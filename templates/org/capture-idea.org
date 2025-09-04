@@ -1,0 +1,50 @@
+* IDEA %^{Idea Title} %^g
+%U
+:PROPERTIES:
+:CATEGORY: %^{Category|Product|Process|Personal|Technical}
+:PRIORITY: %^{Priority|A|B|C}
+:STATUS: %^{Status|New|Exploring|Researching|Planning|Shelved}
+:END:
+
+** The Idea 💡
+%^{Describe the core idea}
+
+** Why This Matters 🎯
+%^{Why is this important? What problem does it solve?}
+
+** Initial Thoughts 🤔
+%?
+
+** Potential Benefits ✅
+- %^{Benefit 1}
+- %^{Benefit 2}
+- %^{Benefit 3}
+
+** Potential Challenges ⚠️
+- %^{Challenge 1}
+- %^{Challenge 2}
+- %^{Challenge 3}
+
+** Next Steps 🚀
+- [ ] %^{Next step 1}
+- [ ] %^{Next step 2}
+- [ ] %^{Next step 3}
+
+** Research Needed 📚
+- [ ] %^{Research item 1}
+- [ ] %^{Research item 2}
+
+** Resources & References 🔗
+- %^{Resource 1}
+- %^{Resource 2}
+
+** Timeline Estimate 📅
+**Exploration Phase:** %^{Exploration time}
+**Implementation Phase:** %^{Implementation time}
+
+** Success Metrics 📊
+- %^{How will you measure success?}
+
+---
+*Inspiration: %^{What sparked this idea?}*
+*Created: %U*

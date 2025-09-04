@@ -14,4 +14,10 @@ dist/
 *~
 
 # Undo-tree save-files
-*.~undo-tree
+*.~undo-tree.DS_Store
+straight/
+robustness-backups/
+history
+autosaves/
+.claude/
+

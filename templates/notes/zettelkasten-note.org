@@ -1,0 +1,96 @@
+#+TITLE: %^{Note Title}
+#+DATE: %<%Y-%m-%d>
+#+STARTUP: overview
+#+TAGS: %^{Tags}
+#+FILETAGS: :zettelkasten:note:
+#+ID: %<%Y%m%d%H%M%S>
+
+* %^{Note Title} 🗒️
+
+** Metadata
+- **Created:** %U
+- **Modified:** %U
+- **Type:** %^{Note Type|Concept|Literature|Project|Fleeting|Permanent}
+- **Status:** %^{Status|Draft|Review|Complete}
+- **Context:** %^{Context}
+
+** Source Information
+- **Source:** %^{Source|Book|Article|Video|Podcast|Experience|Conversation}
+- **Author:** %^{Author}
+- **Reference:** %^{Reference/URL}
+- **Page/Timestamp:** %^{Page or Timestamp}
+
+** Main Idea 💡
+%^{What is the core concept or main idea?}
+
+** Detailed Notes 📝
+%?
+
+** Key Insights 🔍
+- %^{Insight 1}
+- %^{Insight 2}
+- %^{Insight 3}
+
+** Questions Raised 🤔
+- %^{Question 1}
+- %^{Question 2}
+- %^{Question 3}
+
+** Connections & Links 🔗
+*** Related Notes
+- [[%^{Related Note 1}]]
+- [[%^{Related Note 2}]]
+- [[%^{Related Note 3}]]
+
+*** Related Topics
+- %^{Related Topic 1}
+- %^{Related Topic 2}
+- %^{Related Topic 3}
+
+*** Contradictory Ideas
+- %^{Contradictory idea 1}
+- %^{Contradictory idea 2}
+
+** Applications 🚀
+*** Practical Uses
+- %^{Practical use 1}
+- %^{Practical use 2}
+- %^{Practical use 3}
+
+*** Future Research
+- %^{Research direction 1}
+- %^{Research direction 2}
+- %^{Research direction 3}
+
+** Quotes & Evidence 📖
+*** Important Quotes
+> %^{Quote 1}
+> 
+> *— %^{Quote 1 Author}*
+
+> %^{Quote 2}
+> 
+> *— %^{Quote 2 Author}*
+
+*** Supporting Evidence
+- %^{Evidence 1}
+- %^{Evidence 2}
+- %^{Evidence 3}
+
+** Personal Reflection 🤗
+%^{What does this mean to you? How does it connect to your experience?}
+
+** Action Items 📋
+- [ ] %^{Action item 1}
+- [ ] %^{Action item 2}
+- [ ] %^{Action item 3}
+
+** Follow-up 🔄
+- [ ] Review in %^{Review timeframe}
+- [ ] Connect with %^{Connection target}
+- [ ] Research %^{Research topic}
+
+---
+*Note ID: %<%Y%m%d%H%M%S>*
+*Created: %U*
+*Word Count: ___*

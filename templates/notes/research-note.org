@@ -1,0 +1,298 @@
+#+TITLE: Research Note - %^{Research Topic}
+#+DATE: %<%Y-%m-%d>
+#+STARTUP: overview
+#+TAGS: research investigation analysis
+#+FILETAGS: :research:investigation:
+
+* Research Note: %^{Research Topic} 🔬
+
+** Research Overview
+- **Research Topic:** %^{Main Research Topic}
+- **Research Question:** %^{Primary Research Question}
+- **Started:** %U
+- **Status:** %^{Status|Planning|Active|Paused|Completed}
+- **Priority:** %^{Priority|High|Medium|Low}
+- **Deadline:** %^{Research Deadline}
+
+** Research Objectives 🎯
+### Primary Objective
+%^{What is the main goal of this research?}
+
+### Secondary Objectives
+1. %^{Secondary objective 1}
+2. %^{Secondary objective 2}
+3. %^{Secondary objective 3}
+
+### Success Criteria
+- %^{Success criterion 1}
+- %^{Success criterion 2}
+- %^{Success criterion 3}
+
+** Background & Context 📚
+### Current Understanding
+%^{What do you already know about this topic?}
+
+### Knowledge Gaps
+- %^{Gap 1}
+- %^{Gap 2}
+- %^{Gap 3}
+
+### Why This Research Matters
+%^{Why is this research important? What problem does it solve?}
+
+** Research Methodology 🔍
+### Research Approach
+**Type:** %^{Research Type|Literature Review|Empirical Study|Case Study|Survey|Interview|Experiment|Mixed Methods}
+
+### Data Collection Methods
+- [ ] %^{Method 1|Literature Search|Interviews|Surveys|Observations|Experiments}
+- [ ] %^{Method 2}
+- [ ] %^{Method 3}
+
+### Information Sources
+#### Primary Sources
+- %^{Primary source 1}
+- %^{Primary source 2}
+- %^{Primary source 3}
+
+#### Secondary Sources
+- %^{Secondary source 1}
+- %^{Secondary source 2}
+- %^{Secondary source 3}
+
+### Search Strategy
+**Keywords:** %^{Research Keywords}
+**Databases:** %^{Databases to Search}
+**Date Range:** %^{Date Range}
+**Inclusion Criteria:** %^{Inclusion Criteria}
+**Exclusion Criteria:** %^{Exclusion Criteria}
+
+** Research Progress 📊
+### Phase 1: %^{Phase 1 Name}
+**Status:** %^{Phase 1 Status|Not Started|In Progress|Completed}
+**Progress:** %^{Phase 1 Progress}%
+**Key Activities:**
+- [ ] %^{Phase 1 Activity 1}
+- [ ] %^{Phase 1 Activity 2}
+- [ ] %^{Phase 1 Activity 3}
+
+**Notes:** %^{Phase 1 Notes}
+
+### Phase 2: %^{Phase 2 Name}
+**Status:** %^{Phase 2 Status|Not Started|In Progress|Completed}
+**Progress:** %^{Phase 2 Progress}%
+**Key Activities:**
+- [ ] %^{Phase 2 Activity 1}
+- [ ] %^{Phase 2 Activity 2}
+- [ ] %^{Phase 2 Activity 3}
+
+**Notes:** %^{Phase 2 Notes}
+
+### Phase 3: %^{Phase 3 Name}
+**Status:** %^{Phase 3 Status|Not Started|In Progress|Completed}
+**Progress:** %^{Phase 3 Progress}%
+**Key Activities:**
+- [ ] %^{Phase 3 Activity 1}
+- [ ] %^{Phase 3 Activity 2}
+- [ ] %^{Phase 3 Activity 3}
+
+**Notes:** %^{Phase 3 Notes}
+
+** Literature Review 📖
+### Key Authors/Researchers
+| Author | Expertise | Key Works | Contact |
+|--------+-----------+-----------+---------|
+| %^{Author 1} | %^{Author 1 Expertise} | %^{Author 1 Works} | %^{Author 1 Contact} |
+| %^{Author 2} | %^{Author 2 Expertise} | %^{Author 2 Works} | %^{Author 2 Contact} |
+| %^{Author 3} | %^{Author 3 Expertise} | %^{Author 3 Works} | %^{Author 3 Contact} |
+
+### Important Publications
+#### Publication 1: %^{Publication 1 Title}
+- **Author:** %^{Pub 1 Author}
+- **Year:** %^{Pub 1 Year}
+- **Key Findings:** %^{Pub 1 Findings}
+- **Relevance:** %^{Pub 1 Relevance}
+- **Quality:** %^{Pub 1 Quality}/10
+- **Notes:** %^{Pub 1 Notes}
+
+#### Publication 2: %^{Publication 2 Title}
+- **Author:** %^{Pub 2 Author}
+- **Year:** %^{Pub 2 Year}
+- **Key Findings:** %^{Pub 2 Findings}
+- **Relevance:** %^{Pub 2 Relevance}
+- **Quality:** %^{Pub 2 Quality}/10
+- **Notes:** %^{Pub 2 Notes}
+
+#### Publication 3: %^{Publication 3 Title}
+- **Author:** %^{Pub 3 Author}
+- **Year:** %^{Pub 3 Year}
+- **Key Findings:** %^{Pub 3 Findings}
+- **Relevance:** %^{Pub 3 Relevance}
+- **Quality:** %^{Pub 3 Quality}/10
+- **Notes:** %^{Pub 3 Notes}
+
+### Literature Themes
+#### Theme 1: %^{Theme 1}
+**Description:** %^{Theme 1 Description}
+**Key Papers:**
+- [[%^{Theme 1 Paper 1}]]
+- [[%^{Theme 1 Paper 2}]]
+- [[%^{Theme 1 Paper 3}]]
+
+#### Theme 2: %^{Theme 2}
+**Description:** %^{Theme 2 Description}
+**Key Papers:**
+- [[%^{Theme 2 Paper 1}]]
+- [[%^{Theme 2 Paper 2}]]
+- [[%^{Theme 2 Paper 3}]]
+
+** Data Collection 📋
+### Data Sources
+| Source | Type | Access | Quality | Notes |
+|--------+------+--------+---------+-------|
+| %^{Data Source 1} | %^{Source 1 Type} | %^{Source 1 Access} | %^{Source 1 Quality}/10 | %^{Source 1 Notes} |
+| %^{Data Source 2} | %^{Source 2 Type} | %^{Source 2 Access} | %^{Source 2 Quality}/10 | %^{Source 2 Notes} |
+| %^{Data Source 3} | %^{Source 3 Type} | %^{Source 3 Access} | %^{Source 3 Quality}/10 | %^{Source 3 Notes} |
+
+### Data Collection Log
+| Date | Activity | Source | Data Collected | Notes |
+|------+----------+--------+----------------+-------|
+| %^{Log Date 1} | %^{Log Activity 1} | %^{Log Source 1} | %^{Log Data 1} | %^{Log Notes 1} |
+| %^{Log Date 2} | %^{Log Activity 2} | %^{Log Source 2} | %^{Log Data 2} | %^{Log Notes 2} |
+| %^{Log Date 3} | %^{Log Activity 3} | %^{Log Source 3} | %^{Log Data 3} | %^{Log Notes 3} |
+
+## Key Findings 🔍
+### Major Discoveries
+1. **Finding 1:** %^{Major Finding 1}
+   **Evidence:** %^{Finding 1 Evidence}
+   **Significance:** %^{Finding 1 Significance}
+   **Confidence Level:** %^{Finding 1 Confidence}/10
+
+2. **Finding 2:** %^{Major Finding 2}
+   **Evidence:** %^{Finding 2 Evidence}
+   **Significance:** %^{Finding 2 Significance}
+   **Confidence Level:** %^{Finding 2 Confidence}/10
+
+3. **Finding 3:** %^{Major Finding 3}
+   **Evidence:** %^{Finding 3 Evidence}
+   **Significance:** %^{Finding 3 Significance}
+   **Confidence Level:** %^{Finding 3 Confidence}/10
+
+### Patterns & Trends
+- %^{Pattern 1}
+- %^{Pattern 2}
+- %^{Pattern 3}
+
+### Contradictory Evidence
+- %^{Contradiction 1}
+- %^{Contradiction 2}
+- %^{Contradiction 3}
+
+### Unexpected Results
+- %^{Unexpected 1}
+- %^{Unexpected 2}
+- %^{Unexpected 3}
+
+** Analysis & Interpretation 🧐
+### Data Analysis Methods
+- %^{Analysis Method 1}
+- %^{Analysis Method 2}
+- %^{Analysis Method 3}
+
+### Key Insights
+1. %^{Insight 1}
+2. %^{Insight 2}
+3. %^{Insight 3}
+
+### Theoretical Implications
+- %^{Theoretical Implication 1}
+- %^{Theoretical Implication 2}
+- %^{Theoretical Implication 3}
+
+### Practical Implications
+- %^{Practical Implication 1}
+- %^{Practical Implication 2}
+- %^{Practical Implication 3}
+
+** Challenges & Limitations 🚧
+### Research Challenges
+1. **Challenge:** %^{Challenge 1}
+   **Impact:** %^{Challenge 1 Impact}
+   **Solution:** %^{Challenge 1 Solution}
+
+2. **Challenge:** %^{Challenge 2}
+   **Impact:** %^{Challenge 2 Impact}
+   **Solution:** %^{Challenge 2 Solution}
+
+### Study Limitations
+- %^{Limitation 1}
+- %^{Limitation 2}
+- %^{Limitation 3}
+
+### Data Quality Issues
+- %^{Quality Issue 1}
+- %^{Quality Issue 2}
+- %^{Quality Issue 3}
+
+** Conclusions & Next Steps 🎯
+### Primary Conclusions
+1. %^{Conclusion 1}
+2. %^{Conclusion 2}
+3. %^{Conclusion 3}
+
+### Answers to Research Questions
+**Q1: %^{Original Question 1}**
+**A1:** %^{Answer 1}
+
+**Q2: %^{Original Question 2}**
+**A2:** %^{Answer 2}
+
+**Q3: %^{Original Question 3}**
+**A3:** %^{Answer 3}
+
+### Recommendations
+1. %^{Recommendation 1}
+2. %^{Recommendation 2}
+3. %^{Recommendation 3}
+
+### Future Research Directions
+- %^{Future Direction 1}
+- %^{Future Direction 2}
+- %^{Future Direction 3}
+
+** Action Items 📋
+### Immediate Actions
+- [ ] %^{Immediate Action 1}
+- [ ] %^{Immediate Action 2}
+- [ ] %^{Immediate Action 3}
+
+### Follow-up Research
+- [ ] %^{Follow-up 1}
+- [ ] %^{Follow-up 2}
+- [ ] %^{Follow-up 3}
+
+### Communication & Dissemination
+- [ ] %^{Communication 1}
+- [ ] %^{Communication 2}
+- [ ] %^{Communication 3}
+
+** Resources & References 📚
+### Bibliography
+%^{Key references in proper citation format}
+
+### Useful Tools & Resources
+- **%^{Tool 1}:** %^{Tool 1 Description}
+- **%^{Tool 2}:** %^{Tool 2 Description}
+- **%^{Tool 3}:** %^{Tool 3 Description}
+
+### Contact Information
+- **%^{Contact 1 Name}:** %^{Contact 1 Info}
+- **%^{Contact 2 Name}:** %^{Contact 2 Info}
+- **%^{Contact 3 Name}:** %^{Contact 3 Info}
+
+---
+*Research started: %U*
+*Last updated: %U*
+*Status: %^{Final Status}*
+*Total research time: %^{Total Time} hours*
+*Next review: %^{Next Review Date}*

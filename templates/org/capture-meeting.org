@@ -1,0 +1,46 @@
+* MEETING %^{Meeting Title} %^g
+SCHEDULED: %^{Date and Time}T
+:PROPERTIES:
+:CATEGORY: Meeting
+:LOCATION: %^{Location|Office|Remote|Phone}
+:DURATION: %^{Duration|30min|1hr|2hr}
+:END:
+
+** Attendees
+- %^{Attendee 1}
+- %^{Attendee 2}
+- %^{Attendee 3}
+
+** Agenda
+1. %^{Agenda Item 1}
+2. %^{Agenda Item 2}
+3. %^{Agenda Item 3}
+
+** Pre-Meeting Preparation
+- [ ] %^{Preparation task 1}
+- [ ] %^{Preparation task 2}
+
+** Meeting Notes
+%?
+
+** Decisions Made
+- %^{Decision 1}
+- %^{Decision 2}
+
+** Action Items
+*** TODO %^{Action 1}
+    DEADLINE: %^{Due Date 1}t
+    **Assignee:** %^{Assignee 1}
+
+*** TODO %^{Action 2}
+    DEADLINE: %^{Due Date 2}t
+    **Assignee:** %^{Assignee 2}
+
+** Follow-up
+- [ ] Send meeting notes to attendees
+- [ ] Schedule follow-up meeting if needed
+- [ ] Update project status
+
+---
+*Meeting Date: %U*
+*Next Meeting: %^{Next Meeting Date}*

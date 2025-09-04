@@ -1,0 +1,230 @@
+#+TITLE: Project Plan - %^{Project Name}
+#+DATE: %<%Y-%m-%d>
+#+STARTUP: overview
+#+TAGS: project planning strategy
+#+FILETAGS: :project:planning:
+
+* Project: %^{Project Name} 🚀
+
+** Project Overview
+- **Project Name:** %^{Project Name}
+- **Project Manager:** %^{Project Manager}
+- **Start Date:** %^{Start Date}
+- **Target End Date:** %^{Target End Date}
+- **Status:** %^{Status|Planning|Active|On Hold|Completed|Cancelled}
+- **Priority:** %^{Priority|High|Medium|Low}
+- **Budget:** %^{Budget}
+
+** Project Description
+%^{Brief project description}
+
+** Project Objectives 🎯
+*** Primary Objective
+%^{Main goal of the project}
+
+*** Secondary Objectives
+1. %^{Secondary objective 1}
+2. %^{Secondary objective 2}
+3. %^{Secondary objective 3}
+
+** Success Criteria 📊
+- %^{Success criterion 1}
+- %^{Success criterion 2}
+- %^{Success criterion 3}
+
+** Stakeholders 👥
+*** Project Team
+| Role | Name | Contact | Responsibility |
+|------+------+---------+----------------|
+| PM | %^{PM Name} | %^{PM Contact} | %^{PM Responsibility} |
+| Dev Lead | %^{Dev Lead Name} | %^{Dev Contact} | %^{Dev Responsibility} |
+| Designer | %^{Designer Name} | %^{Designer Contact} | %^{Designer Responsibility} |
+
+*** External Stakeholders
+- **Client/Customer:** %^{Client Name}
+- **Sponsor:** %^{Sponsor Name}
+- **End Users:** %^{End Users}
+
+** Scope Definition 📋
+*** In Scope
+- %^{In scope item 1}
+- %^{In scope item 2}
+- %^{In scope item 3}
+
+*** Out of Scope
+- %^{Out of scope item 1}
+- %^{Out of scope item 2}
+- %^{Out of scope item 3}
+
+** Requirements 📝
+*** Functional Requirements
+1. %^{Functional requirement 1}
+2. %^{Functional requirement 2}
+3. %^{Functional requirement 3}
+
+*** Non-Functional Requirements
+1. %^{Non-functional requirement 1}
+2. %^{Non-functional requirement 2}
+3. %^{Non-functional requirement 3}
+
+*** Technical Requirements
+1. %^{Technical requirement 1}
+2. %^{Technical requirement 2}
+3. %^{Technical requirement 3}
+
+** Project Phases 📅
+*** Phase 1: %^{Phase 1 Name}
+    **Duration:** %^{Phase 1 Duration}
+    **Deliverables:**
+    - %^{Phase 1 Deliverable 1}
+    - %^{Phase 1 Deliverable 2}
+
+*** Phase 2: %^{Phase 2 Name}
+    **Duration:** %^{Phase 2 Duration}
+    **Deliverables:**
+    - %^{Phase 2 Deliverable 1}
+    - %^{Phase 2 Deliverable 2}
+
+*** Phase 3: %^{Phase 3 Name}
+    **Duration:** %^{Phase 3 Duration}
+    **Deliverables:**
+    - %^{Phase 3 Deliverable 1}
+    - %^{Phase 3 Deliverable 2}
+
+** Work Breakdown Structure 🗂️
+*** Epic 1: %^{Epic 1 Name}
+**** TODO Task 1.1: %^{Task 1.1}
+     DEADLINE: %^{Task 1.1 Deadline}t
+     **Assignee:** %^{Task 1.1 Assignee}
+     **Effort:** %^{Task 1.1 Effort}
+
+**** TODO Task 1.2: %^{Task 1.2}
+     DEADLINE: %^{Task 1.2 Deadline}t
+     **Assignee:** %^{Task 1.2 Assignee}
+     **Effort:** %^{Task 1.2 Effort}
+
+*** Epic 2: %^{Epic 2 Name}
+**** TODO Task 2.1: %^{Task 2.1}
+     DEADLINE: %^{Task 2.1 Deadline}t
+     **Assignee:** %^{Task 2.1 Assignee}
+     **Effort:** %^{Task 2.1 Effort}
+
+**** TODO Task 2.2: %^{Task 2.2}
+     DEADLINE: %^{Task 2.2 Deadline}t
+     **Assignee:** %^{Task 2.2 Assignee}
+     **Effort:** %^{Task 2.2 Effort}
+
+** Timeline & Milestones 📅
+| Date | Milestone | Owner | Status |
+|------+-----------+-------+--------|
+| %^{Milestone 1 Date} | %^{Milestone 1} | %^{M1 Owner} | Pending |
+| %^{Milestone 2 Date} | %^{Milestone 2} | %^{M2 Owner} | Pending |
+| %^{Milestone 3 Date} | %^{Milestone 3} | %^{M3 Owner} | Pending |
+
+** Risk Management 🛡️
+*** High Risks
+**** Risk 1: %^{High Risk 1}
+     **Probability:** %^{HR1 Probability|High|Medium|Low}
+     **Impact:** %^{HR1 Impact|High|Medium|Low}
+     **Mitigation:** %^{HR1 Mitigation}
+     **Owner:** %^{HR1 Owner}
+
+**** Risk 2: %^{High Risk 2}
+     **Probability:** %^{HR2 Probability|High|Medium|Low}
+     **Impact:** %^{HR2 Impact|High|Medium|Low}
+     **Mitigation:** %^{HR2 Mitigation}
+     **Owner:** %^{HR2 Owner}
+
+*** Medium Risks
+- %^{Medium Risk 1}
+- %^{Medium Risk 2}
+
+*** Low Risks
+- %^{Low Risk 1}
+- %^{Low Risk 2}
+
+** Resource Planning 💰
+*** Human Resources
+| Role | Person | Allocation % | Duration |
+|------+--------+--------------+----------|
+| %^{Resource Role 1} | %^{Resource Person 1} | %^{Allocation 1}% | %^{Duration 1} |
+| %^{Resource Role 2} | %^{Resource Person 2} | %^{Allocation 2}% | %^{Duration 2} |
+
+*** Budget Breakdown
+| Category | Estimated Cost | Actual Cost |
+|----------+----------------+-------------|
+| Personnel | %^{Personnel Cost} | |
+| Tools/Software | %^{Tools Cost} | |
+| Infrastructure | %^{Infrastructure Cost} | |
+| Miscellaneous | %^{Misc Cost} | |
+| **Total** | %^{Total Estimated} | |
+
+** Quality Assurance 🔍
+*** Quality Standards
+- %^{Quality standard 1}
+- %^{Quality standard 2}
+- %^{Quality standard 3}
+
+*** Testing Strategy
+- %^{Testing approach 1}
+- %^{Testing approach 2}
+- %^{Testing approach 3}
+
+*** Review Process
+- %^{Review process 1}
+- %^{Review process 2}
+
+** Communication Plan 📢
+*** Regular Meetings
+| Meeting | Frequency | Attendees | Purpose |
+|---------+-----------+-----------+---------|
+| Standup | %^{Standup Freq} | %^{Standup Attendees} | Daily sync |
+| Review | %^{Review Freq} | %^{Review Attendees} | Progress review |
+| Retrospective | %^{Retro Freq} | %^{Retro Attendees} | Process improvement |
+
+*** Reporting
+- **Status Reports:** %^{Status Report Frequency}
+- **Progress Dashboard:** %^{Dashboard Location}
+- **Escalation Path:** %^{Escalation Process}
+
+** Dependencies 🔗
+*** External Dependencies
+- %^{External dependency 1}
+- %^{External dependency 2}
+- %^{External dependency 3}
+
+*** Internal Dependencies
+- %^{Internal dependency 1}
+- %^{Internal dependency 2}
+- %^{Internal dependency 3}
+
+** Project Closure Criteria ✅
+- [ ] All deliverables completed and accepted
+- [ ] Quality standards met
+- [ ] Stakeholder sign-off obtained
+- [ ] Documentation completed
+- [ ] Knowledge transfer completed
+- [ ] Lessons learned documented
+- [ ] Resources released
+- [ ] Project retrospective conducted
+
+** Lessons Learned 📚
+*** What Went Well
+- %^{What went well 1}
+- %^{What went well 2}
+- %^{What went well 3}
+
+*** What Could Be Improved
+- %^{Improvement 1}
+- %^{Improvement 2}
+- %^{Improvement 3}
+
+*** Recommendations for Future Projects
+- %^{Recommendation 1}
+- %^{Recommendation 2}
+- %^{Recommendation 3}
+
+---
+*Project created: %U*
+*Last updated: %U*
+*Next review: %^{Next Review Date}*

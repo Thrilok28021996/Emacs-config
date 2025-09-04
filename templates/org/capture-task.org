@@ -1,0 +1,23 @@
+* TODO %^{Task Title}
+SCHEDULED: %^{Scheduled}t DEADLINE: %^{Deadline}t
+:PROPERTIES:
+:CATEGORY: %^{Category|Work|Personal|Learning|Health}
+:EFFORT: %^{Effort|0:15|0:30|1:00|2:00|4:00|8:00}
+:PRIORITY: %^{Priority|A|B|C}
+:END:
+
+** Context
+%^{Context/Background}
+
+** Acceptance Criteria
+- [ ] %^{Criteria 1}
+- [ ] %^{Criteria 2}
+- [ ] %^{Criteria 3}
+
+** Resources
+- %^{Resource links or references}
+
+** Notes
+%?
+
+** Created: %U

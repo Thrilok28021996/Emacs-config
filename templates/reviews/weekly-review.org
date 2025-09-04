@@ -1,0 +1,226 @@
+#+TITLE: Weekly Review - Week %<%V, %Y>
+#+DATE: %<%Y-%m-%d>
+#+STARTUP: overview
+#+TAGS: review weekly gtd productivity
+#+FILETAGS: :review:weekly:
+
+* Weekly Review - %<%B %d, %Y> 📋
+
+** Overview
+- **Week of:** %<%B %d, %Y>
+- **Review Date:** %U
+- **Duration:** ___ minutes
+
+* Last Week's Accomplishments ✅
+
+** Major Wins 🏆
+1. 
+2. 
+3. 
+
+** Completed Projects/Milestones 🎯
+- [ ] 
+- [ ] 
+- [ ] 
+
+** Tasks Completed 📝
+- [ ] 
+- [ ] 
+- [ ] 
+
+** Habits Tracked 📊
+| Habit           | Mon | Tue | Wed | Thu | Fri | Sat | Sun | Total |
+|-----------------+-----+-----+-----+-----+-----+-----+-----+-------|
+| Exercise        |     |     |     |     |     |     |     |       |
+| Reading         |     |     |     |     |     |     |     |       |
+| Meditation      |     |     |     |     |     |     |     |       |
+| Deep Work Hours |     |     |     |     |     |     |     |       |
+
+* Challenges & Lessons Learned 🤔
+
+** What Didn't Go Well?
+- 
+- 
+- 
+
+** Obstacles Encountered
+- 
+- 
+- 
+
+** Lessons Learned
+1. 
+2. 
+3. 
+
+** Process Improvements
+- 
+- 
+- 
+
+* Inbox Processing 📥
+
+** Capture Review
+- [ ] Email inbox at zero
+- [ ] Physical inbox cleared
+- [ ] Digital notes processed
+- [ ] Voice memos transcribed
+- [ ] Photos/screenshots organized
+
+** New Items Captured This Week
+- 
+- 
+- 
+
+* Project Review 🗂️
+
+** Active Projects Status
+*** Project Name 1
+    - **Status:** %^{Status|On Track|Behind|Ahead|Blocked|Complete}
+    - **Next Action:** 
+    - **Notes:** 
+
+*** Project Name 2
+    - **Status:** %^{Status|On Track|Behind|Ahead|Blocked|Complete}
+    - **Next Action:** 
+    - **Notes:** 
+
+** Projects to Start
+- [ ] 
+- [ ] 
+
+** Projects to Complete/Close
+- [ ] 
+- [ ] 
+
+** Someday/Maybe Review
+- [ ] Review someday/maybe list
+- [ ] Move any items to active projects
+- [ ] Add new someday/maybe items
+
+* Areas of Focus Review 🎯
+
+** Work/Career
+- **Progress:** 
+- **Challenges:** 
+- **Opportunities:** 
+
+** Health & Fitness
+- **Progress:** 
+- **Challenges:** 
+- **Opportunities:** 
+
+** Relationships
+- **Progress:** 
+- **Challenges:** 
+- **Opportunities:** 
+
+** Learning & Development
+- **Progress:** 
+- **Challenges:** 
+- **Opportunities:** 
+
+** Finance
+- **Progress:** 
+- **Challenges:** 
+- **Opportunities:** 
+
+* Calendar Review 📅
+
+** Last Week's Key Events
+- 
+- 
+- 
+
+** Upcoming Week Preview
+- 
+- 
+- 
+
+** Monthly/Quarterly Deadlines
+- 
+- 
+- 
+
+* Next Week Planning 🚀
+
+** Top 3 Priorities
+1. 
+2. 
+3. 
+
+** Key Projects to Advance
+- 
+- 
+- 
+
+** Important Meetings/Events
+- 
+- 
+- 
+
+** Time Blocks to Schedule
+- [ ] Deep work sessions
+- [ ] Administrative tasks
+- [ ] Personal time
+- [ ] Exercise/health
+
+* Action Items 📋
+
+** Immediate (This Week)
+- [ ] 
+- [ ] 
+- [ ] 
+
+** Short-term (Next 2-4 Weeks)
+- [ ] 
+- [ ] 
+- [ ] 
+
+** Long-term (Next Quarter)
+- [ ] 
+- [ ] 
+- [ ] 
+
+* Reflection & Gratitude 🙏
+
+** What Am I Grateful For?
+1. 
+2. 
+3. 
+
+** Personal Growth This Week
+- 
+- 
+- 
+
+** Energy & Motivation Level (/10)
+**Overall Energy:** ___/10
+**Work Motivation:** ___/10
+**Personal Satisfaction:** ___/10
+
+* System & Process Review 🔧
+
+** What's Working Well?
+- 
+- 
+- 
+
+** What Needs Adjustment?
+- 
+- 
+- 
+
+** Tools/Apps Review
+- **Useful:** 
+- **Underused:** 
+- **To Remove:** 
+- **To Try:** 
+
+* Next Review
+**Next Weekly Review:** %^{Next Review Date}
+**Monthly Review Due:** %^{Monthly Review Date}
+
+---
+*Review completed: %U*
+*Duration: __ minutes*

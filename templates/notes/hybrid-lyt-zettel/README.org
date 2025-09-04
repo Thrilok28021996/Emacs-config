@@ -1,0 +1,222 @@
+#+TITLE: LYT + Zettelkasten Hybrid Knowledge System
+#+DATE: %<%Y-%m-%d>
+#+STARTUP: overview
+
+* 🧠 LYT + Zettelkasten Hybrid Knowledge System
+
+This is a hybrid note-taking system that combines the best of both **Linking Your Thinking (LYT)** and **Zettelkasten** methodologies.
+
+** System Philosophy 🎯
+
+*** LYT Principles (Structure & Navigation)
+- **Maps of Content (MOCs)** provide structured overviews
+- **Hierarchical organization** with flexible boundaries  
+- **Contextual relationships** and thematic groupings
+- **Progressive summarization** and idea development
+- **Flexible emergence** allowing organic growth
+
+*** Zettelkasten Principles (Connections & Discovery)
+- **Atomic notes** with single, focused ideas
+- **Unique identifiers** for permanent referencing
+- **Surprise connections** through linking
+- **Emergence over hierarchy** for new insights
+- **Conversation with notes** over time
+
+*** Hybrid Benefits 🌟
+- **Best of both worlds:** Structure when needed, fluidity when exploring
+- **Multiple entry points:** Hierarchical for beginners, networked for experts
+- **Natural evolution:** Notes can graduate from atomic to structured
+- **Serendipitous discovery:** Within organized frameworks
+- **Cognitive flexibility:** Match system to thinking style
+
+** Note Types & When to Use 📝
+
+*** 1. Atomic Note (`atomic-note.org`)
+**Purpose:** Single, focused ideas that stand alone
+**When to use:**
+- Capturing a specific concept, claim, or insight
+- Creating building blocks for larger ideas
+- When you want maximum linkability
+- For evidence-based thinking
+
+**Key features:**
+- One idea per note
+- Strong evidence focus
+- Extensive linking capability
+- Certainty and development tracking
+
+*** 2. Fluid Note (`fluid-note.org`)
+**Purpose:** Emergent, evolving ideas that haven't crystallized
+**When to use:**
+- Early-stage thinking and exploration
+- When ideas are still shifting and developing
+- For capturing emerging patterns
+- When you're not sure where an idea will go
+
+**Key features:**
+- Evolution tracking
+- Tension and paradox exploration
+- Branching possibilities
+- Serendipity capture
+
+*** 3. Synthesis Note (`synthesis-note.org`)
+**Purpose:** Bringing together multiple ideas into new insights
+**When to use:**
+- Combining concepts from different domains
+- Resolving apparent contradictions
+- Creating new frameworks or models
+- When you've found unexpected connections
+
+**Key features:**
+- Multi-source integration
+- Validation methods
+- Emergent properties identification
+- Impact assessment
+
+*** 4. MOC - Map of Content (`moc-template.org`)
+**Purpose:** Structured overview of a knowledge domain
+**When to use:**
+- You have 20+ notes in a topic area
+- Need to provide navigation for others
+- Want to see the big picture
+- Creating learning pathways
+
+**Key features:**
+- Hierarchical organization (Tier 1-3)
+- Multiple organizational schemes
+- Entry points and pathways
+- Maintenance tracking
+
+*** 5. Knowledge Hub (`index-hub.org`)
+**Purpose:** Master index and navigation center
+**When to use:**
+- Starting your knowledge system
+- Need overview of all domains
+- Want to track system health
+- Creating personal knowledge dashboard
+
+**Key features:**
+- Domain overview and metrics
+- Cross-domain bridges
+- Quality tracking
+- Workflow integration
+
+** Workflow Integration 🔄
+
+*** Capture Process
+1. **Quick Capture:** Use org-roam capture templates
+2. **Initial Processing:** Decide note type based on idea maturity
+3. **Development:** Let notes evolve between types as needed
+4. **Integration:** Link to existing notes and MOCs
+
+*** Connection Strategy
+- **Immediate connections:** Link during creation
+- **Systematic review:** Weekly connection sessions
+- **Serendipitous discovery:** Follow curiosity during browsing
+- **MOC maintenance:** Monthly structural updates
+
+*** Quality Assurance
+- **Atomic notes:** One clear idea, good evidence
+- **Fluid notes:** Track evolution, embrace uncertainty
+- **Synthesis notes:** Validate integration claims
+- **MOCs:** Maintain navigation effectiveness
+- **Hubs:** Monitor system health metrics
+
+** Keybindings & Access 🎮
+
+*** Org-Roam Captures (SPC n r c)
+- `a` - Atomic Note
+- `f` - Fluid Note  
+- `s` - Synthesis Note
+- `m` - MOC (Map of Content)
+- `h` - Knowledge Hub
+- `l` - Literature Note
+- `r` - Research Note
+
+*** Quick Actions
+- `SPC n r f` - Find any note
+- `SPC n r i` - Insert link to note
+- `SPC n r b` - Toggle backlinks buffer
+- `SPC n r g` - View knowledge graph
+- `SPC n r t` - Add tags
+- `SPC n r a` - Add aliases
+
+** File Naming Convention 📁
+
+*** Prefixes
+- `MOC-` - Maps of Content
+- `HUB-` - Knowledge Hubs  
+- `synthesis-` - Synthesis Notes
+- `fluid-` - Fluid Notes
+- `lit-` - Literature Notes
+- `research-` - Research Notes
+- `YYYYMMDDHHMISS-` - Atomic Notes (timestamp)
+
+*** Examples
+- `MOC-20231215123045-machine-learning.org`
+- `HUB-20231215123045-personal-knowledge.org`
+- `synthesis-20231215123045-ai-consciousness.org`
+- `20231215123045-attention-mechanism.org`
+
+** Best Practices 🌟
+
+*** Starting Out
+1. Create your first **Knowledge Hub** as system center
+2. Begin with **Atomic Notes** for specific ideas
+3. Create **MOCs** when you have 15-20 notes in an area
+4. Use **Fluid Notes** for exploratory thinking
+5. **Synthesis Notes** emerge from connecting atomics
+
+*** Maintaining the System
+- **Daily:** Add notes, make immediate connections
+- **Weekly:** Review fluid notes, update connections  
+- **Monthly:** Maintain MOCs, assess hub metrics
+- **Quarterly:** System-wide reorganization if needed
+
+*** Connection Strategies
+- **Follow curiosity:** Trust your interests for connections
+- **Use surprise:** Unexpected links often most valuable
+- **Think in relationships:** How do ideas support/contradict?
+- **Build bridges:** Connect different domains explicitly
+- **Layer connections:** Some immediate, some discovered later
+
+** Evolution Pathways 📈
+
+Notes naturally evolve within the system:
+
+```
+Fluid Note → Atomic Note → Part of Synthesis → Included in MOC
+     ↓            ↓              ↓                ↓
+ (uncertain) → (crystallized) → (integrated) → (organized)
+```
+
+*** Graduation Criteria
+- **Fluid → Atomic:** Idea stabilizes, evidence emerges
+- **Atomic → Synthesis:** Multiple atomics combine meaningfully  
+- **Any → MOC inclusion:** Becomes part of larger knowledge domain
+- **MOC → Hub inclusion:** Domain becomes significant in your system
+
+** System Health Indicators 🏥
+
+*** Green (Healthy)
+- Regular note creation and connection
+- Balance between note types
+- Growing MOCs with good navigation
+- Increasing synthesis insights
+- Active use of backlinks
+
+*** Yellow (Attention Needed)
+- Many orphaned notes
+- Overemphasis on one note type
+- Stale MOCs without updates
+- Decreased connection making
+- Accumulating fluid notes without development
+
+*** Red (Requires Action)
+- No new connections for weeks
+- MOCs become overwhelming/unusable
+- System complexity exceeds cognitive load
+- Notes feel disconnected from goals
+- Avoidance of the system
+
+Remember: This is a **living system**. Adapt these templates and processes to match your thinking style and evolving needs.

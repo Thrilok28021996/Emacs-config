@@ -1,0 +1,331 @@
+#+TITLE: Project Retrospective - %^{Project Name}
+#+DATE: %<%Y-%m-%d>
+#+STARTUP: overview
+#+TAGS: retrospective lessons learned
+#+FILETAGS: :project:retrospective:
+
+* Project Retrospective: %^{Project Name} 🔍
+
+** Project Overview
+- **Project Name:** %^{Project Name}
+- **Project Manager:** %^{Project Manager}
+- **Team Size:** %^{Team Size}
+- **Duration:** %^{Actual Duration}
+- **Budget Used:** %^{Budget Used}
+- **Completion Date:** %^{Completion Date}
+- **Final Status:** %^{Final Status|Completed|Cancelled|On Hold}
+
+** Project Summary 📊
+*** Original Goals vs. Achievements
+| Original Goal | Achievement | Status |
+|---------------+-------------+--------|
+| %^{Goal 1} | %^{Achievement 1} | %^{Status 1|Met|Exceeded|Partially Met|Not Met} |
+| %^{Goal 2} | %^{Achievement 2} | %^{Status 2|Met|Exceeded|Partially Met|Not Met} |
+| %^{Goal 3} | %^{Achievement 3} | %^{Status 3|Met|Exceeded|Partially Met|Not Met} |
+
+*** Key Metrics
+| Metric | Planned | Actual | Variance |
+|--------+---------+--------+----------|
+| Timeline | %^{Planned Timeline} | %^{Actual Timeline} | %^{Timeline Variance} |
+| Budget | %^{Planned Budget} | %^{Actual Budget} | %^{Budget Variance} |
+| Quality Score | %^{Planned Quality} | %^{Actual Quality} | %^{Quality Variance} |
+| Team Satisfaction | | %^{Team Satisfaction}/10 | |
+
+** What Went Well 🌟
+*** Team Performance
+- %^{Team strength 1}
+- %^{Team strength 2}
+- %^{Team strength 3}
+
+*** Process & Methodology
+- %^{Process strength 1}
+- %^{Process strength 2}
+- %^{Process strength 3}
+
+*** Technical Execution
+- %^{Technical strength 1}
+- %^{Technical strength 2}
+- %^{Technical strength 3}
+
+*** Stakeholder Management
+- %^{Stakeholder strength 1}
+- %^{Stakeholder strength 2}
+- %^{Stakeholder strength 3}
+
+*** Tools & Resources
+- %^{Tool strength 1}
+- %^{Tool strength 2}
+- %^{Tool strength 3}
+
+** What Didn't Go Well 🚨
+*** Challenges Faced
+**** Major Challenge 1: %^{Major Challenge 1}
+     **Impact:** %^{Challenge 1 Impact}
+     **Root Cause:** %^{Challenge 1 Root Cause}
+     **How We Handled It:** %^{Challenge 1 Response}
+     **Outcome:** %^{Challenge 1 Outcome}
+
+**** Major Challenge 2: %^{Major Challenge 2}
+     **Impact:** %^{Challenge 2 Impact}
+     **Root Cause:** %^{Challenge 2 Root Cause}
+     **How We Handled It:** %^{Challenge 2 Response}
+     **Outcome:** %^{Challenge 2 Outcome}
+
+**** Major Challenge 3: %^{Major Challenge 3}
+     **Impact:** %^{Challenge 3 Impact}
+     **Root Cause:** %^{Challenge 3 Root Cause}
+     **How We Handled It:** %^{Challenge 3 Response}
+     **Outcome:** %^{Challenge 3 Outcome}
+
+*** Process Issues
+- %^{Process issue 1}
+- %^{Process issue 2}
+- %^{Process issue 3}
+
+*** Communication Problems
+- %^{Communication issue 1}
+- %^{Communication issue 2}
+- %^{Communication issue 3}
+
+*** Technical Difficulties
+- %^{Technical issue 1}
+- %^{Technical issue 2}
+- %^{Technical issue 3}
+
+** Team Feedback 👥
+*** Individual Team Member Reflections
+**** %^{Team Member 1}
+     **Role:** %^{Member 1 Role}
+     **Highlights:** %^{Member 1 Highlights}
+     **Challenges:** %^{Member 1 Challenges}
+     **Suggestions:** %^{Member 1 Suggestions}
+
+**** %^{Team Member 2}
+     **Role:** %^{Member 2 Role}
+     **Highlights:** %^{Member 2 Highlights}
+     **Challenges:** %^{Member 2 Challenges}
+     **Suggestions:** %^{Member 2 Suggestions}
+
+**** %^{Team Member 3}
+     **Role:** %^{Member 3 Role}
+     **Highlights:** %^{Member 3 Highlights}
+     **Challenges:** %^{Member 3 Challenges}
+     **Suggestions:** %^{Member 3 Suggestions}
+
+*** Team Dynamics
+- **Collaboration Level:** %^{Collaboration Score}/10
+- **Communication Effectiveness:** %^{Communication Score}/10
+- **Conflict Resolution:** %^{Conflict Resolution Score}/10
+- **Knowledge Sharing:** %^{Knowledge Sharing Score}/10
+
+** Stakeholder Feedback 🗣️
+*** Client/Customer Feedback
+- **Satisfaction Level:** %^{Client Satisfaction}/10
+- **Key Feedback:** %^{Client Feedback}
+- **Future Collaboration:** %^{Future Collaboration|Yes|No|Maybe}
+
+*** Sponsor Feedback
+- **Project Success Rating:** %^{Sponsor Rating}/10
+- **Key Comments:** %^{Sponsor Comments}
+- **Budget Satisfaction:** %^{Budget Satisfaction|Satisfied|Concerned|Unsatisfied}
+
+** Risk Analysis 🛡️
+*** Risks That Materialized
+| Risk | Probability Was | Impact Was | How We Managed | Outcome |
+|------+-----------------+------------+----------------+---------|
+| %^{Risk 1} | %^{Risk 1 Prob} | %^{Risk 1 Impact} | %^{Risk 1 Management} | %^{Risk 1 Outcome} |
+| %^{Risk 2} | %^{Risk 2 Prob} | %^{Risk 2 Impact} | %^{Risk 2 Management} | %^{Risk 2 Outcome} |
+
+*** Risks We Missed
+- %^{Missed risk 1}
+- %^{Missed risk 2}
+- %^{Missed risk 3}
+
+*** Risk Management Effectiveness
+- **Risk Identification:** %^{Risk ID Score}/10
+- **Risk Mitigation:** %^{Risk Mitigation Score}/10
+- **Risk Monitoring:** %^{Risk Monitoring Score}/10
+
+** Process Analysis 🔄
+*** Methodology Assessment
+- **Methodology Used:** %^{Methodology}
+- **Effectiveness:** %^{Methodology Effectiveness}/10
+- **Team Adherence:** %^{Team Adherence}/10
+- **Adaptation Needed:** %^{Adaptation Needed}
+
+*** Meeting Effectiveness
+| Meeting Type | Frequency | Effectiveness | Improvement Needed |
+|--------------+-----------+---------------+--------------------|
+| Standups | %^{Standup Freq} | %^{Standup Effectiveness}/10 | %^{Standup Improvement} |
+| Sprint Reviews | %^{Review Freq} | %^{Review Effectiveness}/10 | %^{Review Improvement} |
+| Retrospectives | %^{Retro Freq} | %^{Retro Effectiveness}/10 | %^{Retro Improvement} |
+
+*** Documentation Quality
+- **Requirements Documentation:** %^{Req Doc Score}/10
+- **Technical Documentation:** %^{Tech Doc Score}/10
+- **User Documentation:** %^{User Doc Score}/10
+- **Process Documentation:** %^{Process Doc Score}/10
+
+** Quality Assessment 🎯
+*** Deliverable Quality
+| Deliverable | Quality Score | Issues Found | Client Acceptance |
+|-------------+---------------+--------------+-------------------|
+| %^{Deliverable 1} | %^{D1 Quality}/10 | %^{D1 Issues} | %^{D1 Acceptance|Yes|No|Conditional} |
+| %^{Deliverable 2} | %^{D2 Quality}/10 | %^{D2 Issues} | %^{D2 Acceptance|Yes|No|Conditional} |
+| %^{Deliverable 3} | %^{D3 Quality}/10 | %^{D3 Issues} | %^{D3 Acceptance|Yes|No|Conditional} |
+
+*** Quality Process Effectiveness
+- **Code Reviews:** %^{Code Review Score}/10
+- **Testing Coverage:** %^{Testing Coverage}%
+- **Bug Detection Rate:** %^{Bug Detection Rate}
+- **Customer-Found Issues:** %^{Customer Issues}
+
+** Technology & Tools Review 🛠️
+*** Most Valuable Tools
+1. **Tool:** %^{Valuable Tool 1}
+   **Usage:** %^{VT1 Usage}
+   **Value Rating:** %^{VT1 Rating}/10
+
+2. **Tool:** %^{Valuable Tool 2}
+   **Usage:** %^{VT2 Usage}
+   **Value Rating:** %^{VT2 Rating}/10
+
+3. **Tool:** %^{Valuable Tool 3}
+   **Usage:** %^{VT3 Usage}
+   **Value Rating:** %^{VT3 Rating}/10
+
+*** Tools That Didn't Work
+- %^{Poor tool 1} - %^{Why it didn't work 1}
+- %^{Poor tool 2} - %^{Why it didn't work 2}
+- %^{Poor tool 3} - %^{Why it didn't work 3}
+
+*** Technical Decisions
+**** Good Technical Decisions
+- %^{Good tech decision 1}
+- %^{Good tech decision 2}
+- %^{Good tech decision 3}
+
+**** Poor Technical Decisions
+- %^{Poor tech decision 1}
+- %^{Poor tech decision 2}
+- %^{Poor tech decision 3}
+
+** Key Learnings & Insights 💡
+*** Project Management Learnings
+1. %^{PM Learning 1}
+2. %^{PM Learning 2}
+3. %^{PM Learning 3}
+
+*** Technical Learnings
+1. %^{Tech Learning 1}
+2. %^{Tech Learning 2}
+3. %^{Tech Learning 3}
+
+*** Team & People Learnings
+1. %^{People Learning 1}
+2. %^{People Learning 2}
+3. %^{People Learning 3}
+
+*** Business & Domain Learnings
+1. %^{Business Learning 1}
+2. %^{Business Learning 2}
+3. %^{Business Learning 3}
+
+** Recommendations for Future Projects 🚀
+*** Process Improvements
+**** Start Doing
+- %^{Start doing 1}
+- %^{Start doing 2}
+- %^{Start doing 3}
+
+**** Stop Doing
+- %^{Stop doing 1}
+- %^{Stop doing 2}
+- %^{Stop doing 3}
+
+**** Continue Doing
+- %^{Continue doing 1}
+- %^{Continue doing 2}
+- %^{Continue doing 3}
+
+*** Best Practices to Adopt
+1. %^{Best practice 1}
+2. %^{Best practice 2}
+3. %^{Best practice 3}
+
+*** Templates & Artifacts to Create
+- %^{Template 1}
+- %^{Template 2}
+- %^{Template 3}
+
+*** Training & Development Needs
+- %^{Training need 1}
+- %^{Training need 2}
+- %^{Training need 3}
+
+** Action Items for Improvement 📋
+*** Immediate Actions (Next Sprint/Month)
+- [ ] %^{Immediate action 1}
+- [ ] %^{Immediate action 2}
+- [ ] %^{Immediate action 3}
+
+*** Short-term Actions (Next Quarter)
+- [ ] %^{Short-term action 1}
+- [ ] %^{Short-term action 2}
+- [ ] %^{Short-term action 3}
+
+*** Long-term Actions (Next 6-12 Months)
+- [ ] %^{Long-term action 1}
+- [ ] %^{Long-term action 2}
+- [ ] %^{Long-term action 3}
+
+** Knowledge Transfer 📚
+*** Documentation Created
+- [ ] %^{Doc 1}
+- [ ] %^{Doc 2}
+- [ ] %^{Doc 3}
+
+*** Key Knowledge Areas
+- %^{Knowledge area 1}
+- %^{Knowledge area 2}
+- %^{Knowledge area 3}
+
+*** Knowledge Sharing Sessions
+- [ ] %^{Session 1}
+- [ ] %^{Session 2}
+- [ ] %^{Session 3}
+
+** Project Metrics Summary 📈
+*** Overall Project Rating
+- **Success Rating:** %^{Overall Success}/10
+- **Team Satisfaction:** %^{Team Satisfaction Overall}/10
+- **Process Effectiveness:** %^{Process Overall}/10
+- **Quality Achievement:** %^{Quality Overall}/10
+- **Stakeholder Satisfaction:** %^{Stakeholder Overall}/10
+
+*** Would We Do This Project Again?
+**Answer:** %^{Do Again|Yes|No|With Changes}
+**Reason:** %^{Do Again Reason}
+
+** Celebration & Recognition 🎉
+*** Team Achievements to Celebrate
+- %^{Achievement 1}
+- %^{Achievement 2}
+- %^{Achievement 3}
+
+*** Individual Recognition
+- **%^{Recognition Person 1}:** %^{Recognition 1}
+- **%^{Recognition Person 2}:** %^{Recognition 2}
+- **%^{Recognition Person 3}:** %^{Recognition 3}
+
+*** Milestones Worth Remembering
+- %^{Memorable milestone 1}
+- %^{Memorable milestone 2}
+- %^{Memorable milestone 3}
+
+---
+*Retrospective conducted: %U*
+*Facilitator: %^{Facilitator}*
+*Participants: %^{Participants}*
+*Duration: %^{Retro Duration} hours*
+*Next Review: %^{Next Review Date}*

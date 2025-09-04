@@ -1,0 +1,21 @@
+* %^{Note Title} %^g
+%U
+
+** Summary
+%^{Brief summary}
+
+** Details
+%?
+
+** Tags: %^{Tags (space-separated)}
+
+** Related
+- %^{Related notes or references}
+
+** Follow-up Actions
+- [ ] %^{Action item 1}
+- [ ] %^{Action item 2}
+
+---
+*Source: %^{Source|Meeting|Book|Article|Conversation|Idea}*
+*Created: %U*

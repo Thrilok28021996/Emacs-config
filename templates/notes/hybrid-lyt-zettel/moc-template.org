@@ -1,0 +1,247 @@
+#+TITLE: MOC - %^{MOC Title}
+#+DATE: %<%Y-%m-%d>
+#+STARTUP: overview
+#+TAGS: MOC map index
+#+FILETAGS: :MOC:map:index:
+#+ID: MOC-%<%Y%m%d%H%M%S>
+#+ROAM_ALIASES: %^{Aliases}
+
+* 🗺️ MOC: %^{MOC Title}
+
+** MOC Overview
+- **MOC Type:** %^{MOC Type|Concept|Domain|Project|Temporal|Spatial|Alphabetical|Fluid}
+- **Scope:** %^{Scope|Broad|Medium|Narrow|Specific}
+- **Development Stage:** %^{Development|Embryonic|Developing|Mature|Comprehensive}
+- **Last Updated:** %U
+- **Curator:** %^{Curator Name}
+
+** Purpose & Intent 🎯
+%^{What is the purpose of this MOC? What organizing principle does it serve?}
+
+** Scope & Boundaries 📏
+*** Included Topics
+- %^{Included topic 1}
+- %^{Included topic 2}  
+- %^{Included topic 3}
+
+*** Excluded Topics
+- %^{Excluded topic 1}
+- %^{Excluded topic 2}
+
+*** Related MOCs
+- [[%^{Related MOC 1}]] - %^{Relationship 1}
+- [[%^{Related MOC 2}]] - %^{Relationship 2}
+
+** Hierarchical Structure 🌳
+
+*** Parent MOCs
+- [[%^{Parent MOC 1}]]
+- [[%^{Parent MOC 2}]]
+
+*** Child MOCs  
+- [[%^{Child MOC 1}]]
+- [[%^{Child MOC 2}]]
+- [[%^{Child MOC 3}]]
+
+** Core Concepts (Tier 1) 🎯
+*The most fundamental ideas in this domain*
+
+*** %^{Core Concept 1}
+- [[%^{Core Note 1.1}]] - %^{Description 1.1}
+- [[%^{Core Note 1.2}]] - %^{Description 1.2}
+- [[%^{Core Note 1.3}]] - %^{Description 1.3}
+
+*** %^{Core Concept 2}
+- [[%^{Core Note 2.1}]] - %^{Description 2.1}
+- [[%^{Core Note 2.2}]] - %^{Description 2.2}
+- [[%^{Core Note 2.3}]] - %^{Description 2.3}
+
+*** %^{Core Concept 3}
+- [[%^{Core Note 3.1}]] - %^{Description 3.1}
+- [[%^{Core Note 3.2}]] - %^{Description 3.2}
+- [[%^{Core Note 3.3}]] - %^{Description 3.3}
+
+** Supporting Ideas (Tier 2) 🔧
+*Ideas that support and elaborate on core concepts*
+
+*** %^{Supporting Category 1}
+- [[%^{Support Note 1.1}]]
+- [[%^{Support Note 1.2}]]
+- [[%^{Support Note 1.3}]]
+
+*** %^{Supporting Category 2}
+- [[%^{Support Note 2.1}]]
+- [[%^{Support Note 2.2}]]
+- [[%^{Support Note 2.3}]]
+
+*** %^{Supporting Category 3}
+- [[%^{Support Note 3.1}]]
+- [[%^{Support Note 3.2}]]
+- [[%^{Support Note 3.3}]]
+
+** Peripheral Connections (Tier 3) 🌐
+*Looser connections and emerging themes*
+
+*** Emerging Themes
+- [[%^{Emerging 1}]] - %^{Theme description 1}
+- [[%^{Emerging 2}]] - %^{Theme description 2}
+- [[%^{Emerging 3}]] - %^{Theme description 3}
+
+*** Cross-Domain Links
+- [[%^{Cross-domain 1}]] - Links to %^{External domain 1}
+- [[%^{Cross-domain 2}]] - Links to %^{External domain 2}
+
+*** Controversial/Debated Ideas
+- [[%^{Controversial 1}]] - %^{Why controversial 1}
+- [[%^{Controversial 2}]] - %^{Why controversial 2}
+
+** Temporal Organization 📅
+*Chronological or developmental progression*
+
+*** Historical Development
+- [[%^{Historical 1}]] (%^{Time period 1})
+- [[%^{Historical 2}]] (%^{Time period 2})
+- [[%^{Historical 3}]] (%^{Time period 3})
+
+*** Current State
+- [[%^{Current 1}]] - %^{Current relevance 1}
+- [[%^{Current 2}]] - %^{Current relevance 2}
+
+*** Future Directions
+- [[%^{Future 1}]] - %^{Future potential 1}
+- [[%^{Future 2}]] - %^{Future potential 2}
+
+** Key Thinkers & Contributors 👥
+*** Foundational Figures
+- [[%^{Founder 1}]] - %^{Contribution 1}
+- [[%^{Founder 2}]] - %^{Contribution 2}
+
+*** Contemporary Voices
+- [[%^{Contemporary 1}]] - %^{Current work 1}
+- [[%^{Contemporary 2}]] - %^{Current work 2}
+
+*** My Influences
+- [[%^{Influence 1}]] - %^{Personal impact 1}
+- [[%^{Influence 2}]] - %^{Personal impact 2}
+
+** Mental Models & Frameworks 🧠
+*** Core Mental Models
+- [[%^{Model 1}]] - %^{Model description 1}
+- [[%^{Model 2}]] - %^{Model description 2}
+- [[%^{Model 3}]] - %^{Model description 3}
+
+*** Decision Frameworks
+- [[%^{Framework 1}]] - %^{When to use 1}
+- [[%^{Framework 2}]] - %^{When to use 2}
+
+*** Thinking Tools
+- [[%^{Tool 1}]] - %^{Tool application 1}
+- [[%^{Tool 2}]] - %^{Tool application 2}
+
+** Questions & Research Directions 🔍
+*** Unanswered Questions
+- %^{Question 1}
+- %^{Question 2}
+- %^{Question 3}
+
+*** Research Gaps
+- %^{Gap 1}
+- %^{Gap 2}
+- %^{Gap 3}
+
+*** Personal Investigations
+- %^{Investigation 1}
+- %^{Investigation 2}
+
+** Practical Applications 🛠️
+*** Real-World Uses
+- %^{Application 1}
+- %^{Application 2}
+- %^{Application 3}
+
+*** Tools & Methods
+- [[%^{Method 1}]] - %^{Method context 1}
+- [[%^{Method 2}]] - %^{Method context 2}
+
+*** Case Studies
+- [[%^{Case 1}]] - %^{Case summary 1}
+- [[%^{Case 2}]] - %^{Case summary 2}
+
+** Resources & References 📚
+*** Essential Reading
+- [[%^{Essential 1}]] - %^{Why essential 1}
+- [[%^{Essential 2}]] - %^{Why essential 2}
+- [[%^{Essential 3}]] - %^{Why essential 3}
+
+*** Recommended Deep Dives
+- [[%^{Deep dive 1}]] - %^{Deep dive focus 1}
+- [[%^{Deep dive 2}]] - %^{Deep dive focus 2}
+
+*** External Resources
+- %^{External resource 1}
+- %^{External resource 2}
+
+** MOC Maintenance 🔧
+*** Review Schedule
+- **Weekly:** Check for new connections
+- **Monthly:** Reorganize structure
+- **Quarterly:** Major revision if needed
+- **Last Major Revision:** %^{Last revision date}
+
+*** Growth Tracking
+- **Note Count:** %^{Current note count}
+- **Connection Density:** %^{Connection assessment|Sparse|Moderate|Dense|Very Dense}
+- **Completeness:** %^{Completeness}%
+
+*** Identified Gaps
+- [ ] %^{Gap 1 to fill}
+- [ ] %^{Gap 2 to fill}
+- [ ] %^{Gap 3 to fill}
+
+** Navigation Aids 🧭
+*** Quick Access Clusters
+- **Fundamentals:** [[%^{Fund 1}]], [[%^{Fund 2}]], [[%^{Fund 3}]]
+- **Advanced:** [[%^{Adv 1}]], [[%^{Adv 2}]], [[%^{Adv 3}]]
+- **Practical:** [[%^{Prac 1}]], [[%^{Prac 2}]], [[%^{Prac 3}]]
+
+*** Entry Points for Beginners
+1. Start with [[%^{Beginner 1}]]
+2. Then explore [[%^{Beginner 2}]]
+3. Finally dive into [[%^{Beginner 3}]]
+
+*** Advanced Exploration Paths
+- **Path A:** %^{Path A sequence}
+- **Path B:** %^{Path B sequence}
+- **Path C:** %^{Path C sequence}
+
+** Personal Perspective 🤔
+*** My Current Understanding
+%^{Your current level of understanding and perspective on this domain}
+
+*** Key Insights Gained
+- %^{Insight 1}
+- %^{Insight 2}
+- %^{Insight 3}
+
+*** Areas for Growth
+- %^{Growth area 1}
+- %^{Growth area 2}
+- %^{Growth area 3}
+
+** Fluid Connections 🌊
+*Connections that don't fit neatly into hierarchical structure*
+
+%?
+
+---
+*MOC Statistics:*
+- *Total Notes: ___*
+- *Connection Density: ___*
+- *Last Updated: %U*
+- *Next Review: %^{Next review date}*
+
+*Usage Notes:*
+- This MOC uses both hierarchical (LYT) and network (Zettelkasten) principles
+- Tier 1-3 structure provides clear navigation
+- Fluid connections capture emergent relationships
+- Regular maintenance ensures continued usefulness

@@ -1,0 +1,102 @@
+#+TITLE: %^{Note Title}
+#+DATE: %<%Y-%m-%d>
+#+STARTUP: overview
+#+TAGS: %^{Tags}
+#+FILETAGS: :atomic:zettel:
+#+ID: %<%Y%m%d%H%M%S>
+#+ROAM_ALIASES: %^{Aliases (comma-separated)}
+
+* %^{Note Title} ⚛️
+
+** Note Metadata
+- **Created:** %U
+- **Last Modified:** %U
+- **Note Type:** %^{Type|Concept|Claim|Evidence|Question|Hypothesis|Method|Example}
+- **Certainty Level:** %^{Certainty|High|Medium|Low|Speculative}
+- **Development Stage:** %^{Stage|Seedling|Budding|Evergreen|Withering}
+- **Source Strength:** %^{Source|Primary|Secondary|Tertiary|Personal Experience}
+
+** Atomic Idea 💡
+%^{What is the single, core idea of this note? Keep it atomic and focused.}
+
+** Context & Background 🌍
+%^{What context is needed to understand this idea? What's the background?}
+
+** Evidence & Support 📊
+*** Primary Evidence
+- %^{Primary evidence 1}
+- %^{Primary evidence 2}
+- %^{Primary evidence 3}
+
+*** Supporting Arguments
+- %^{Supporting argument 1}
+- %^{Supporting argument 2}
+- %^{Supporting argument 3}
+
+*** Counter-Evidence
+- %^{Counter-evidence 1}
+- %^{Counter-evidence 2}
+
+** Elaboration & Development 🔍
+%?
+
+** Connections & Relationships 🕸️
+*** Direct Links (Strong Connections)
+- [[%^{Strong connection 1}]] - %^{Relationship type 1|supports|contradicts|extends|specifies|generalizes}
+- [[%^{Strong connection 2}]] - %^{Relationship type 2|supports|contradicts|extends|specifies|generalizes}
+- [[%^{Strong connection 3}]] - %^{Relationship type 3|supports|contradicts|extends|specifies|generalizes}
+
+*** Weak Connections (Associations)
+- [[%^{Weak connection 1}]] - %^{Association 1}
+- [[%^{Weak connection 2}]] - %^{Association 2}
+
+*** MOC Membership
+- [[%^{MOC 1}]] - %^{MOC relationship 1}
+- [[%^{MOC 2}]] - %^{MOC relationship 2}
+
+*** Hierarchical Relationships
+- **Parent Concept:** [[%^{Parent concept}]]
+- **Child Concepts:** [[%^{Child 1}]], [[%^{Child 2}]]
+- **Sibling Concepts:** [[%^{Sibling 1}]], [[%^{Sibling 2}]]
+
+** Questions & Unknowns ❓
+- %^{Question 1}
+- %^{Question 2}
+- %^{Question 3}
+
+** Implications & Applications 🚀
+*** Theoretical Implications
+- %^{Theoretical implication 1}
+- %^{Theoretical implication 2}
+
+*** Practical Applications
+- %^{Practical application 1}
+- %^{Practical application 2}
+
+*** Future Research Directions
+- %^{Research direction 1}
+- %^{Research direction 2}
+
+** Source Information 📚
+- **Primary Source:** %^{Primary source}
+- **Page/Location:** %^{Page or location}
+- **Citation:** %^{Full citation}
+- **Reliability:** %^{Source reliability|Very High|High|Medium|Low}
+
+** Personal Commentary 🤔
+%^{Your personal thoughts, reactions, and insights about this idea}
+
+** Revision History 📝
+- **%U:** Created note
+- **Next Review:** %^{Next review date}
+
+** Zettelkasten Metadata 🗂️
+- **Zettel ID:** %<%Y%m%d%H%M%S>
+- **Folgezettel:** %^{Folgezettel sequence (if applicable)}
+- **Topic Clusters:** %^{Topic clusters this belongs to}
+- **Keyword Density:** %^{Main keywords|concept|idea|theory|method}
+
+---
+*Note: This is an atomic note - it should contain exactly one idea that can stand alone.*
+*Word Count Target: 100-300 words*
+*Atomic Principle: One idea, one note, one connection at a time*

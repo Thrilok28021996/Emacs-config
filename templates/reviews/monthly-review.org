@@ -1,0 +1,290 @@
+#+TITLE: Monthly Review - %<%B %Y>
+#+DATE: %<%Y-%m-%d>
+#+STARTUP: overview
+#+TAGS: review monthly goals planning
+#+FILETAGS: :review:monthly:
+
+* Monthly Review - %<%B %Y> 📅
+
+** Overview
+- **Month:** %<%B %Y>
+- **Review Date:** %U
+- **Duration:** ___ minutes
+
+* Month in Numbers 📊
+
+** Quantitative Metrics
+| Metric                    | Target | Actual | Variance |
+|---------------------------+--------+--------+----------|
+| Projects Completed       |        |        |          |
+| Books Read               |        |        |          |
+| Exercise Sessions        |        |        |          |
+| Deep Work Hours          |        |        |          |
+| Blog Posts Written       |        |        |          |
+| Courses/Learning Hours   |        |        |          |
+| Network Meetings         |        |        |          |
+
+** Financial Overview
+- **Income:** 
+- **Expenses:** 
+- **Savings Rate:** 
+- **Investment Performance:** 
+
+* Major Accomplishments 🏆
+
+** Professional Wins
+1. 
+2. 
+3. 
+
+** Personal Achievements
+1. 
+2. 
+3. 
+
+** Learning & Growth
+1. 
+2. 
+3. 
+
+** Relationship & Social
+1. 
+2. 
+3. 
+
+* Goals Assessment 🎯
+
+** Goal 1: %^{Goal Title 1}
+- **Target:** 
+- **Actual Progress:** 
+- **Status:** %^{Status|Exceeded|On Track|Behind|Paused|Abandoned}
+- **Key Actions Taken:** 
+- **Obstacles:** 
+- **Lessons:** 
+- **Next Month Strategy:** 
+
+** Goal 2: %^{Goal Title 2}
+- **Target:** 
+- **Actual Progress:** 
+- **Status:** %^{Status|Exceeded|On Track|Behind|Paused|Abandoned}
+- **Key Actions Taken:** 
+- **Obstacles:** 
+- **Lessons:** 
+- **Next Month Strategy:** 
+
+** Goal 3: %^{Goal Title 3}
+- **Target:** 
+- **Actual Progress:** 
+- **Status:** %^{Status|Exceeded|On Track|Behind|Paused|Abandoned}
+- **Key Actions Taken:** 
+- **Obstacles:** 
+- **Lessons:** 
+- **Next Month Strategy:** 
+
+* Areas of Life Review 🌟
+
+** Work & Career (/10: ___)
+- **Highlights:** 
+- **Challenges:** 
+- **Satisfaction Level:** ___/10
+- **Growth Opportunities:** 
+- **Action Items:** 
+
+** Health & Fitness (/10: ___)
+- **Physical Health:** 
+- **Mental Health:** 
+- **Energy Levels:** 
+- **Habits Maintained:** 
+- **Areas for Improvement:** 
+
+** Relationships (/10: ___)
+- **Family:** 
+- **Friends:** 
+- **Professional Network:** 
+- **Quality Time Spent:** 
+- **Relationship Goals:** 
+
+** Personal Development (/10: ___)
+- **Skills Developed:** 
+- **Knowledge Gained:** 
+- **Books/Courses Completed:** 
+- **Reflection & Self-awareness:** 
+- **Growth Areas:** 
+
+** Finance (/10: ___)
+- **Budget Performance:** 
+- **Savings Progress:** 
+- **Investment Returns:** 
+- **Financial Goals Status:** 
+- **Money Mindset:** 
+
+** Recreation & Hobbies (/10: ___)
+- **Activities Enjoyed:** 
+- **New Experiences:** 
+- **Creative Pursuits:** 
+- **Work-Life Balance:** 
+- **Fun & Satisfaction:** 
+
+* Habit Tracking Analysis 📈
+
+** Habits That Stuck
+- 
+- 
+- 
+
+** Habits That Faltered
+- 
+- 
+- 
+
+** New Habits to Implement
+- 
+- 
+- 
+
+** Habit Stack Optimization
+- 
+- 
+- 
+
+* Time & Energy Analysis ⏰
+
+** Time Allocation Review
+| Category           | Planned % | Actual % | Satisfaction |
+|--------------------+-----------+----------+--------------|
+| Deep Work          |           |          |              |
+| Meetings           |           |          |              |
+| Administrative     |           |          |              |
+| Learning           |           |          |              |
+| Exercise           |           |          |              |
+| Family/Personal    |           |          |              |
+| Rest/Recovery      |           |          |              |
+
+** Energy Management
+- **Peak Energy Times:** 
+- **Energy Drains:** 
+- **Energy Sources:** 
+- **Recovery Strategies:** 
+
+* Challenges & Obstacles 🚧
+
+** Major Challenges Faced
+1. 
+2. 
+3. 
+
+** How I Overcame Them
+1. 
+2. 
+3. 
+
+** Unresolved Issues
+- 
+- 
+- 
+
+** Support Needed
+- 
+- 
+- 
+
+* Key Learnings & Insights 💡
+
+** Professional Insights
+- 
+- 
+- 
+
+** Personal Revelations
+- 
+- 
+- 
+
+** Process Improvements
+- 
+- 
+- 
+
+** Mindset Shifts
+- 
+- 
+- 
+
+* Gratitude & Appreciation 🙏
+
+** People Who Made a Difference
+- 
+- 
+- 
+
+** Experiences I'm Grateful For
+- 
+- 
+- 
+
+** Personal Qualities I Appreciate
+- 
+- 
+- 
+
+* Next Month's Focus 🎯
+
+** Theme for Next Month
+**Overall Theme:** 
+
+** Top 3 Priorities
+1. 
+2. 
+3. 
+
+** New Goals to Set
+- 
+- 
+- 
+
+** Experiments to Try
+- 
+- 
+- 
+
+** Skills to Develop
+- 
+- 
+- 
+
+** Relationships to Nurture
+- 
+- 
+- 
+
+* Planning & Preparation 📋
+
+** Systems to Implement
+- 
+- 
+- 
+
+** Resources Needed
+- 
+- 
+- 
+
+** Calendar Commitments
+- 
+- 
+- 
+
+** Potential Obstacles & Mitigation
+- **Obstacle:** ___ | **Mitigation:** ___
+- **Obstacle:** ___ | **Mitigation:** ___
+- **Obstacle:** ___ | **Mitigation:** ___
+
+* Review Schedule 📅
+- **Next Monthly Review:** %^{Next Monthly Review Date}
+- **Quarterly Review Due:** %^{Quarterly Review Date}
+- **Annual Review Due:** %^{Annual Review Date}
+
+---
+*Review completed: %U*
+*Overall Month Rating: ___/10*
+*Duration: ___ minutes*

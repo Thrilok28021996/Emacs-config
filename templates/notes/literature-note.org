@@ -1,0 +1,249 @@
+#+TITLE: Literature Note - %^{Source Title}
+#+DATE: %<%Y-%m-%d>
+#+STARTUP: overview
+#+TAGS: literature note reading
+#+FILETAGS: :literature:note:reading:
+#+ROAM_REFS: %^{Reference URL or Citation}
+
+* Literature Note: %^{Source Title} 📚
+
+** Source Information
+- **Title:** %^{Full Title}
+- **Author(s):** %^{Author(s)}
+- **Publication:** %^{Publication/Journal}
+- **Date:** %^{Publication Date}
+- **Type:** %^{Type|Book|Article|Paper|Report|Blog Post|Video|Podcast}
+- **URL/DOI:** %^{URL or DOI}
+- **ISBN/ISSN:** %^{ISBN or ISSN}
+
+** Reading Information
+- **Date Read:** %U
+- **Reading Status:** %^{Status|To Read|Reading|Completed|Abandoned}
+- **Reading Time:** %^{Reading Time}
+- **Format:** %^{Format|Physical|Digital|Audio|Video}
+- **Rating:** %^{Rating|★★★★★|★★★★☆|★★★☆☆|★★☆☆☆|★☆☆☆☆}
+
+** Summary 📋
+### Main Thesis/Argument
+%^{What is the main thesis or central argument?}
+
+### Key Points
+1. %^{Key point 1}
+2. %^{Key point 2}
+3. %^{Key point 3}
+4. %^{Key point 4}
+5. %^{Key point 5}
+
+### Structure Overview
+%^{How is the content organized? What are the main sections?}
+
+** Detailed Notes by Section 📖
+
+### Section 1: %^{Section 1 Title}
+**Page/Location:** %^{Section 1 Pages}
+**Key Ideas:**
+- %^{Section 1 Idea 1}
+- %^{Section 1 Idea 2}
+- %^{Section 1 Idea 3}
+
+**Important Quotes:**
+> %^{Section 1 Quote 1}
+> 
+> *(Page %^{S1Q1 Page})*
+
+**Notes:**
+%^{Section 1 Notes}
+
+### Section 2: %^{Section 2 Title}
+**Page/Location:** %^{Section 2 Pages}
+**Key Ideas:**
+- %^{Section 2 Idea 1}
+- %^{Section 2 Idea 2}
+- %^{Section 2 Idea 3}
+
+**Important Quotes:**
+> %^{Section 2 Quote 1}
+> 
+> *(Page %^{S2Q1 Page})*
+
+**Notes:**
+%^{Section 2 Notes}
+
+### Section 3: %^{Section 3 Title}
+**Page/Location:** %^{Section 3 Pages}
+**Key Ideas:**
+- %^{Section 3 Idea 1}
+- %^{Section 3 Idea 2}
+- %^{Section 3 Idea 3}
+
+**Important Quotes:**
+> %^{Section 3 Quote 1}
+> 
+> *(Page %^{S3Q1 Page})*
+
+**Notes:**
+%^{Section 3 Notes}
+
+** Critical Analysis 🧐
+
+### Strengths
+- %^{Strength 1}
+- %^{Strength 2}
+- %^{Strength 3}
+
+### Weaknesses
+- %^{Weakness 1}
+- %^{Weakness 2}
+- %^{Weakness 3}
+
+### Methodology (if applicable)
+- **Research Method:** %^{Research Method}
+- **Sample Size:** %^{Sample Size}
+- **Data Collection:** %^{Data Collection Method}
+- **Analysis Approach:** %^{Analysis Approach}
+- **Limitations:** %^{Limitations}
+
+### Evidence Quality
+- **Primary Sources:** %^{Primary Sources Quality}
+- **Secondary Sources:** %^{Secondary Sources Quality}
+- **Data Reliability:** %^{Data Reliability}
+- **Bias Assessment:** %^{Bias Assessment}
+
+** Key Concepts & Definitions 📚
+- **%^{Concept 1}:** %^{Definition 1}
+- **%^{Concept 2}:** %^{Definition 2}
+- **%^{Concept 3}:** %^{Definition 3}
+- **%^{Concept 4}:** %^{Definition 4}
+
+** Significant Quotes 💬
+### Quote 1
+> %^{Significant Quote 1}
+> 
+> *(Page %^{SQ1 Page})*
+> 
+> **Context:** %^{SQ1 Context}
+> **Significance:** %^{SQ1 Significance}
+
+### Quote 2
+> %^{Significant Quote 2}
+> 
+> *(Page %^{SQ2 Page})*
+> 
+> **Context:** %^{SQ2 Context}
+> **Significance:** %^{SQ2 Significance}
+
+### Quote 3
+> %^{Significant Quote 3}
+> 
+> *(Page %^{SQ3 Page})*
+> 
+> **Context:** %^{SQ3 Context}
+> **Significance:** %^{SQ3 Significance}
+
+** Personal Reflection 🤔
+### Initial Thoughts
+%^{What were your initial thoughts before reading?}
+
+### Surprising Elements
+- %^{Surprise 1}
+- %^{Surprise 2}
+- %^{Surprise 3}
+
+### Challenging Ideas
+- %^{Challenge 1}
+- %^{Challenge 2}
+- %^{Challenge 3}
+
+### Agreement/Disagreement
+**I agree with:**
+- %^{Agreement 1}
+- %^{Agreement 2}
+
+**I disagree with:**
+- %^{Disagreement 1}
+- %^{Disagreement 2}
+
+**I'm uncertain about:**
+- %^{Uncertainty 1}
+- %^{Uncertainty 2}
+
+### Personal Relevance
+%^{How does this relate to your work, interests, or life?}
+
+** Connections & Context 🔗
+### Related Works
+- [[%^{Related Work 1}]] - %^{Relation 1}
+- [[%^{Related Work 2}]] - %^{Relation 2}
+- [[%^{Related Work 3}]] - %^{Relation 3}
+
+### Contrasting Views
+- [[%^{Contrasting Work 1}]] - %^{Contrast 1}
+- [[%^{Contrasting Work 2}]] - %^{Contrast 2}
+
+### Historical Context
+%^{What is the historical context of this work?}
+
+### Contemporary Relevance
+%^{How is this relevant to current issues or debates?}
+
+** Applications & Implications 🚀
+### Practical Applications
+- %^{Application 1}
+- %^{Application 2}
+- %^{Application 3}
+
+### Research Implications
+- %^{Research Implication 1}
+- %^{Research Implication 2}
+- %^{Research Implication 3}
+
+### Policy Implications
+- %^{Policy Implication 1}
+- %^{Policy Implication 2}
+
+### Future Directions
+- %^{Future Direction 1}
+- %^{Future Direction 2}
+- %^{Future Direction 3}
+
+** Questions & Further Research 🔍
+### Questions Raised
+- %^{Question 1}
+- %^{Question 2}
+- %^{Question 3}
+- %^{Question 4}
+
+### Research Gaps Identified
+- %^{Gap 1}
+- %^{Gap 2}
+- %^{Gap 3}
+
+### Follow-up Reading
+- [ ] %^{Follow-up 1}
+- [ ] %^{Follow-up 2}
+- [ ] %^{Follow-up 3}
+
+** Action Items 📋
+- [ ] Create permanent notes for key concepts
+- [ ] Research %^{Research Topic}
+- [ ] Connect with %^{Connection Topic}
+- [ ] Discuss with %^{Discussion Partner}
+- [ ] Apply concept of %^{Application Concept}
+
+** Citation & References 📎
+### Full Citation
+%^{Full APA/MLA Citation}
+
+### Referenced Works
+- %^{Reference 1}
+- %^{Reference 2}
+- %^{Reference 3}
+
+### Citing This Work
+For future reference: %^{Personal Citation Note}
+
+---
+*Literature note created: %U*
+*Reading completed: %^{Reading Completion Date}*
+*Review scheduled: %^{Review Date}*
+*Total reading time: %^{Total Reading Time}*

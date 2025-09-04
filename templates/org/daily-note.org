@@ -1,0 +1,91 @@
+#+TITLE: Daily Note - %<%A, %B %d, %Y>
+#+DATE: %<%Y-%m-%d>
+#+STARTUP: overview
+#+TAGS: daily personal work health
+#+FILETAGS: :daily:
+
+* Today's Focus 🎯
+** Top 3 Priorities
+1. [ ] 
+2. [ ] 
+3. [ ] 
+
+** Secondary Tasks
+- [ ] 
+- [ ] 
+- [ ] 
+
+* Schedule 📅
+| Time  | Activity     | Notes |
+|-------+--------------+-------|
+| 09:00 |              |       |
+| 10:00 |              |       |
+| 11:00 |              |       |
+| 12:00 | Lunch        |       |
+| 13:00 |              |       |
+| 14:00 |              |       |
+| 15:00 |              |       |
+| 16:00 |              |       |
+| 17:00 |              |       |
+
+* Meetings 🤝
+** 
+   - **Time:** 
+   - **Attendees:** 
+   - **Agenda:** 
+   - **Notes:** 
+
+* Work Progress 💼
+** Current Projects
+*** Project Name
+    - **Status:** 
+    - **Next Action:** 
+    - **Blocker:** 
+
+* Learning & Development 📚
+** Today I Learned
+- 
+
+** Resources to Explore
+- [ ] 
+
+* Health & Wellness 🌱
+** Physical
+- [ ] Exercise/Movement
+- [ ] Hydration (8 glasses)
+- [ ] Nutrition
+
+** Mental
+- [ ] Meditation/Mindfulness
+- [ ] Reading
+- [ ] Reflection
+
+* Random Notes 📝
+- 
+
+* Tomorrow's Preparation 🚀
+** Tomorrow's Top 3
+1. 
+2. 
+3. 
+
+** Items to Follow Up
+- [ ] 
+
+* Reflection 🤔
+** What Went Well Today?
+- 
+
+** What Could Be Improved?
+- 
+
+** Gratitude (3 things)
+1. 
+2. 
+3. 
+
+** Energy Level: /10
+** Mood: 
+
+---
+*Created: %U*
