@@ -20,16 +20,14 @@
 (defun my/smart-quit ()
   "Smart quit that saves automatically or prompts."
   (interactive)
-  (if nil  ; Removed dashboard check
-      nil
-    ;; Otherwise, handle file saving
-    (if (and (buffer-modified-p) (buffer-file-name))
+  ;; Handle file saving
+  (if (and (buffer-modified-p) (buffer-file-name))
         (if (y-or-n-p "Save buffer and quit? ")
             (progn (save-buffer) (kill-emacs))
           (if (y-or-n-p "Quit without saving? ")
               (kill-emacs)
             (message "Quit cancelled")))
-      (kill-emacs))))
+    (kill-emacs)))
 
 ;; --- Evil Mode (Vim Emulation) ---
 (use-package evil
@@ -123,8 +121,7 @@
     "f D" 'delete-file
     "f R" 'rename-file
     "f c" 'copy-file
-    "f y" 'my/copy-file-path
-    "f n" 'my/copy-file-name
+    ;; File utilities integrated with modern completion
     "f F" 'consult-find
     "f L" 'consult-locate
     "f j" 'dired-jump
@@ -180,7 +177,11 @@
     "t v" 'visual-line-mode
     "t V" 'visual-fill-column-mode
     "t H" 'hl-todo-mode
-    
+    "t z" 'zoom-mode
+    "t M" 'minimap-mode
+    "t d" 'dashboard-open
+    "t g" 'git-gutter-mode
+
     ;; Project operations
     "p f" 'consult-find
     "p s" 'consult-ripgrep
@@ -314,7 +315,11 @@
     "n g" 'org-roam-graph
     "n j" 'org-journal-new-entry
     "n n" 'org-capture
-    
+    "n l" 'org-cliplink
+    "n d" 'org-download-screenshot
+    "n D" 'org-download-yank
+    "n s" 'org-super-agenda-mode
+
     ;; Markdown operations
     "M m" 'markdown-mode
     "M p" 'markdown-preview
@@ -342,35 +347,54 @@
     "R o" 'open-rectangle
     "R c" 'clear-rectangle
     "R s" 'string-rectangle
-    
-    
+
+    ;; Multiple cursors
+    "m n" 'mc/mark-next-like-this
+    "m p" 'mc/mark-previous-like-this
+    "m a" 'mc/mark-all-like-this
+    "m u" 'mc/unmark-next-like-this
+    "m U" 'mc/unmark-previous-like-this
+    "m s" 'mc/skip-to-next-like-this
+    "m S" 'mc/skip-to-previous-like-this
+
+    ;; Snippets
+    "i s" 'yas-insert-snippet
+    "i n" 'yas-new-snippet
+    "i v" 'yas-visit-snippet-file
+
+    ;; Workspace management
+    "TAB TAB" 'persp-switch
+    "TAB n" 'persp-next
+    "TAB p" 'persp-prev
+    "TAB c" 'persp-kill
+    "TAB r" 'persp-rename
+
+    ;; Git operations (enhanced)
+    "g g" 'git-gutter:next-hunk
+    "g G" 'git-gutter:previous-hunk
+    "g r" 'git-gutter:revert-hunk
+    "g S" 'git-gutter:stage-hunk
+    "g d" 'git-gutter:popup-hunk
+
+
     ;; Help and documentation
     "h f" 'describe-function
     "h V" 'describe-variable
     "h k" 'describe-key
     "h m" 'describe-mode
-    "h P" 'my/monitor-performance-continuously
     "h g" 'garbage-collect
     "h M" 'memory-usage
     "h b" 'describe-bindings
     "h a" 'apropos
     "h i" 'info
     "h h" 'helpful-at-point
-    "h s" 'my/show-startup-history
-    "h e" 'my/show-error-report
-    "h x" 'my/reinstall-failed-packages
-    "h v" 'my/validate-critical-packages
-    "h r" 'my/show-resource-report
-    "h w" 'my/optimize-for-low-memory
-    "h n" 'my/check-network-connectivity
-    "h z" 'my/show-security-report
-    "h o" 'my/toggle-offline-mode
-    "h t" 'my/test-configuration
-    
-    ;; Backup management
-    "U c" 'my/create-config-backup
-    "U r" 'my/restore-from-backup
-    "U l" 'my/list-available-backups
+
+    ;; Available diagnostic functions
+    "h D" 'my/validate-modern-config    ; Validation from init.el
+    "h e" 'my/show-error-summary        ; Error summary from robustness-enhancements.el
+    "h s" 'my/show-startup-errors       ; Startup errors from init.el
+    "h w" 'my/optimize-for-low-memory   ; Memory optimization from utilities.el
+    "h r" 'my/recover-from-errors       ; Error recovery from robustness-enhancements.el
     
     ;; Quick utilities
     "R" 'revert-buffer-quick
@@ -384,6 +408,11 @@
     "a l" 'align-regexp
     "a r" 'align-region
     "a c" 'align-current
+    "a e" 'er/expand-region
+    "a i" 'aggressive-indent-mode
+    "a s" 'highlight-symbol-at-point
+    "a n" 'highlight-symbol-next
+    "a p" 'highlight-symbol-prev
     
     ;; Registers and macros
     "M" 'call-last-kbd-macro

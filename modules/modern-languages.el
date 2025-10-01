@@ -261,11 +261,129 @@
      (t
       (message "Tree-sitter language installation check completed - no new grammars needed!")))))
 
-;; Auto-install tree-sitter grammars on first use (disabled to prevent errors)
+;; --- Snippet System ---
+
+;; YASnippet: Template system for code snippets
+(use-package yasnippet
+  :straight t
+  :defer my/defer-medium
+  :hook (prog-mode . yas-minor-mode)
+  :config
+  (yas-global-mode 1)
+
+  ;; Load common snippets
+  (use-package yasnippet-snippets
+    :straight t
+    :defer t)
+
+  ;; Integrate with completion
+  (add-hook 'yas-minor-mode-hook
+            (lambda ()
+              (setq yas-buffer-local-condition
+                    '(not (memq this-command '(corfu-insert)))))))
+
+;; --- Multiple Cursors ---
+
+;; Multiple cursors for simultaneous editing
+(use-package multiple-cursors
+  :straight t
+  :defer my/defer-slow
+  :commands (mc/mark-next-like-this mc/mark-previous-like-this mc/mark-all-like-this)
+  :config
+  (setq mc/always-run-for-all t))
+
+;; --- Git Integration Enhancement ---
+
+;; Git gutter for line-by-line git status
+(use-package git-gutter
+  :straight t
+  :defer my/defer-medium
+  :hook (prog-mode . git-gutter-mode)
+  :config
+  (setq git-gutter:update-interval 2)
+  (setq git-gutter:modified-sign "~")
+  (setq git-gutter:added-sign "+")
+  (setq git-gutter:deleted-sign "-")
+
+  ;; Custom faces for git gutter
+  (custom-set-faces
+   '(git-gutter:modified ((t (:foreground "#e5c07b" :background nil))))
+   '(git-gutter:added    ((t (:foreground "#98c379" :background nil))))
+   '(git-gutter:deleted  ((t (:foreground "#e06c75" :background nil)))))
+
+  ;; Enable in all modes where it makes sense
+  (global-git-gutter-mode +1))
+
+;; --- Better Terminal Integration ---
+
+;; Vterm: Better terminal emulator (optional, requires compilation)
+;; Commented out by default as it requires external compilation
+;; (use-package vterm
+;;   :straight t
+;;   :defer t
+;;   :commands vterm
+;;   :config
+;;   (setq vterm-max-scrollback 10000))
+
+;; --- Workspace Management ---
+
+;; Perspective: Workspace management
+(use-package perspective
+  :straight t
+  :defer my/defer-slow
+  :commands (persp-switch persp-kill persp-rename)
+  :init
+  (setq persp-mode-prefix-key (kbd "C-c p"))
+  :config
+  (persp-mode 1)
+  (setq persp-auto-save-fname (expand-file-name "perspectives" user-emacs-directory))
+  (add-hook 'kill-emacs-hook #'persp-state-save))
+
+;; --- Additional Development Tools ---
+
+;; Expand region for intelligent selection
+(use-package expand-region
+  :straight t
+  :defer my/defer-medium
+  :commands er/expand-region
+  :config
+  (setq expand-region-contract-fast-key "z")
+  (setq expand-region-reset-fast-key "r"))
+
+;; Aggressive indent for automatic indentation
+(use-package aggressive-indent
+  :straight t
+  :defer my/defer-medium
+  :hook ((emacs-lisp-mode . aggressive-indent-mode)
+         (lisp-mode . aggressive-indent-mode)
+         (scheme-mode . aggressive-indent-mode))
+  :config
+  (add-to-list 'aggressive-indent-excluded-modes 'html-mode))
+
+;; Rainbow mode moved to enhanced-colors.el to avoid duplication
+
+;; Highlight symbol at point
+(use-package highlight-symbol
+  :straight t
+  :defer my/defer-medium
+  :hook (prog-mode . highlight-symbol-mode)
+  :config
+  (setq highlight-symbol-idle-delay 0.3)
+  (setq highlight-symbol-on-navigation-p t))
+
+;; Better diff highlighting
+(use-package diff-hl
+  :straight t
+  :defer my/defer-medium
+  :hook ((prog-mode . diff-hl-mode)
+         (dired-mode . diff-hl-dired-mode))
+  :config
+  (diff-hl-flydiff-mode 1)
+  (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
+  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
+
+;; Auto-install tree-sitter grammars helper (disabled to prevent errors)
 ;; You can manually run M-x my/install-tree-sitter-languages if needed
-;; (add-hook 'emacs-startup-hook
-;;           (lambda ()
-;;             (run-with-idle-timer 2 nil #'my/install-tree-sitter-languages)))
 
 (provide 'modern-languages)
 ;;; modern-languages.el ends here

@@ -395,5 +395,80 @@
             (rename-file html-file (concat output-dir html-file) t)
             (message "Exported to %s%s" output-dir html-file)))))))
 
+;; --- Additional Org Productivity Plugins ---
+
+;; Org Super Agenda for better agenda organization
+(use-package org-super-agenda
+  :straight t
+  :defer 5
+  :after org-agenda
+  :config
+  (org-super-agenda-mode 1)
+  (setq org-super-agenda-groups
+        '((:name "Today"
+           :time-grid t
+           :scheduled today)
+          (:name "Important"
+           :priority "A")
+          (:name "Projects"
+           :category "project")
+          (:name "Work"
+           :category "work")
+          (:name "Personal"
+           :category "personal")
+          (:name "Waiting"
+           :todo "WAITING")
+          (:auto-category t))))
+
+;; Org Download for handling images and files
+(use-package org-download
+  :straight t
+  :defer 5
+  :after org
+  :config
+  (setq org-download-method 'directory)
+  (setq org-download-image-dir "./images/")
+  (setq org-download-heading-lvl nil)
+  (setq org-download-timestamp "_%Y%m%d_%H%M%S")
+  ;; Drag and drop images into org-mode
+  (add-hook 'dired-mode-hook 'org-download-enable))
+
+;; Org Cliplink for easy link insertion
+(use-package org-cliplink
+  :straight t
+  :defer 5
+  :after org
+  :commands org-cliplink)
+
+;; Better org-mode tables
+(use-package org-table
+  :straight (:type built-in)
+  :defer t
+  :after org
+  :config
+  (setq org-table-automatic-realign t)
+  (setq org-table-tab-recognizes-table.el t))
+
+;; Org Tempo for structure templates (< s TAB, etc.)
+(use-package org-tempo
+  :straight (:type built-in)
+  :defer t
+  :after org
+  :config
+  ;; Add more structure templates
+  (add-to-list 'org-structure-template-alist '("sh" . "src shell"))
+  (add-to-list 'org-structure-template-alist '("py" . "src python"))
+  (add-to-list 'org-structure-template-alist '("js" . "src javascript"))
+  (add-to-list 'org-structure-template-alist '("el" . "src elisp"))
+  (add-to-list 'org-structure-template-alist '("json" . "src json")))
+
+;; Org Archive for better archiving
+(use-package org-archive
+  :straight (:type built-in)
+  :defer t
+  :after org
+  :config
+  (setq org-archive-location "archive/%s_archive::"))
+
 (provide 'org-config)
 ;;; org-config.el ends here

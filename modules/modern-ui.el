@@ -67,28 +67,8 @@
   (setq mood-line-show-encoding-information t)
   (setq mood-line-show-cursor-point t))
 
-;; Alternative: Keep doom-modeline but optimize it
-;; (use-package doom-modeline
-;;   :straight t
-;;   :defer my/defer-fast
-;;   :hook (after-init . doom-modeline-mode)
-;;   :config
-;;   ;; Optimize doom-modeline for better performance
-;;   (setq doom-modeline-height 22)
-;;   (setq doom-modeline-bar-width 3)
-;;   (setq doom-modeline-buffer-file-name-style 'truncate-from-project)
-;;   (setq doom-modeline-icon t)
-;;   (setq doom-modeline-major-mode-icon t)
-;;   (setq doom-modeline-minor-modes nil)
-;;   (setq doom-modeline-enable-word-count nil)
-;;   (setq doom-modeline-continuous-word-count-modes nil)
-;;   (setq doom-modeline-github nil)
-;;   (setq doom-modeline-mu4e nil)
-;;   (setq doom-modeline-gnus nil)
-;;   (setq doom-modeline-irc nil)
-;;   (setq doom-modeline-persp-name nil)
-;;   (setq doom-modeline-workspace-name nil)
-;;   (setq doom-modeline-env-version nil))
+;; Note: Using mood-line instead of doom-modeline for better performance
+;; doom-modeline can be enabled by uncommenting and customizing above
 
 ;; --- Better Popup Management ---
 
@@ -104,7 +84,7 @@
         `(,my/buffer-messages
           "Output\\*$"
           ,my/buffer-async-shell
-          ,my/buffer-compile-log
+          ,my/buffer-compilation
           ,my/buffer-completions
           ,my/buffer-warnings
           ,my/buffer-help
@@ -134,24 +114,22 @@
         doom-themes-padded-modeline t)
   (load-theme 'doom-one t)
   (doom-themes-visual-bell-config)
-  (doom-themes-org-config)
-  
-  ;; Manual theme toggle function (automatic switching handled below)
-  (defun my/toggle-theme ()
-    "Manually toggle between doom-one and doom-one-light."
-    (interactive)
-    (if (eq (car custom-enabled-themes) 'doom-one)
-        (progn
-          (disable-theme 'doom-one)
-          (load-theme 'doom-one-light t)
-          ;; Silent theme switch
-          )
-      (progn
-        (disable-theme 'doom-one-light)
-        (load-theme 'doom-one t)
-        ;; Silent theme switch
-        ))))
+  (doom-themes-org-config))
 
+
+;; Manual theme toggle function
+(defun my/toggle-theme ()
+  "Manually toggle between doom-one and doom-one-light."
+  (interactive)
+  (if (eq (car custom-enabled-themes) 'doom-one)
+      (progn
+        (disable-theme 'doom-one)
+        (load-theme 'doom-one-light t)
+        (message "Switched to light theme"))
+    (progn
+      (disable-theme 'doom-one-light)
+      (load-theme 'doom-one t)
+      (message "Switched to dark theme"))))
 
 ;; --- Better Window and Buffer Management ---
 
@@ -215,11 +193,8 @@
   (setq whitespace-style '(face trailing tabs empty))
   (setq whitespace-line-column 120))
 
-;; --- Enhanced Org Mode Visuals ---
-
+;; --- Frame and Window Styling ---
 ;; Note: org-modern is configured in config/org-config.el to avoid dependency issues
-
-;; --- Better Frame and Window Styling ---
 
 ;; Frame and window appearance
 (when (display-graphic-p)
@@ -254,19 +229,15 @@
               ;; Set variable-pitch font for better text reading
               (set-face-attribute 'variable-pitch nil
                                   :family "Fira Code"
-                                  :height 160)
-              ;; Silent font setup
-              )
+                                  :height 160))
           (progn
             ;; Fallback to Monaco on macOS if Fira Code not available
             (set-face-attribute 'default nil
                                 :family "Monaco"
                                 :height 160)
             (set-face-attribute 'variable-pitch nil
-                                :family "Monaco" 
-                                :height 160)
-            ;; Silent font fallback
-            )))
+                                :family "Monaco"
+                                :height 160))))
     (error
      (message "❌ Font configuration error: %s" (error-message-string err)))))
 
@@ -308,9 +279,8 @@
 (setq completion-show-help nil)
 (setq completions-detailed t)
 
-;; --- UI keybindings are configured in evil-config.el ---
-
 ;; --- Performance Optimizations for UI ---
+;; Note: UI keybindings are configured in evil-config.el
 
 ;; Optimize redisplay
 (setq redisplay-dont-pause t)
@@ -330,8 +300,6 @@
 (defun my/setup-modern-ui ()
   "Set up modern UI enhancements."
   (interactive)
-  ;; Silent UI setup
-  
   ;; Enable useful modes
   (when (fboundp 'pixel-scroll-precision-mode)
     (pixel-scroll-precision-mode 1))
@@ -342,10 +310,54 @@
   (setq switch-to-buffer-obey-display-actions t)
   (setq display-buffer-alist
         `((,my/buffer-help display-buffer-reuse-window)
-          (,my/buffer-completions display-buffer-below-selected)))
-  
-  ;; Silent UI complete
-  )
+          (,my/buffer-completions display-buffer-below-selected))))
+
+;; --- Additional Productivity Enhancements ---
+
+;; Which-key integration with icons
+(use-package which-key-posframe
+  :straight t
+  :defer my/defer-slow
+  :after which-key
+  :config
+  (which-key-posframe-mode 1)
+  (setq which-key-posframe-poshandler 'posframe-poshandler-frame-center))
+
+;; Zoom for better presentations/reading
+(use-package zoom
+  :straight t
+  :defer my/defer-slow
+  :commands zoom-mode
+  :config
+  (setq zoom-size '(0.618 . 0.618))
+  (setq zoom-ignored-major-modes '(dired-mode markdown-mode)))
+
+;; Minimap for code overview
+(use-package minimap
+  :straight t
+  :defer my/defer-slow
+  :commands minimap-mode
+  :config
+  (setq minimap-window-location 'right)
+  (setq minimap-update-delay 0.2)
+  (setq minimap-minimum-width 20))
+
+;; Dashboard for startup
+(use-package dashboard
+  :straight t
+  :defer my/defer-fast
+  :config
+  (dashboard-setup-startup-hook)
+  (setq dashboard-startup-banner 'logo)
+  (setq dashboard-center-content t)
+  (setq dashboard-items '((recents  . 5)
+                         (projects . 5)
+                         (bookmarks . 3)
+                         (agenda . 5)))
+  (setq dashboard-set-heading-icons t)
+  (setq dashboard-set-file-icons t)
+  (setq dashboard-banner-logo-title "Welcome to Emacs!")
+  (setq dashboard-footer-messages '("Happy Coding!")))
 
 ;; Apply UI setup
 (add-hook 'emacs-startup-hook #'my/setup-modern-ui)

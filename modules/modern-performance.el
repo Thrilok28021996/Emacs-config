@@ -27,13 +27,12 @@
   (let ((native-dir (expand-file-name "eln-cache" user-emacs-directory)))
     (add-to-list 'native-comp-eln-load-path native-dir))
   
-  ;; Silent native compilation setup
-  )
+  (message "✅ Native compilation enabled"))
 
 ;; --- Advanced Garbage Collection Tuning ---
 
-(defvar my/gc-cons-threshold-normal (* 20 1024 1024)
-  "Normal GC threshold for interactive use (20MB).")
+(defvar my/gc-cons-threshold-normal (* 16 1024 1024)
+  "Normal GC threshold for interactive use (16MB).")
 
 (defvar my/gc-cons-threshold-high (* 100 1024 1024)
   "High GC threshold for heavy operations (100MB).")
@@ -50,7 +49,6 @@
         gc-cons-percentage my/gc-cons-percentage-high)
   (when (fboundp 'gcmh-mode)
     (gcmh-mode -1))  ; Disable GCMH if present during startup
-  ;; Silent GC optimization
   )
 
 (defun my/gc-restore-normal ()
@@ -60,7 +58,6 @@
   (when (fboundp 'gcmh-mode)
     (gcmh-mode 1))  ; Re-enable GCMH after startup
   (run-with-idle-timer 2 nil #'garbage-collect)  ; Clean up after startup
-  ;; Silent GC restoration
   )
 
 (defun my/gc-temporarily-increase ()
@@ -82,9 +79,7 @@
   (pixel-scroll-precision-mode 1)
   (setq pixel-scroll-precision-large-scroll-height 40.0)
   (setq pixel-scroll-precision-interpolation-factor 30.0)
-  (setq pixel-scroll-precision-use-momentum t)
-  ;; Silent pixel scrolling setup
-  )
+  (setq pixel-scroll-precision-use-momentum t))
 
 ;; Enhanced scrolling settings with error handling
 (condition-case err
@@ -151,20 +146,13 @@
 
 ;; --- Advanced Startup Optimizations ---
 
-(defun my/defer-garbage-collection ()
-  "Defer garbage collection during startup with reasonable limits."
-  (setq gc-cons-threshold (* 100 1024 1024)))  ; 100MB instead of max value
-
-(defun my/restore-garbage-collection ()
-  "Restore garbage collection after startup."
-  (run-with-idle-timer 2 nil
-                      (lambda ()
-                        (setq gc-cons-threshold my/gc-cons-threshold-normal)
-                        (garbage-collect))))
+;; GC optimizations are handled by the existing functions above
+;; my/gc-optimize-for-startup is called in init.el
+;; my/gc-restore-normal is hooked to emacs-startup-hook
 
 ;; Apply startup optimizations
-(my/defer-garbage-collection)
-(add-hook 'emacs-startup-hook #'my/restore-garbage-collection)
+(my/gc-optimize-for-startup)
+(add-hook 'emacs-startup-hook #'my/gc-restore-normal)
 
 ;; --- Enhanced File Handling ---
 
@@ -203,61 +191,27 @@
   (error
    (message "⚠️ Some modern feature initialization failed: %s" (error-message-string err))))
 
-;; --- Performance Statistics Collection ---
 
-(defvar my/performance-stats-history '()
-  "History of performance statistics.")
+;; --- Simplified GC Monitoring ---
 
-(defvar my/performance-monitoring-enabled t
-  "Whether performance monitoring is active.")
-
-(defun my/collect-performance-stats ()
-  "Collect and store performance statistics with error handling."
-  (when my/performance-monitoring-enabled
-    (condition-case err
-        (let ((stats (list
-                      :timestamp (current-time)
-                      :gc-count gcs-done
-                      :gc-elapsed gc-elapsed
-                      :memory-usage (length (garbage-collect))  ; Just get length for efficiency
-                      :uptime (if (boundp 'emacs-start-time)
-                                 (float-time (time-subtract (current-time) emacs-start-time))
-                               0)
-                      :buffer-count (length (buffer-list))
-                      :window-count (length (window-list)))))
-          ;; Keep only last 50 entries for memory efficiency
-          (setq my/performance-stats-history 
-                (cons stats (seq-take my/performance-stats-history 49)))
-          stats)
-      (error
-       (message "⚠️ Performance stats collection failed: %s" (error-message-string err))
-       nil))))
-
-(defun my/show-performance-stats ()
-  "Show collected performance statistics."
+(defun my/handle-excessive-gc ()
+  "Handle excessive garbage collection by optimizing settings."
   (interactive)
-  (if my/performance-stats-history
-      (let ((latest (car my/performance-stats-history)))
-        (message "Performance: GC:%d(%.2fs) Uptime:%.2fs Buffers:%d Windows:%d" 
-                 (plist-get latest :gc-count)
-                 (plist-get latest :gc-elapsed)
-                 (plist-get latest :uptime)
-                 (plist-get latest :buffer-count)
-                 (plist-get latest :window-count)))
-    (message "No performance stats collected yet")))
+  (when (> gcs-done 300)  ; Increased threshold to reduce false positives
+    (setq gc-cons-threshold (* 50 1024 1024))  ; Increase to 50MB
+    (setq gc-cons-percentage 0.2)              ; Increase percentage
+    (message "🗑️ Excessive GC detected (%d cycles), adjusting thresholds" gcs-done)))
 
-(defun my/reset-performance-stats ()
-  "Reset performance statistics history."
+(defun my/reset-gc-settings ()
+  "Reset GC settings to normal values."
   (interactive)
-  (setq my/performance-stats-history '())
-  (message "Performance statistics reset"))
+  (setq gc-cons-threshold my/gc-cons-threshold-normal
+        gc-cons-percentage my/gc-cons-percentage-normal)
+  (message "GC settings reset to normal (threshold: %dMB)"
+           (/ my/gc-cons-threshold-normal 1024 1024)))
 
-(defun my/toggle-performance-monitoring ()
-  "Toggle performance monitoring on/off."
-  (interactive)
-  (setq my/performance-monitoring-enabled (not my/performance-monitoring-enabled))
-  (message "Performance monitoring: %s" 
-           (if my/performance-monitoring-enabled "enabled" "disabled")))
+;; Monitor GC less frequently to reduce overhead
+(run-with-timer 600 1200 #'my/handle-excessive-gc)
 
 (provide 'modern-performance)
 ;;; modern-performance.el ends here

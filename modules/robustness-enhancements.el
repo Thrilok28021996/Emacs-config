@@ -57,149 +57,26 @@
      (my/handle-package-failure (file-name-nondirectory file) err)
      nil)))
 
-;; --- Enhanced Resource Monitoring ---
 
-(defvar my/resource-monitoring-enabled t
-  "Whether resource monitoring is active.")
 
-(defvar my/memory-threshold (* 500 1024 1024)  ; 500MB
-  "Memory usage threshold for warnings.")
+;; --- Future Enhancement Areas ---
+;; Backup and recovery system can be added here
+;; Network resilience features can be added here
 
-(defvar my/monitoring-interval 300  ; 5 minutes
-  "Interval in seconds between resource checks.")
-
-(defvar my/gc-threshold-critical 200
-  "Critical GC count threshold.")
-
-(defvar my/buffer-count-warning 100
-  "Warning threshold for number of open buffers.")
-
-(defvar my/monitoring-timer nil
-  "Timer for periodic resource monitoring.")
-
-;; Additional variables referenced in init.el validation
-(defvar my/backup-directory (expand-file-name "robustness-backups" user-emacs-directory)
-  "Directory for configuration backups.")
-
-(defvar my/network-status 'unknown
-  "Current network connectivity status.")
-
-(defvar my/trusted-executables '()
-  "List of trusted executable paths for security.")
-
-(defun my/get-memory-usage ()
-  "Get current memory usage information."
-  (let ((gc-stats (garbage-collect)))
-    (list :gc-count (if (boundp 'gcs-done) gcs-done 0)
-          :gc-elapsed (if (boundp 'gc-elapsed) gc-elapsed 0.0)
-          :cons-cells (nth 0 gc-stats))))
-
-(defun my/monitor-resource-usage ()
-  "Monitor memory usage, GC, and buffer count with comprehensive warnings."
-  (when my/resource-monitoring-enabled
-    (condition-case err
-        (let* ((memory-info (my/get-memory-usage))
-               (gc-count (plist-get memory-info :gc-count))
-               (buffer-count (length (buffer-list)))
-               (window-count (length (window-list))))
-          
-          ;; Check excessive GC (but not in batch mode)
-          (when (and (> gc-count my/gc-threshold-critical)
-                     (not noninteractive))
-            (display-warning 'resource-monitor
-                            (format "⚠️ Excessive garbage collection: %d cycles. Consider restarting Emacs."
-                                   gc-count)
-                            :warning))
-          
-          ;; Check buffer count (but not in batch mode)
-          (when (and (> buffer-count my/buffer-count-warning)
-                     (not noninteractive))
-            (display-warning 'resource-monitor
-                            (format "⚠️ High buffer count: %d buffers open. Consider cleaning up."
-                                   buffer-count)
-                            :warning))
-          
-          ;; Log stats periodically (every 10th check)
-          (when (zerop (mod (or (plist-get memory-info :gc-count) 0) 10))
-            (message "📊 Resources: GC:%d Buffers:%d Windows:%d" 
-                     gc-count buffer-count window-count)))
-      (error
-       (message "⚠️ Resource monitoring failed: %s" (error-message-string err))))))
-
-(defun my/start-resource-monitoring ()
-  "Start periodic resource monitoring."
-  (interactive)
-  (unless noninteractive  ; Don't start in batch mode
-    (when my/monitoring-timer
-      (cancel-timer my/monitoring-timer))
-    (setq my/monitoring-timer
-          (run-with-timer my/monitoring-interval my/monitoring-interval 
-                         #'my/monitor-resource-usage))
-    (message "🔍 Resource monitoring started (interval: %ds)" my/monitoring-interval)))
-
-(defun my/stop-resource-monitoring ()
-  "Stop periodic resource monitoring."
-  (interactive)
-  (when my/monitoring-timer
-    (cancel-timer my/monitoring-timer)
-    (setq my/monitoring-timer nil)
-    (message "🔍 Resource monitoring stopped")))
-
-;; --- Backup and Recovery System ---
-
-(defun my/create-emergency-backup ()
-  "Create an emergency backup of critical configuration files."
-  (interactive)
-  (let ((backup-dir (expand-file-name "emergency-backup" user-emacs-directory))
-        (timestamp (format-time-string "%Y%m%d_%H%M%S"))
-        (critical-files '("init.el" "modules/" "config/")))
-    (condition-case err
-        (progn
-          (unless (file-directory-p backup-dir)
-            (make-directory backup-dir t))
-          (dolist (file critical-files)
-            (let ((source (expand-file-name file user-emacs-directory))
-                  (dest (expand-file-name (format "%s_%s" timestamp file) backup-dir)))
-              (when (file-exists-p source)
-                (if (file-directory-p source)
-                    (copy-directory source dest nil t t)
-                  (copy-file source dest t)))))
-          (message "✅ Emergency backup created in %s" backup-dir))
-      (error
-       (message "⚠️ Emergency backup failed: %s" (error-message-string err))))))
-
-;; --- Network Resilience ---
-
-(defun my/check-network-and-adapt ()
-  "Check network connectivity and adapt configuration."
-  (condition-case err
-      (let ((online (and (fboundp 'network-interface-list)
-                        (network-interface-list))))
-        (setq my/network-status (if online 'connected 'offline))
-        (when (not online)
-          (message "📶 Offline mode: disabling network-dependent features")
-          ;; Could disable package updates, LSP servers, etc.
-          ))
-    (error
-     (setq my/network-status 'unknown)
-     (message "⚠️ Network check failed: %s" (error-message-string err)))))
 
 ;; --- Enhanced Initialization ---
 
 (defun my/initialize-robustness-enhancements ()
-  "Initialize comprehensive robustness enhancements."
+  "Initialize basic robustness enhancements."
   (condition-case err
       (progn
         ;; Ensure backup directory exists
-        (unless (file-directory-p my/backup-directory)
-          (make-directory my/backup-directory t))
-        
-        ;; Check network status
-        (my/check-network-and-adapt)
-        
-        ;; Start resource monitoring (not in batch mode)
-        (when (and my/resource-monitoring-enabled (not noninteractive))
-          (run-with-timer 60 nil #'my/start-resource-monitoring))
+        (let ((backup-dir (expand-file-name "backups" user-emacs-directory)))
+          (unless (file-directory-p backup-dir)
+            (make-directory backup-dir t)))
+
+        ;; Resource monitoring and network status are handled by utilities.el
+        ;; Basic initialization complete
         
         ;; Set up error recovery hooks (not in batch mode)
         (unless noninteractive
@@ -264,7 +141,6 @@
 ;; Initialize on load
 (add-hook 'emacs-startup-hook #'my/initialize-robustness-enhancements)
 
-;; Remove duplicate function definitions - already defined above
 
 (provide 'robustness-enhancements)
 ;;; robustness-enhancements.el ends here

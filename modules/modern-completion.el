@@ -246,5 +246,30 @@
         savehist-save-minibuffer-history t)
   (add-to-list 'savehist-additional-variables 'corfu-history))
 
+;; --- Additional Completion Enhancements ---
+
+;; Cape: Completion at point extensions
+(use-package cape
+  :straight t
+  :defer my/defer-medium
+  :init
+  ;; Add useful completion sources
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-elisp-block)
+  :config
+  ;; Configure cape for better completion
+  (setq cape-dabbrev-min-length 3))
+
+;; Abbrev for text expansion
+(use-package abbrev
+  :straight nil
+  :defer my/defer-slow
+  :hook (text-mode . abbrev-mode)
+  :config
+  (setq abbrev-file-name (expand-file-name "abbrev_defs" user-emacs-directory))
+  (if (file-exists-p abbrev-file-name)
+      (quietly-read-abbrev-file)))
+
 (provide 'modern-completion)
 ;;; modern-completion.el ends here

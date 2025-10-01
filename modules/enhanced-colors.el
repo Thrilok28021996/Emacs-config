@@ -67,33 +67,7 @@
 
 
 ;; --- Color Identifiers ---
-;; Assign unique colors to different identifiers/variables
-;; TEMPORARILY DISABLED due to elisp parsing bug
-
-;; (use-package color-identifiers-mode
-;;   :straight t
-;;   :defer my/defer-slow
-;;   :hook (prog-mode . color-identifiers-mode)
-;;   :config
-;;   ;; Disable coloring of certain faces to avoid conflicts
-;;   (setq color-identifiers:modes-alist
-;;         '((js-mode . (:foreground))
-;;           (js2-mode . (:foreground))
-;;           (rjsx-mode . (:foreground))
-;;           (python-mode . (:foreground))
-;;           (emacs-lisp-mode . (:foreground))
-;;           (lisp-mode . (:foreground))
-;;           (c-mode . (:foreground))
-;;           (c++-mode . (:foreground))
-;;           (java-mode . (:foreground))
-;;           (go-mode . (:foreground))
-;;           (rust-mode . (:foreground))))
-;;   
-;;   ;; Fine-tune color selection
-;;   (setq color-identifiers:num-colors 10)
-;;   (setq color-identifiers:color-luminance 0.3)
-;;   (setq color-identifiers:min-color-saturation 0.2)
-;;   (setq color-identifiers:max-color-saturation 0.8))
+;; Note: color-identifiers-mode has been removed due to performance and parsing issues
 
 ;; --- Enhanced Line Highlighting ---
 ;; Improve current line highlighting with subtle colors
@@ -213,18 +187,9 @@
 (add-hook 'python-mode-hook #'my/enhance-python-colors)
 
 ;; --- Bracket Pair Highlighting ---
-;; Highlight matching brackets/parentheses
+;; Custom faces for matching pairs (smartparens configured in modern-languages.el)
 
-(use-package smartparens
-  :straight t
-  :defer my/defer-medium
-  :hook (prog-mode . smartparens-mode)
-  :config
-  (require 'smartparens-config)
-  (smartparens-global-mode t)
-  (show-smartparens-global-mode t)
-  
-  ;; Custom faces for matching pairs
+(with-eval-after-load 'smartparens
   (custom-set-faces
    '(sp-show-pair-match-face ((t (:background "#3e4451" :foreground "#61afef" :weight bold))))
    '(sp-show-pair-mismatch-face ((t (:background "#be5046" :foreground "#ffffff" :weight bold))))))
@@ -262,15 +227,7 @@
 
 ;; --- Utility Functions ---
 
-(defun my/toggle-color-identifiers ()
-  "Toggle color-identifiers-mode."
-  (interactive)
-  (if (fboundp 'color-identifiers-mode)
-      (progn
-        (color-identifiers-mode 'toggle)
-        (message "Color identifiers: %s" 
-                 (if color-identifiers-mode "enabled" "disabled")))
-    (message "Color identifiers mode not available")))
+;; color-identifiers-mode removed due to performance issues
 
 (defun my/toggle-rainbow-delimiters ()
   "Toggle rainbow-delimiters-mode."
@@ -282,8 +239,6 @@
 (defun my/reset-color-enhancements ()
   "Reset all color enhancement modes."
   (interactive)
-  (when (fboundp 'color-identifiers-mode)
-    (color-identifiers-mode -1))
   (when (fboundp 'rainbow-delimiters-mode)
     (rainbow-delimiters-mode -1))
   (when (fboundp 'rainbow-mode)
@@ -294,8 +249,6 @@
   "Enable all color enhancement modes for current buffer."
   (interactive)
   (when (derived-mode-p 'prog-mode)
-    (when (fboundp 'color-identifiers-mode)
-      (color-identifiers-mode 1))
     (when (fboundp 'rainbow-delimiters-mode)
       (rainbow-delimiters-mode 1))
     (when (fboundp 'highlight-numbers-mode)

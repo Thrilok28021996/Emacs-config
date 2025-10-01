@@ -332,11 +332,7 @@
 ;; Load validation suite for comprehensive testing
 (my/safe-load-legacy-config "validate-config.el")
 
-;; --- Directory Setup ---
-
-;; Directory creation now handled by utilities.el my/ensure-all-directories
-
-;; --- Final Startup Optimizations ---
+;; --- Startup Statistics and Hooks ---
 
 (defun my/display-startup-stats ()
   "Display minimal startup statistics."
@@ -370,7 +366,6 @@
               (error
                (my/handle-startup-error (format "Startup hook failed: %s" (error-message-string err)))))))
 
-;; --- Evil Leader Configuration handled in evil-config.el ---
 
 ;; --- Configuration Validation ---
 
@@ -491,7 +486,7 @@
             :robustness-score robustness-score
             :healthy config-healthy))))
 
-;; Skip auto-validation for cleaner startup
+;; Auto-validation available via my/validate-modern-config function
 
 (provide 'init)
 ;;; init.el ends here
