@@ -15,7 +15,7 @@
            (native-comp-available-p))
   ;; Enable native compilation for better performance
   (setq native-comp-jit-compilation t)
-  (setq native-comp-deferred-compilation t)
+  ;; native-comp-deferred-compilation is obsolete in Emacs 29+, use native-comp-jit-compilation
   (setq native-comp-async-report-warnings-errors nil)
   (setq native-comp-async-jobs-number (max 1 (/ (num-processors) 2)))
   
@@ -31,13 +31,14 @@
 
 ;; --- Advanced Garbage Collection Tuning ---
 
-(defvar my/gc-cons-threshold-normal (* 16 1024 1024)
-  "Normal GC threshold for interactive use (16MB).")
+;; PERFORMANCE: Optimized GC settings for programming
+(defvar my/gc-cons-threshold-normal (* 32 1024 1024)
+  "Normal GC threshold for interactive use (32MB for better performance).")
 
 (defvar my/gc-cons-threshold-high (* 100 1024 1024)
   "High GC threshold for heavy operations (100MB).")
 
-(defvar my/gc-cons-percentage-normal 0.1
+(defvar my/gc-cons-percentage-normal 0.15
   "Normal GC percentage for balanced performance.")
 
 (defvar my/gc-cons-percentage-high 0.6
@@ -111,21 +112,23 @@
 
 ;; --- Advanced I/O Optimizations ---
 
-;; Increase process output buffer size for better LSP performance
-(setq read-process-output-max (* 3 1024 1024)) ; 3MB
-(setq process-adaptive-read-buffering nil)      ; Disable adaptive buffering for consistent performance
+;; PERFORMANCE: Increase process output buffer size for LSP/Eglot
+(setq read-process-output-max (* 1 1024 1024)) ; 1MB (was 3MB, reduced for stability)
+(setq process-adaptive-read-buffering nil)      ; Disable adaptive buffering
 
-;; Optimize file I/O while preserving essential safety features
-(setq create-lockfiles nil        ; Don't create .# lock files (optional)
-      make-backup-files t         ; Re-enable backup files for safety
+;; PERFORMANCE: Optimize file I/O for programming
+(setq create-lockfiles nil        ; Don't create .# lock files
+      make-backup-files t         ; Keep backup files for safety
       backup-by-copying t         ; Use copying instead of renaming
       backup-directory-alist      ; Store backups in dedicated directory
       `(("." . ,(expand-file-name "backups/" user-emacs-directory)))
       delete-old-versions t       ; Delete old backup versions
       version-control t          ; Use numbered backups
-      kept-new-versions 5        ; Keep 5 new versions
-      kept-old-versions 2        ; Keep 2 old versions
-      auto-save-default t)       ; Re-enable auto-save for safety
+      kept-new-versions 3        ; Keep 3 new versions (reduced from 5)
+      kept-old-versions 1        ; Keep 1 old version (reduced from 2)
+      auto-save-default t        ; Keep auto-save
+      auto-save-interval 200     ; Auto-save every 200 keystrokes (was 300)
+      auto-save-timeout 20)      ; Auto-save after 20 seconds idle (was 30)
 
 ;; Better UTF-8 performance with error handling
 (condition-case err
@@ -178,7 +181,9 @@
       (when (fboundp 'tab-bar-mode)
         (setq tab-bar-show 1)
         (setq tab-bar-close-button-show nil)
-        (setq tab-bar-new-button-show nil))
+        ;; tab-bar-new-button-show is obsolete in 28.1+, use tab-bar-format instead
+        (when (version< emacs-version "28.1")
+          (setq tab-bar-new-button-show nil)))
 
       ;; Enhanced repeat mode (Emacs 28+)
       (when (fboundp 'repeat-mode)
@@ -210,8 +215,9 @@
   (message "GC settings reset to normal (threshold: %dMB)"
            (/ my/gc-cons-threshold-normal 1024 1024)))
 
-;; Monitor GC less frequently to reduce overhead
-(run-with-timer 600 1200 #'my/handle-excessive-gc)
+;; Monitor GC less frequently to reduce overhead - EXTENDED for performance
+;; Changed from 600/1200 to 3600 (1 hour) to minimize timer overhead
+(run-with-timer 3600 nil #'my/handle-excessive-gc)
 
 (provide 'modern-performance)
 ;;; modern-performance.el ends here

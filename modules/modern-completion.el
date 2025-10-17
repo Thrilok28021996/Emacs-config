@@ -173,9 +173,10 @@
   :init
   (global-corfu-mode)
   :config
+  ;; PERFORMANCE: Optimized for speed
   (setq corfu-cycle t                  ;; Enable cycling for `corfu-next/previous'
         corfu-auto t                   ;; Enable auto completion
-        corfu-auto-delay 0.2           ;; Auto completion delay
+        corfu-auto-delay 0.3           ;; Slightly longer delay for performance (was 0.2)
         corfu-auto-prefix 2            ;; Minimum prefix length for auto completion
         corfu-separator ?\s            ;; Orderless field separator
         corfu-quit-at-boundary nil     ;; Never quit at completion boundary
@@ -183,7 +184,8 @@
         corfu-preview-current nil      ;; Disable current candidate preview
         corfu-preselect 'prompt        ;; Preselect the prompt
         corfu-on-exact-match nil       ;; Configure handling of exact matches
-        corfu-scroll-margin 5)         ;; Use scroll margin
+        corfu-scroll-margin 5          ;; Use scroll margin
+        corfu-count 10)                ;; Limit candidates shown (performance)
 
   ;; TAB cycle if there are only few candidates
   (setq completion-cycle-threshold 3)

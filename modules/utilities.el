@@ -73,8 +73,7 @@
 (defun my/optimize-for-low-memory ()
   "Optimize Emacs for low memory usage with comprehensive cleanup."
   (interactive)
-  (let ((initial-buffers (length (buffer-list)))
-        (cleaned-buffers 0))
+  (let ((cleaned-buffers 0))
     
     ;; Close temporary and help buffers
     (dolist (buffer (buffer-list))
@@ -134,7 +133,7 @@
     
     (when (> killed 0)
       (garbage-collect)
-      (message "🧠 Smart cleanup: removed %d large temporary buffers" killed)))
+      (message "🧠 Smart cleanup: removed %d large temporary buffers" killed))))
 
 
 
@@ -164,7 +163,7 @@
               (unless (file-directory-p full-path)
                 (make-directory full-path t)
                 (setq created (1+ created)))
-            (error 
+            (error
              (message "⚠️ Could not create directory %s: %s" full-path (error-message-string err)))))))
     (when (> created 0)
       (message "📁 Created %d essential directories" created))))
@@ -186,7 +185,7 @@
                   (delete-file file)
                   (setq cleaned (1+ cleaned))))
             (error
-             (message "⚠️ Failed to clean %s: %s" dir (error-message-string err))))))))
+             (message "⚠️ Failed to clean %s: %s" dir (error-message-string err)))))))
     (when (> cleaned 0)
       (message "🧠 Cleaned %d old temporary files" cleaned))))
 
@@ -213,8 +212,54 @@
     (garbage-collect)
     (message "🚀 Applied immediate GC optimization due to %d GC cycles" gcs-done)))
 
-;; Schedule daily maintenance (runs once per session after 10 minutes to reduce startup overhead)
-(run-with-idle-timer 600 nil #'my/daily-maintenance)
+;; Schedule daily maintenance - OPTIMIZED interval
+;; Changed from 600 (10 min) to 1800 (30 min) for less interruption
+(run-with-idle-timer 1800 nil #'my/daily-maintenance)
+
+;; --- Performance Monitoring Functions ---
+
+(defvar my/performance-stats '()
+  "Performance statistics collected during runtime.")
+
+(defun my/collect-performance-stats ()
+  "Collect performance statistics for monitoring."
+  (interactive)
+  (let ((stats (list :timestamp (current-time)
+                     :gc-count gcs-done
+                     :gc-time gc-elapsed
+                     :memory-usage (memory-use-counts)
+                     :buffer-count (length (buffer-list)))))
+    (push stats my/performance-stats)
+    ;; Keep only last 100 entries
+    (when (> (length my/performance-stats) 100)
+      (setq my/performance-stats (seq-take my/performance-stats 100)))
+    stats))
+
+(defun my/monitor-resource-usage ()
+  "Monitor and report resource usage."
+  (interactive)
+  (let ((buffer-count (length (buffer-list)))
+        (gc-count gcs-done)
+        (memory (memory-use-counts)))
+    (message "📊 Buffers: %d | GC cycles: %d | Memory: %s"
+             buffer-count gc-count memory)))
+
+(defun my/show-performance-stats ()
+  "Display collected performance statistics."
+  (interactive)
+  (if my/performance-stats
+      (with-current-buffer (get-buffer-create "*Performance Stats*")
+        (erase-buffer)
+        (insert "📊 Performance Statistics\n")
+        (insert "=========================\n\n")
+        (dolist (stat my/performance-stats)
+          (insert (format "Time: %s\nGC: %d cycles (%.2fs)\nBuffers: %d\n\n"
+                         (format-time-string "%Y-%m-%d %H:%M:%S" (plist-get stat :timestamp))
+                         (plist-get stat :gc-count)
+                         (plist-get stat :gc-time)
+                         (plist-get stat :buffer-count))))
+        (display-buffer (current-buffer)))
+    (message "No performance statistics collected yet")))
 
 
 (provide 'utilities)

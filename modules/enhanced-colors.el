@@ -6,6 +6,8 @@
 
 ;;; Code:
 
+(require 'utilities)  ; For defer timing constants
+
 ;; --- Rainbow Delimiters ---
 ;; Colorize parentheses, brackets, and braces by depth level
 
@@ -66,20 +68,10 @@
    '(font-lock-warning-face ((t (:foreground "#ff6c6b" :weight bold :underline t))))))
 
 
-;; --- Color Identifiers ---
-;; Note: color-identifiers-mode has been removed due to performance and parsing issues
-
-;; --- Enhanced Line Highlighting ---
-;; Improve current line highlighting with subtle colors
-
-(use-package hl-line
-  :straight nil
-  :config
-  (global-hl-line-mode 1)
-  
-  ;; Custom face for current line highlighting
-  (custom-set-faces
-   '(hl-line ((t (:background "#2c323c" :extend t))))))
+;; --- Enhanced Line Highlighting Faces ---
+;; Mode enabled in core-ui.el, faces defined here
+(custom-set-faces
+ '(hl-line ((t (:background "#2c323c" :extend t)))))
 
 ;; --- Highlight Numbers ---
 ;; Syntax highlighting for numbers in code
@@ -92,49 +84,6 @@
   ;; Custom face for numbers
   (custom-set-faces
    '(highlight-numbers-number ((t (:foreground "#da8548" :weight normal))))))
-
-;; --- Highlight Operators ---
-;; Syntax highlighting for operators
-
-(use-package highlight-operators
-  :straight t
-  :defer my/defer-medium
-  :hook (prog-mode . highlight-operators-mode)
-  :config
-  ;; Custom face for operators
-  (custom-set-faces
-   '(highlight-operators-face ((t (:foreground "#c678dd" :weight normal))))))
-
-;; --- Highlight Escape Sequences ---
-;; Better visibility for escape sequences in strings
-
-(use-package highlight-escape-sequences
-  :straight t
-  :defer my/defer-medium
-  :hook (prog-mode . hes-mode)
-  :config
-  ;; Custom face for escape sequences
-  (custom-set-faces
-   '(hes-escape-backslash-face ((t (:foreground "#c678dd" :weight bold))))
-   '(hes-escape-sequence-face ((t (:foreground "#e5c07b" :weight bold))))))
-
-;; --- Rainbow Mode ---
-;; Display color codes (hex, rgb) with their actual colors
-
-(use-package rainbow-mode
-  :straight t
-  :defer my/defer-slow
-  :hook ((css-mode . rainbow-mode)
-         (scss-mode . rainbow-mode)
-         (less-mode . rainbow-mode)
-         (web-mode . rainbow-mode)
-         (html-mode . rainbow-mode))
-  :config
-  ;; Configure rainbow-mode for better performance
-  (setq rainbow-x-colors nil)
-  (setq rainbow-r-colors nil)
-  (setq rainbow-html-colors nil)
-  (setq rainbow-latex-colors nil))
 
 ;; --- Better Diff Colors ---
 ;; Enhanced colors for version control diffs
@@ -194,6 +143,12 @@
    '(sp-show-pair-match-face ((t (:background "#3e4451" :foreground "#61afef" :weight bold))))
    '(sp-show-pair-mismatch-face ((t (:background "#be5046" :foreground "#ffffff" :weight bold))))))
 
+;; Built-in show-paren-mode faces (configured in core-ui.el)
+(custom-set-faces
+ '(show-paren-match ((t (:background "#3e4451" :foreground "#61afef" :weight bold))))
+ '(show-paren-mismatch ((t (:background "#be5046" :foreground "#ffffff" :weight bold))))
+ '(show-paren-match-expression ((t (:background "#2c323c" :weight normal)))))
+
 ;; --- Region Selection Enhancement ---
 ;; Better colors for selected regions
 
@@ -227,7 +182,10 @@
 
 ;; --- Utility Functions ---
 
-;; color-identifiers-mode removed due to performance issues
+(defun my/toggle-color-identifiers ()
+  "Toggle color-identifiers-mode (removed - placeholder for compatibility)."
+  (interactive)
+  (message "⚠️ color-identifiers-mode has been removed for performance reasons"))
 
 (defun my/toggle-rainbow-delimiters ()
   "Toggle rainbow-delimiters-mode."

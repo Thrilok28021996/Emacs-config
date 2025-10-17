@@ -101,7 +101,7 @@
   (let ((recovered 0))
     (dolist (failure my/package-load-failures)
       (let ((package (plist-get failure :package)))
-        (condition-case err
+        (condition-case _err
             (when (and (symbolp package) (not (featurep package)))
               (require package)
               (setq recovered (1+ recovered))

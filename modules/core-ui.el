@@ -6,6 +6,29 @@
 
 ;;; Code:
 
+;; --- Built-in Bracket Highlighting ---
+
+;; Show matching parentheses (built-in)
+(use-package paren
+  :straight nil
+  :init
+  (show-paren-mode 1)
+  :config
+  (setq show-paren-delay 0)                    ;; No delay
+  (setq show-paren-style 'mixed)               ;; Highlight bracket or entire expression
+  (setq show-paren-when-point-inside-paren t)  ;; Show even when inside
+  (setq show-paren-when-point-in-periphery t)) ;; Show when cursor is next to paren
+
+;; Electric pair mode for auto-closing brackets (built-in)
+(use-package elec-pair
+  :straight nil
+  :init
+  (electric-pair-mode 1)
+  :config
+  (setq electric-pair-preserve-balance t)
+  (setq electric-pair-delete-adjacent-pairs t)
+  (setq electric-pair-open-newline-between-pairs t))
+
 ;; --- UI Configuration ---
 ;; Line numbers
 (global-display-line-numbers-mode t)
@@ -94,10 +117,10 @@
   (interactive)
   (setq my/focus-mode-active t)
   (display-line-numbers-mode -1)
-  (when (fboundp 'git-gutter-mode)
-    (git-gutter-mode -1))
-  (when (fboundp 'doom-modeline-mode)
-    (doom-modeline-mode -1))
+  (when (fboundp 'diff-hl-mode)
+    (diff-hl-mode -1))
+  (when (fboundp 'mood-line-mode)
+    (mood-line-mode -1))
   (message "🎯 Focus mode activated"))
 
 (defun my/exit-focus-mode ()
@@ -105,10 +128,10 @@
   (interactive)
   (setq my/focus-mode-active nil)
   (display-line-numbers-mode 1)
-  (when (fboundp 'git-gutter-mode)
-    (git-gutter-mode 1))
-  (when (fboundp 'doom-modeline-mode)
-    (doom-modeline-mode 1))
+  (when (fboundp 'diff-hl-mode)
+    (diff-hl-mode 1))
+  (when (fboundp 'mood-line-mode)
+    (mood-line-mode 1))
   (message "🎯 Focus mode deactivated"))
 
 (provide 'core-ui)

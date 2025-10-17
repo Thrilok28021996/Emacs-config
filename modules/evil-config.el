@@ -172,15 +172,10 @@
     "t R" 'my/toggle-rainbow-delimiters
     "t C" 'my/enable-all-color-enhancements
     "t X" 'my/reset-color-enhancements
-    "t m" 'minimap-mode
     "t F" 'my/toggle-focus-mode
     "t v" 'visual-line-mode
-    "t V" 'visual-fill-column-mode
     "t H" 'hl-todo-mode
-    "t z" 'zoom-mode
-    "t M" 'minimap-mode
-    "t d" 'dashboard-open
-    "t g" 'git-gutter-mode
+    "t d" 'diff-hl-mode
 
     ;; Project operations
     "p f" 'consult-find
@@ -255,6 +250,8 @@
     "SPC" 'execute-extended-command
     
     ;; LSP/Language server operations
+    "l e" 'eglot                        ; Start Eglot manually
+    "l E" 'eglot-ensure                 ; Ensure Eglot started
     "l r" 'eglot-find-references
     "l R" 'eglot-rename
     "l d" 'eglot-find-definition
@@ -369,12 +366,11 @@
     "TAB c" 'persp-kill
     "TAB r" 'persp-rename
 
-    ;; Git operations (enhanced)
-    "g g" 'git-gutter:next-hunk
-    "g G" 'git-gutter:previous-hunk
-    "g r" 'git-gutter:revert-hunk
-    "g S" 'git-gutter:stage-hunk
-    "g d" 'git-gutter:popup-hunk
+    ;; Git diff operations (using diff-hl)
+    "g g" 'diff-hl-next-hunk
+    "g G" 'diff-hl-previous-hunk
+    "g r" 'diff-hl-revert-hunk
+    "g d" 'diff-hl-diff-goto-hunk
 
 
     ;; Help and documentation
@@ -504,6 +500,110 @@
   :straight t
   :defer t
   :commands (magit-status magit-blame magit-log magit-file-dispatch magit-commit magit-push magit-pull))
+
+;; --- Nov-mode (EPUB Reader) Evil Keybindings ---
+
+(with-eval-after-load 'nov
+  (evil-define-key 'normal nov-mode-map
+    ;; Navigation - Chapter level
+    (kbd "n") 'nov-next-document          ; Next chapter
+    (kbd "p") 'nov-previous-document      ; Previous chapter
+    (kbd "N") 'nov-next-document          ; Alternative: Next chapter
+    (kbd "P") 'nov-previous-document      ; Alternative: Previous chapter
+
+    ;; Navigation - Scrolling (preserve visual line movement)
+    (kbd "j") 'evil-next-visual-line      ; Down one visual line
+    (kbd "k") 'evil-previous-visual-line  ; Up one visual line
+    (kbd "C-d") 'evil-scroll-down         ; Scroll down half page
+    (kbd "C-u") 'evil-scroll-up           ; Scroll up half page
+    (kbd "C-f") 'evil-scroll-page-down    ; Scroll down full page
+    (kbd "C-b") 'evil-scroll-page-up      ; Scroll up full page
+    (kbd "g g") 'beginning-of-buffer      ; Go to beginning
+    (kbd "G") 'end-of-buffer              ; Go to end
+
+    ;; Jump to chapter
+    (kbd "g c") 'nov-goto-document        ; Go to chapter number
+    (kbd "g t") 'nov-display-metadata     ; Display table of contents/metadata
+
+    ;; Links and references
+    (kbd "RET") 'nov-browse-url           ; Follow link
+    (kbd "TAB") 'shr-next-link            ; Next link
+    (kbd "S-TAB") 'shr-previous-link      ; Previous link
+    (kbd "<backtab>") 'shr-previous-link  ; Previous link (alternative)
+
+    ;; View controls
+    (kbd "+") 'text-scale-increase        ; Increase font size
+    (kbd "-") 'text-scale-decrease        ; Decrease font size
+    (kbd "=") 'text-scale-adjust          ; Reset font size
+    (kbd "0") (lambda () (interactive) (text-scale-set 0))  ; Reset to default size
+
+    ;; Text width adjustment
+    (kbd "w +") 'visual-fill-column-adjust ; Increase text width
+    (kbd "w -") (lambda () (interactive)   ; Decrease text width
+                  (setq-local visual-fill-column-width
+                             (max 40 (- visual-fill-column-width 5)))
+                  (visual-fill-column-adjust))
+    (kbd "w =") (lambda () (interactive)   ; Reset text width
+                  (setq-local visual-fill-column-width 80)
+                  (visual-fill-column-adjust))
+
+    ;; Bookmarks
+    (kbd "m m") 'bookmark-set             ; Set bookmark
+    (kbd "m l") 'bookmark-bmenu-list      ; List bookmarks
+    (kbd "' '") 'bookmark-jump            ; Jump to bookmark
+
+    ;; Search
+    (kbd "/") 'isearch-forward            ; Search forward
+    (kbd "?") 'isearch-backward           ; Search backward
+    (kbd "*") 'isearch-forward-symbol-at-point  ; Search for symbol at point
+    (kbd "#") 'isearch-backward-symbol-at-point ; Search backward for symbol
+
+    ;; Refresh and reload
+    (kbd "R") 'nov-render-document        ; Re-render current chapter
+    (kbd "g r") 'nov-render-document      ; Alternative: Re-render
+
+    ;; Copy and yank
+    (kbd "y y") 'kill-ring-save           ; Copy line (in visual mode)
+
+    ;; Quit
+    (kbd "q") 'quit-window                ; Quit nov buffer
+    (kbd "Z Z") 'quit-window              ; Vim-style quit
+    (kbd "Z Q") 'kill-current-buffer      ; Force quit
+
+    ;; Help
+    (kbd "?") 'describe-mode              ; Show nov-mode help
+    (kbd "H") 'nov-display-metadata       ; Show metadata/TOC
+    )
+
+  ;; Visual state keybindings for selection
+  (evil-define-key 'visual nov-mode-map
+    (kbd "y") 'kill-ring-save             ; Yank/copy selection
+    (kbd "d") 'delete-region              ; Delete selection
+    )
+
+  ;; Motion state keybindings
+  (evil-define-key 'motion nov-mode-map
+    (kbd "j") 'evil-next-visual-line
+    (kbd "k") 'evil-previous-visual-line
+    (kbd "g g") 'beginning-of-buffer
+    (kbd "G") 'end-of-buffer
+    (kbd "C-d") 'evil-scroll-down
+    (kbd "C-u") 'evil-scroll-up))
+
+;; Set nov-mode to use normal state by default
+(with-eval-after-load 'nov
+  (evil-set-initial-state 'nov-mode 'normal))
+
+;; Leader key bindings for nov-mode (EPUB reading)
+(with-eval-after-load 'evil-leader
+  (evil-leader/set-key-for-mode 'nov-mode
+    "n n" 'nov-next-document
+    "n p" 'nov-previous-document
+    "n g" 'nov-goto-document
+    "n t" 'nov-display-metadata
+    "n r" 'nov-render-document
+    "n b" 'bookmark-set
+    "n l" 'bookmark-bmenu-list))
 
 (provide 'evil-config)
 ;;; evil-config.el ends here

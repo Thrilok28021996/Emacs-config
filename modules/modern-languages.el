@@ -14,71 +14,54 @@
 ;; Treesit-auto: Automatically use tree-sitter modes
 (use-package treesit-auto
   :straight t
-  :defer my/defer-fast
+  :defer my/defer-medium  ; Defer more aggressively
   :config
   (setq treesit-auto-install 'prompt)
-  
+
   ;; Set compatible tree-sitter grammar sources
   (setq treesit-language-source-alist
         '((c "https://github.com/tree-sitter/tree-sitter-c" "v0.20.7")
           (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
           (python "https://github.com/tree-sitter/tree-sitter-python")
           (javascript "https://github.com/tree-sitter/tree-sitter-javascript")
-          (css "https://github.com/tree-sitter/tree-sitter-css")
-          (html "https://github.com/tree-sitter/tree-sitter-html")
           (json "https://github.com/tree-sitter/tree-sitter-json")
-          (yaml "https://github.com/tree-sitter/tree-sitter-yaml")
           (rust "https://github.com/tree-sitter/tree-sitter-rust")
-          (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "typescript/src" "typescript.h")
-          (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "tsx/src" "tsx.h")))
-  
-  (global-treesit-auto-mode)
-  
-  ;; Configure language mappings for tree-sitter modes
-  (setq treesit-auto-langs '(c cpp css html javascript json python rust yaml typescript tsx))
-  
-  ;; Add more languages if available
-  (when (treesit-language-available-p 'go)
-    (add-to-list 'treesit-auto-langs 'go))
-  (when (treesit-language-available-p 'php)
-    (add-to-list 'treesit-auto-langs 'php))
-  (when (treesit-language-available-p 'lua)
-    (add-to-list 'treesit-auto-langs 'lua)))
+          (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "typescript/src" "typescript.h")))
 
-;; Tree-sitter font-lock enhancement
-(setq treesit-font-lock-level 4) ; Maximum highlighting level
+  (global-treesit-auto-mode)
+
+  ;; PERFORMANCE: Only enable essential languages by default
+  (setq treesit-auto-langs '(c cpp python javascript json rust typescript)))
+
+;; Tree-sitter font-lock - balanced performance
+(setq treesit-font-lock-level 3) ; Level 3 for speed (was 4)
 
 ;; --- Eglot: Built-in Language Server Protocol ---
 
 (use-package eglot
   :straight nil ; Built into Emacs 29+
   :defer t
+  :commands (eglot eglot-ensure)
+  ;; PERFORMANCE: Manual Eglot activation via SPC l e
+  ;; Auto-enable only for main languages to avoid startup overhead
   :hook ((python-mode . eglot-ensure)
          (python-ts-mode . eglot-ensure)
-         (c-mode . eglot-ensure)
-         (c-ts-mode . eglot-ensure)
          (c++-mode . eglot-ensure)
-         (c++-ts-mode . eglot-ensure)
-         (rust-mode . eglot-ensure)
-         (rust-ts-mode . eglot-ensure)
-         (go-mode . eglot-ensure)
-         (go-ts-mode . eglot-ensure)
-         (js-mode . eglot-ensure)
-         (js-ts-mode . eglot-ensure)
-         (typescript-mode . eglot-ensure)
-         (typescript-ts-mode . eglot-ensure)
-         (tsx-ts-mode . eglot-ensure)
-         (web-mode . eglot-ensure)
-         (css-mode . eglot-ensure)
-         (css-ts-mode . eglot-ensure)
-         (html-mode . eglot-ensure)
-         (html-ts-mode . eglot-ensure))
+         (c++-ts-mode . eglot-ensure))
   :config
-  ;; Eglot optimizations
-  (setq eglot-autoshutdown t)           ; Shutdown server when last buffer is killed
-  (setq eglot-sync-connect nil)         ; Don't block on connection
-  (setq eglot-extend-to-xref t)         ; Extend eglot to xref locations
-  (setq eglot-ignored-server-capabilities '(:hoverProvider :documentHighlightProvider))
+  ;; Eglot performance optimizations
+  (setq eglot-autoshutdown t)                    ; Shutdown server when last buffer is killed
+  (setq eglot-sync-connect nil)                  ; Don't block on connection (async)
+  (setq eglot-events-buffer-size 0)              ; Disable event logging for performance
+  (setq eglot-send-changes-idle-time 0.5)        ; Debounce change notifications
+  (setq eglot-extend-to-xref t)                  ; Extend eglot to xref locations
+
+  ;; Disable heavy features for better performance
+  (setq eglot-ignored-server-capabilities
+        '(:hoverProvider                          ; Disable hover (use manually with K)
+          :documentHighlightProvider              ; Disable auto-highlight
+          :documentOnTypeFormattingProvider       ; Disable format-on-type
+          :colorProvider))
   
   ;; Configure specific language servers
   (add-to-list 'eglot-server-programs
@@ -114,9 +97,18 @@
   :straight t
   :defer t
   :config
-  (setq conda-anaconda-home (expand-file-name "~/anaconda3"))
-  (conda-env-initialize-interactive-shells)
-  (conda-env-initialize-eshell))
+  ;; Auto-detect conda installation
+  (setq conda-anaconda-home
+        (or (getenv "CONDA_PREFIX")
+            (expand-file-name "~/anaconda3")
+            (expand-file-name "~/miniconda3")
+            (expand-file-name "~/opt/anaconda3")
+            (expand-file-name "~/opt/miniconda3")))
+
+  ;; Only initialize if conda exists
+  (when (file-directory-p conda-anaconda-home)
+    (conda-env-initialize-interactive-shells)
+    (conda-env-initialize-eshell)))
 
 ;; C/C++ with Tree-sitter
 (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
@@ -225,9 +217,13 @@
   :hook (prog-mode . smartparens-mode)
   :config
   (require 'smartparens-config)
-  (setq sp-highlight-pair-overlay nil)
-  (setq sp-highlight-wrap-overlay nil)
-  (setq sp-highlight-wrap-tag-overlay nil))
+  ;; ENABLED: Show matching brackets with highlighting
+  (setq sp-highlight-pair-overlay t)
+  (setq sp-highlight-wrap-overlay t)
+  (setq sp-highlight-wrap-tag-overlay t)
+  ;; Show matching pairs immediately
+  (setq sp-show-pair-delay 0)
+  (setq sp-show-pair-from-inside t))
 
 ;; --- Tree-sitter Language Installation Helper ---
 
@@ -294,36 +290,31 @@
 
 ;; --- Git Integration Enhancement ---
 
-;; Git gutter for line-by-line git status
-(use-package git-gutter
+;; CONFLICT RESOLVED: Using diff-hl instead of git-gutter for better performance
+;; diff-hl integrates with VC and Magit, while git-gutter is standalone
+;; git-gutter removed to avoid duplication and reduce prog-mode hooks
+
+;; Better diff highlighting with VC integration
+(use-package diff-hl
   :straight t
   :defer my/defer-medium
-  :hook (prog-mode . git-gutter-mode)
+  :commands (diff-hl-mode diff-hl-dired-mode global-diff-hl-mode)
+  ;; PERFORMANCE: Load only when needed, not on every prog-mode buffer
+  :hook (dired-mode . diff-hl-dired-mode)
   :config
-  (setq git-gutter:update-interval 2)
-  (setq git-gutter:modified-sign "~")
-  (setq git-gutter:added-sign "+")
-  (setq git-gutter:deleted-sign "-")
+  ;; Disable flydiff for performance (updates on save instead of live)
+  (setq diff-hl-flydiff-delay 2)  ; Increase delay if flydiff is needed
 
-  ;; Custom faces for git gutter
+  ;; Magit integration
+  (with-eval-after-load 'magit
+    (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
+    (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
+
+  ;; Custom faces for diff-hl
   (custom-set-faces
-   '(git-gutter:modified ((t (:foreground "#e5c07b" :background nil))))
-   '(git-gutter:added    ((t (:foreground "#98c379" :background nil))))
-   '(git-gutter:deleted  ((t (:foreground "#e06c75" :background nil)))))
-
-  ;; Enable in all modes where it makes sense
-  (global-git-gutter-mode +1))
-
-;; --- Better Terminal Integration ---
-
-;; Vterm: Better terminal emulator (optional, requires compilation)
-;; Commented out by default as it requires external compilation
-;; (use-package vterm
-;;   :straight t
-;;   :defer t
-;;   :commands vterm
-;;   :config
-;;   (setq vterm-max-scrollback 10000))
+   '(diff-hl-change ((t (:foreground "#e5c07b" :background nil))))
+   '(diff-hl-insert ((t (:foreground "#98c379" :background nil))))
+   '(diff-hl-delete ((t (:foreground "#e06c75" :background nil))))))
 
 ;; --- Workspace Management ---
 
@@ -359,31 +350,6 @@
          (scheme-mode . aggressive-indent-mode))
   :config
   (add-to-list 'aggressive-indent-excluded-modes 'html-mode))
-
-;; Rainbow mode moved to enhanced-colors.el to avoid duplication
-
-;; Highlight symbol at point
-(use-package highlight-symbol
-  :straight t
-  :defer my/defer-medium
-  :hook (prog-mode . highlight-symbol-mode)
-  :config
-  (setq highlight-symbol-idle-delay 0.3)
-  (setq highlight-symbol-on-navigation-p t))
-
-;; Better diff highlighting
-(use-package diff-hl
-  :straight t
-  :defer my/defer-medium
-  :hook ((prog-mode . diff-hl-mode)
-         (dired-mode . diff-hl-dired-mode))
-  :config
-  (diff-hl-flydiff-mode 1)
-  (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
-  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
-
-;; Auto-install tree-sitter grammars helper (disabled to prevent errors)
-;; You can manually run M-x my/install-tree-sitter-languages if needed
 
 (provide 'modern-languages)
 ;;; modern-languages.el ends here

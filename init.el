@@ -252,6 +252,7 @@
 
 (my/safe-require-module 'modern-ui "Nerd-icons, mood-line, popper, themes")
 (my/safe-require-module 'enhanced-colors "Advanced color coding and syntax highlighting")
+(my/safe-require-module 'startup-dashboard "Modern startup dashboard inspired by doom-emacs")
 
 ;; --- Phase 6: Utilities and Legacy Support ---
 

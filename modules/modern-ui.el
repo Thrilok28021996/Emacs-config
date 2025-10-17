@@ -89,7 +89,6 @@
           ,my/buffer-warnings
           ,my/buffer-help
           ,my/buffer-apropos
-          ,my/buffer-compilation
           ,my/buffer-flymake
           ,my/buffer-shell-output
           "\\*eshell.*\\*$" eshell-mode
@@ -107,11 +106,12 @@
 ;; Doom-themes: Popular theme collection including doom-one
 (use-package doom-themes
   :straight t
-  :defer my/defer-fast
-  :config
+  :init
+  ;; Load theme immediately for better visual experience
   (setq doom-themes-enable-bold t
         doom-themes-enable-italic t
         doom-themes-padded-modeline t)
+  :config
   (load-theme 'doom-one t)
   (doom-themes-visual-bell-config)
   (doom-themes-org-config))
@@ -175,14 +175,7 @@
           ("HACK"   . "#FF6347"))))
 
 ;; Visual line mode improvements
-(use-package visual-fill-column
-  :straight t
-  :defer my/defer-slow
-  :hook ((visual-line-mode . visual-fill-column-mode)
-         (org-mode . visual-line-mode))
-  :config
-  (setq visual-fill-column-width 100)
-  (setq visual-fill-column-center-text t))
+;; REMOVED: visual-fill-column - adds overhead, rarely needed
 
 ;; Better whitespace visualization
 (use-package whitespace
@@ -241,27 +234,7 @@
     (error
      (message "❌ Font configuration error: %s" (error-message-string err)))))
 
-;; --- Advanced Color and Font Enhancements ---
-
-;; Automatic dark/light theme switching based on system
-(when (and (eq system-type 'darwin) (display-graphic-p))
-  (defun my/auto-theme-switch ()
-    "Automatically switch theme based on system appearance."
-    (let ((appearance (shell-command-to-string
-                       "defaults read -g AppleInterfaceStyle 2>/dev/null || echo Light")))
-      (if (string-match "Dark" appearance)
-          (progn
-            (disable-theme 'doom-one-light)
-            (load-theme 'doom-one t))
-        (progn
-          (disable-theme 'doom-one)
-          (load-theme 'doom-one-light t)))))
-  
-  ;; Check theme on startup and periodically
-  (my/auto-theme-switch)
-  (run-with-timer 300 300 #'my/auto-theme-switch))
-
-;; --- Improved Cursor and Selection ---
+;; --- Cursor and Selection ---
 
 ;; Better cursor configuration
 (setq-default cursor-type 'bar)
@@ -312,55 +285,52 @@
         `((,my/buffer-help display-buffer-reuse-window)
           (,my/buffer-completions display-buffer-below-selected))))
 
-;; --- Additional Productivity Enhancements ---
-
-;; Which-key integration with icons
-(use-package which-key-posframe
-  :straight t
-  :defer my/defer-slow
-  :after which-key
-  :config
-  (which-key-posframe-mode 1)
-  (setq which-key-posframe-poshandler 'posframe-poshandler-frame-center))
-
-;; Zoom for better presentations/reading
-(use-package zoom
-  :straight t
-  :defer my/defer-slow
-  :commands zoom-mode
-  :config
-  (setq zoom-size '(0.618 . 0.618))
-  (setq zoom-ignored-major-modes '(dired-mode markdown-mode)))
-
-;; Minimap for code overview
-(use-package minimap
-  :straight t
-  :defer my/defer-slow
-  :commands minimap-mode
-  :config
-  (setq minimap-window-location 'right)
-  (setq minimap-update-delay 0.2)
-  (setq minimap-minimum-width 20))
-
-;; Dashboard for startup
-(use-package dashboard
-  :straight t
-  :defer my/defer-fast
-  :config
-  (dashboard-setup-startup-hook)
-  (setq dashboard-startup-banner 'logo)
-  (setq dashboard-center-content t)
-  (setq dashboard-items '((recents  . 5)
-                         (projects . 5)
-                         (bookmarks . 3)
-                         (agenda . 5)))
-  (setq dashboard-set-heading-icons t)
-  (setq dashboard-set-file-icons t)
-  (setq dashboard-banner-logo-title "Welcome to Emacs!")
-  (setq dashboard-footer-messages '("Happy Coding!")))
-
 ;; Apply UI setup
 (add-hook 'emacs-startup-hook #'my/setup-modern-ui)
+
+;; --- EPUB Reader ---
+
+;; visual-fill-column: Better text centering and wrapping
+(use-package visual-fill-column
+  :straight t
+  :defer t
+  :config
+  (setq-default visual-fill-column-width 80)
+  (setq-default visual-fill-column-center-text t))
+
+;; nov.el: EPUB reader for Emacs
+(use-package nov
+  :straight t
+  :defer t
+  :mode ("\\.epub\\'" . nov-mode)
+  :config
+  ;; Text width settings - use full window width
+  (setq nov-text-width t)
+
+  ;; Customize unzip program if needed
+  ;; (setq nov-unzip-program "unzip")
+
+  ;; Font and visual setup for nov mode
+  (defun my/nov-setup ()
+    "Setup font and visual settings for nov mode."
+    (face-remap-add-relative 'variable-pitch
+                              :family "Fira Code"
+                              :height 1.2)
+    (visual-line-mode 1)
+    (when (fboundp 'visual-fill-column-mode)
+      (setq-local visual-fill-column-center-text t)
+      (visual-fill-column-mode 1)))
+
+  (add-hook 'nov-mode-hook #'my/nov-setup))
+
+;; Nov.el keybindings (available in nov-mode):
+;; n/p       - next/previous chapter
+;; g         - go to chapter
+;; t         - display table of contents
+;; TAB       - jump to next link
+;; <backtab> - jump to previous link
+;; RET       - follow link
+;; C-x C-+/- - increase/decrease font size
 
 (provide 'modern-ui)
 ;;; modern-ui.el ends here
