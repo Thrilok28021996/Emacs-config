@@ -1,0 +1,292 @@
+#+TITLE: Weekly Flow - Week %<%V, %Y>
+#+DATE: %<%Y-%m-%d>
+#+FILETAGS: :weekly:planning:review:
+
+* 📅 Week at a Glance
+
+** Week Of: %<%B %d, %Y>
+- *Week Number*: %<%V>
+- *Month*: %<%B>
+- *Quarter*: Q%<%q>
+
+** Theme of the Week
+What's the main focus this week?
+
+* 🎯 Weekly Objectives
+
+** Top 3 Goals
+1. [ ] *Goal 1*:
+   - Why it matters:
+   - Success criteria:
+
+2. [ ] *Goal 2*:
+   - Why it matters:
+   - Success criteria:
+
+3. [ ] *Goal 3*:
+   - Why it matters:
+   - Success criteria:
+
+** Key Results Expected
+- KR1:
+- KR2:
+- KR3:
+
+* 📋 Weekly Tasks
+
+** High Priority [0/0]
+- [ ] Task 1
+- [ ] Task 2
+- [ ]
+
+** Medium Priority [0/0]
+- [ ] Task 1
+- [ ] Task 2
+- [ ]
+
+** Low Priority (If Time Permits) [0/0]
+- [ ] Task 1
+- [ ] Task 2
+- [ ]
+
+** Recurring Tasks [0/0]
+- [ ] Weekly review
+- [ ] Project updates
+- [ ] Learning time
+- [ ]
+
+* 📚 Learning Goals
+
+** What to Learn This Week
+- [ ] Topic 1:
+- [ ] Topic 2:
+- [ ]
+
+** Courses/Tutorials to Complete
+- [ ] [[link][Course/Tutorial Name]] - Module X
+- [ ]
+
+** Books/Articles to Read
+- [ ]
+- [ ]
+
+** Practice/Projects
+- [ ] Work on: [[link][Project Name]]
+- [ ]
+
+* 💻 Development Work
+
+** Active Projects
+| Project | This Week's Goal | Status | Hours Allocated |
+|---------+------------------+--------+-----------------|
+| [[link][Project 1]] |                  | [ ]    |                 |
+| [[link][Project 2]] |                  | [ ]    |                 |
+
+** Code Reviews Needed
+- [ ]
+- [ ]
+
+** Bugs to Fix
+- [ ] [[link][Bug #1]]
+- [ ]
+
+* 🗓️ Daily Breakdown
+
+** Monday %<%Y-%m-%d>
+*** Focus:
+*** Tasks: [0/0]
+- [ ]
+- [ ]
+*** Notes:
+
+** Tuesday %<%Y-%m-%d>
+*** Focus:
+*** Tasks: [0/0]
+- [ ]
+- [ ]
+*** Notes:
+
+** Wednesday %<%Y-%m-%d>
+*** Focus:
+*** Tasks: [0/0]
+- [ ]
+- [ ]
+*** Notes:
+
+** Thursday %<%Y-%m-%d>
+*** Focus:
+*** Tasks: [0/0]
+- [ ]
+- [ ]
+*** Notes:
+
+** Friday %<%Y-%m-%d>
+*** Focus:
+*** Tasks: [0/0]
+- [ ]
+- [ ]
+*** Notes:
+
+** Weekend Plans
+*** Saturday - Personal/Learning Time
+- [ ]
+- [ ]
+
+*** Sunday - Planning & Preparation
+- [ ] Next week planning
+- [ ] Weekly review
+- [ ]
+
+* 🤝 Meetings & Collaboration
+
+** Scheduled Meetings
+| Date/Time | Meeting | Attendees | Prep Needed |
+|-----------+---------+-----------+-------------|
+|           |         |           | [ ]         |
+|           |         |           | [ ]         |
+
+** Follow-ups Required
+- [ ] Person/Team:
+- [ ]
+
+* ⏱️ Time Allocation
+
+** Planned Time Distribution
+| Activity | Planned Hours | Actual Hours | Notes |
+|----------+---------------+--------------+-------|
+| Deep Work |               |              |       |
+| Meetings |               |              |       |
+| Learning |               |              |       |
+| Admin    |               |              |       |
+| Breaks   |               |              |       |
+
+** Time Blocking
+- *Deep Work Blocks*: [e.g., Mon 9-12, Wed 9-12, Fri 9-12]
+- *Meeting Time*: [e.g., Tue/Thu afternoons]
+- *Learning Time*: [e.g., Daily 7-8pm]
+- *Review Time*: [e.g., Fri 4-5pm]
+
+* 📊 Progress Tracking
+
+** Completed This Week [0/0]
+- [ ] Achievement 1
+- [ ] Achievement 2
+- [ ]
+
+** Metrics
+- *Tasks Completed*: __ / __
+- *Goals Achieved*: __ / 3
+- *Learning Hours*: __ hours
+- *Code Commits*: __
+- *PRs Merged*: __
+
+* 💡 Insights & Learning
+
+** Key Learnings
+1.
+2.
+3.
+
+** Challenges Faced
+- Challenge:
+  - How I overcame it:
+
+** Skills Improved
+- [ ] Skill 1
+- [ ] Skill 2
+
+* 🔄 Continuous Improvement
+
+** What Went Well ✅
+-
+-
+
+** What Could Be Improved 🔧
+-
+-
+
+** Process Adjustments
+-
+-
+
+** Tools/Techniques Tried
+- *Tool*:
+  - Verdict:
+
+* 🎯 Next Week Preview
+
+** Carry Over Tasks
+- [ ]
+- [ ]
+
+** Upcoming Priorities
+1.
+2.
+3.
+
+** Preparation Needed
+- [ ]
+- [ ]
+
+* 🧘 Work-Life Balance
+
+** Energy Levels
+| Day | Energy (1-10) | Focus (1-10) | Notes |
+|-----+---------------+--------------+-------|
+| Mon |               |              |       |
+| Tue |               |              |       |
+| Wed |               |              |       |
+| Thu |               |              |       |
+| Fri |               |              |       |
+
+** Self-Care Checklist [0/0]
+- [ ] Exercise (__ days)
+- [ ] Adequate sleep (__ days)
+- [ ] Healthy meals
+- [ ] Breaks/Walks
+- [ ] Social time
+- [ ] Hobby time
+
+** Wins & Gratitude
+*** This Week's Wins 🎉
+-
+-
+
+*** Grateful For
+-
+-
+
+* 📝 Notes & Reflections
+
+** Random Thoughts
+
+
+** Ideas to Explore
+-
+-
+
+** Quotes/Inspiration
+#+begin_quote
+
+#+end_quote
+
+* 🔗 Resources & Links
+
+** Useful Resources Discovered
+-
+-
+
+** Articles Read
+-
+-
+
+** Tools/Apps Used
+-
+-
+
+---
+*Week Rating*: __ / 10
+
+*Overall Satisfaction*: [ ] Excellent [ ] Good [ ] Okay [ ] Needs Improvement
+
+*One Thing to Remember*:

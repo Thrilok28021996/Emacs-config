@@ -23,41 +23,66 @@
         org-ellipsis " ▾")
   
   
-  ;; Enhanced org capture templates for writing
+  ;; Enhanced org capture templates for writing and learning
   (setq org-capture-templates
         `(("t" "Task" entry
            (file+headline ,(concat org-directory "/tasks.org") "Inbox")
            "* TODO %?\n  %u\n  %i")
-          
+
           ("n" "Note" entry
            (file+headline ,(concat org-directory "/notes.org") "Quick Notes")
            "* %?\n  %u\n  %i")
-          
+
           ("m" "Meeting" entry
            (file+headline ,(concat org-directory "/meetings.org") "Meetings")
            "* %?\n  %u\n  %i")
-          
+
+          ;; Learning Templates
+          ("l" "Learning Templates")
+          ("lc" "Course" entry
+           (file ,(concat org-directory "/learning/courses.org"))
+           (file ,(expand-file-name "templates/notes/course-template.org" user-emacs-directory)))
+
+          ("le" "Learning Extract" entry
+           (file ,(concat org-directory "/learning/extracts.org"))
+           (file ,(expand-file-name "templates/notes/learning-extract.org" user-emacs-directory)))
+
+          ("lt" "Tutorial" entry
+           (file ,(concat org-directory "/learning/tutorials.org"))
+           (file ,(expand-file-name "templates/notes/tutorial-template.org" user-emacs-directory)))
+
+          ("ln" "Universal Note" entry
+           (file ,(concat org-directory "/learning/notes.org"))
+           (file ,(expand-file-name "templates/notes/universal-note.org" user-emacs-directory)))
+
+          ;; Project Template
+          ("p" "Project" entry
+           (file ,(concat org-directory "/projects/projects.org"))
+           (file ,(expand-file-name "templates/notes/project-template.org" user-emacs-directory)))
+
+          ;; Weekly Flow
+          ("f" "Weekly Flow" entry
+           (file ,(concat org-directory "/planning/weekly.org"))
+           (file ,(expand-file-name "templates/notes/weekly-flow.org" user-emacs-directory)))
+
+          ;; Writing Templates
           ("w" "Writing Templates")
           ("wi" "Idea" entry
            (file+headline ,(concat org-directory "/writing.org") "Ideas")
            "* %?\n  %u\n  %i\n\n** Context\n\n** Development\n")
-          
+
           ("wa" "Article Draft" entry
            (file+headline ,(concat org-directory "/writing.org") "Articles")
            "* DRAFT %?\n  %u\n\n** Outline\n   - \n\n** Introduction\n\n** Main Content\n\n** Conclusion\n\n** References\n")
-          
-          ("wp" "Project Note" entry
-           (file+headline ,(concat org-directory "/projects.org") "Active Projects")
-           "* %?\n  %u\n\n** Objective\n\n** Progress\n\n** Next Steps\n\n** Resources\n")
-          
+
           ("wj" "Journal Entry" entry
            (file+datetree ,(concat org-directory "/journal.org"))
            "* %?\n  %u\n\n** Reflection\n\n** Learnings\n")
-          
+
           ("wr" "Research Note" entry
            (file+headline ,(concat org-directory "/research.org") "Research Notes")
            "* %?\n  %u\n\n** Source: \n** Key Points\n   - \n\n** Analysis\n\n** Related Topics\n   - ")
-          
+
           ("wq" "Quote" entry
            (file+headline ,(concat org-directory "/quotes.org") "Quotes")
            "* %?\n  %u\n  Source: \n\n** Context\n\n** Reflection\n")))
@@ -171,125 +196,74 @@
         org-roam-completion-everywhere t)
   (org-roam-db-autosync-mode)
   
-  ;; LYT + Zettelkasten Hybrid Capture Templates
+  ;; Simplified Org-roam Capture Templates
   (setq org-roam-capture-templates
-        `(;; Atomic notes (Zettelkasten style)
-          ("a" "Atomic Note" plain
-           (file ,(expand-file-name "templates/notes/hybrid-lyt-zettel/atomic-note.org" user-emacs-directory))
-           :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "")
-           :unnarrowed t)
-          
-          ;; Fluid/Emergent notes
-          ("f" "Fluid Note" plain
-           (file ,(expand-file-name "templates/notes/hybrid-lyt-zettel/fluid-note.org" user-emacs-directory))
-           :target (file+head "fluid-%<%Y%m%d%H%M%S>-${slug}.org" "")
-           :unnarrowed t)
-          
-          ;; Synthesis notes
-          ("s" "Synthesis Note" plain
-           (file ,(expand-file-name "templates/notes/hybrid-lyt-zettel/synthesis-note.org" user-emacs-directory))
-           :target (file+head "synthesis-%<%Y%m%d%H%M%S>-${slug}.org" "")
-           :unnarrowed t)
-          
-          ;; MOC (Map of Content) - LYT style
-          ("m" "MOC - Map of Content" plain
-           (file ,(expand-file-name "templates/notes/hybrid-lyt-zettel/moc-template.org" user-emacs-directory))
-           :target (file+head "MOC-%<%Y%m%d%H%M%S>-${slug}.org" "")
-           :unnarrowed t)
-          
-          ;; Knowledge Hub/Index
-          ("h" "Knowledge Hub" plain
-           (file ,(expand-file-name "templates/notes/hybrid-lyt-zettel/index-hub.org" user-emacs-directory))
-           :target (file+head "HUB-%<%Y%m%d%H%M%S>-${slug}.org" "")
-           :unnarrowed t)
-          
-          ;; Literature notes (enhanced for hybrid system)
-          ("l" "Literature Note" plain
-           (file ,(expand-file-name "templates/notes/literature-note.org" user-emacs-directory))
-           :target (file+head "lit-%<%Y%m%d%H%M%S>-${slug}.org" "")
-           :unnarrowed t)
-          
-          ;; Research notes (enhanced for hybrid system)
-          ("r" "Research Note" plain
-           (file ,(expand-file-name "templates/notes/research-note.org" user-emacs-directory))
-           :target (file+head "research-%<%Y%m%d%H%M%S>-${slug}.org" "")
-           :unnarrowed t)
-          
-          ;; Quick default note
+        `(;; Default note
           ("d" "Default Note" plain "%?"
            :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
-                              "#+title: ${title}\n")
+                              "#+title: ${title}\n#+date: %<%Y-%m-%d>\n#+filetags: \n\n")
+           :unnarrowed t)
+
+          ;; Course note (for org-roam)
+          ("c" "Course" plain
+           (file ,(expand-file-name "templates/notes/course-template.org" user-emacs-directory))
+           :target (file+head "course-%<%Y%m%d%H%M%S>-${slug}.org" "")
+           :unnarrowed t)
+
+          ;; Learning extract (for org-roam)
+          ("l" "Learning Extract" plain
+           (file ,(expand-file-name "templates/notes/learning-extract.org" user-emacs-directory))
+           :target (file+head "learn-%<%Y%m%d%H%M%S>-${slug}.org" "")
+           :unnarrowed t)
+
+          ;; Tutorial (for org-roam)
+          ("t" "Tutorial" plain
+           (file ,(expand-file-name "templates/notes/tutorial-template.org" user-emacs-directory))
+           :target (file+head "tutorial-%<%Y%m%d%H%M%S>-${slug}.org" "")
+           :unnarrowed t)
+
+          ;; Universal note (for org-roam)
+          ("n" "Universal Note" plain
+           (file ,(expand-file-name "templates/notes/universal-note.org" user-emacs-directory))
+           :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "")
            :unnarrowed t)))
   
-  ;; Enhanced node display for hybrid system
+  ;; Enhanced node display
   (setq org-roam-node-display-template
         (concat "${type:12} ${title:*} "
-                (propertize "${tags:20}" 'face 'org-tag)
-                " ${file:30}"))
-  
+                (propertize "${tags:20}" 'face 'org-tag)))
+
   ;; Custom node type extraction
   (cl-defmethod org-roam-node-type ((node org-roam-node))
     "Extract note type from filename or tags."
-    (let ((file (org-roam-node-file node))
-          (tags (org-roam-node-tags node)))
+    (let ((file (org-roam-node-file node)))
       (cond
-       ((string-match "^MOC-" (file-name-base file)) "🗺️ MOC")
-       ((string-match "^HUB-" (file-name-base file)) "🏠 Hub")
-       ((string-match "^synthesis-" (file-name-base file)) "🔀 Synthesis")
-       ((string-match "^fluid-" (file-name-base file)) "🌊 Fluid")
-       ((string-match "^lit-" (file-name-base file)) "📚 Literature")
-       ((string-match "^research-" (file-name-base file)) "🔬 Research")
-       ((member "atomic" tags) "⚛️ Atomic")
-       ((member "MOC" tags) "🗺️ MOC")
-       ((member "hub" tags) "🏠 Hub")
+       ((string-match "^course-" (file-name-base file)) "📚 Course")
+       ((string-match "^learn-" (file-name-base file)) "💡 Learning")
+       ((string-match "^tutorial-" (file-name-base file)) "🎓 Tutorial")
        (t "📝 Note"))))
   
   ;; Keybindings now handled in modules/evil-config.el to avoid conflicts
   )
 
-;; Enhanced org-roam utilities for LYT-Zettelkasten workflow
-(defun my/org-roam-find-moc ()
-  "Find or create a Map of Content (MOC)."
+;; Simplified org-roam utilities
+(defun my/org-roam-find-course ()
+  "Find course notes."
   (interactive)
   (org-roam-node-find nil nil (lambda (node)
-                                (string-match "^MOC-" (file-name-base (org-roam-node-file node))))))
+                                (string-match "^course-" (file-name-base (org-roam-node-file node))))))
 
-(defun my/org-roam-find-atomic ()
-  "Find atomic notes (timestamped notes)."
+(defun my/org-roam-find-tutorial ()
+  "Find tutorial notes."
   (interactive)
   (org-roam-node-find nil nil (lambda (node)
-                                (string-match "^[0-9]\\{14\\}" (file-name-base (org-roam-node-file node))))))
+                                (string-match "^tutorial-" (file-name-base (org-roam-node-file node))))))
 
-(defun my/org-roam-find-hub ()
-  "Find knowledge hubs."
+(defun my/org-roam-find-learning ()
+  "Find learning extract notes."
   (interactive)
   (org-roam-node-find nil nil (lambda (node)
-                                (string-match "^HUB-" (file-name-base (org-roam-node-file node))))))
-
-(defun my/org-roam-review-orphans ()
-  "Find orphaned notes that need connections."
-  (interactive)
-  (let ((orphaned-nodes (seq-filter
-                         (lambda (node)
-                           (= (length (org-roam-backlinks-get node)) 0))
-                         (org-roam-node-list))))
-    (if orphaned-nodes
-        (org-roam-node-find nil nil (lambda (node) (member node orphaned-nodes)))
-      (message "No orphaned notes found!"))))
-
-(defun my/org-roam-capture-hybrid ()
-  "Quick hybrid capture with type selection."
-  (interactive)
-  (let ((type (completing-read "Note type: "
-                               '("Atomic" "Fluid" "Synthesis" "MOC" "Hub" "Literature" "Research"))))
-    (pcase type
-      ("Atomic" (org-roam-capture nil "a"))
-      ("Fluid" (org-roam-capture nil "f"))
-      ("Synthesis" (org-roam-capture nil "s"))
-      ("MOC" (org-roam-capture nil "m"))
-      ("Hub" (org-roam-capture nil "h"))
-      ("Literature" (org-roam-capture nil "l"))
-      ("Research" (org-roam-capture nil "r")))))
+                                (string-match "^learn-" (file-name-base (org-roam-node-file node))))))
 
 ;; Org journal for daily notes
 (use-package org-journal
@@ -449,6 +423,41 @@
   (setq org-table-automatic-realign t)
   (setq org-table-tab-recognizes-table.el t))
 
+;; Org Babel for code execution in source blocks
+(use-package org-babel
+  :straight (:type built-in)
+  :defer t
+  :after org
+  :config
+  ;; Enable code execution for specific languages
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((emacs-lisp . t)
+     (python . t)
+     (shell . t)
+     (C . t)           ; C/C++ support
+     (js . t)
+     (sql . t)
+     (latex . t)
+     (org . t)))
+
+  ;; Don't ask for confirmation before executing code blocks
+  (setq org-confirm-babel-evaluate nil)
+
+  ;; Enhanced babel settings for programming
+  (setq org-src-fontify-natively t          ; Syntax highlighting in source blocks
+        org-src-tab-acts-natively t         ; Tab acts native in source blocks
+        org-src-preserve-indentation t      ; Preserve indentation
+        org-src-window-setup 'current-window ; Open source block in current window
+        org-edit-src-content-indentation 0) ; No extra indentation
+
+  ;; Python-specific babel settings
+  (setq org-babel-python-command "python3")
+
+  ;; C/C++ babel settings
+  (setq org-babel-C++-compiler "g++")
+  (setq org-babel-C-compiler "gcc"))
+
 ;; Org Tempo for structure templates (< s TAB, etc.)
 (use-package org-tempo
   :straight (:type built-in)
@@ -458,6 +467,8 @@
   ;; Add more structure templates
   (add-to-list 'org-structure-template-alist '("sh" . "src shell"))
   (add-to-list 'org-structure-template-alist '("py" . "src python"))
+  (add-to-list 'org-structure-template-alist '("cpp" . "src C++"))
+  (add-to-list 'org-structure-template-alist '("c" . "src C"))
   (add-to-list 'org-structure-template-alist '("js" . "src javascript"))
   (add-to-list 'org-structure-template-alist '("el" . "src elisp"))
   (add-to-list 'org-structure-template-alist '("json" . "src json")))

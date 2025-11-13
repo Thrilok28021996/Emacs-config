@@ -11,23 +11,27 @@
 
 ;; --- Tree-sitter Configuration ---
 
+;; Set tree-sitter grammar sources BEFORE treesit-auto loads
+;; This ensures grammars can be installed automatically
+(setq treesit-language-source-alist
+      '((c "https://github.com/tree-sitter/tree-sitter-c" "v0.20.7")
+        (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
+        (python "https://github.com/tree-sitter/tree-sitter-python")
+        (javascript "https://github.com/tree-sitter/tree-sitter-javascript")
+        (json "https://github.com/tree-sitter/tree-sitter-json")
+        (rust "https://github.com/tree-sitter/tree-sitter-rust")
+        (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+        (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+        (css "https://github.com/tree-sitter/tree-sitter-css")
+        (html "https://github.com/tree-sitter/tree-sitter-html")
+        (yaml "https://github.com/tree-sitter/tree-sitter-yaml")))
+
 ;; Treesit-auto: Automatically use tree-sitter modes
 (use-package treesit-auto
   :straight t
-  :defer my/defer-medium  ; Defer more aggressively
+  :defer my/defer-medium
   :config
   (setq treesit-auto-install 'prompt)
-
-  ;; Set compatible tree-sitter grammar sources
-  (setq treesit-language-source-alist
-        '((c "https://github.com/tree-sitter/tree-sitter-c" "v0.20.7")
-          (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
-          (python "https://github.com/tree-sitter/tree-sitter-python")
-          (javascript "https://github.com/tree-sitter/tree-sitter-javascript")
-          (json "https://github.com/tree-sitter/tree-sitter-json")
-          (rust "https://github.com/tree-sitter/tree-sitter-rust")
-          (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "typescript/src" "typescript.h")))
-
   (global-treesit-auto-mode)
 
   ;; PERFORMANCE: Only enable essential languages by default
@@ -162,6 +166,14 @@
         '(black))
   (setf (alist-get 'python-ts-mode apheleia-mode-alist)
         '(black))
+  (setf (alist-get 'c-mode apheleia-mode-alist)
+        '(clang-format))
+  (setf (alist-get 'c-ts-mode apheleia-mode-alist)
+        '(clang-format))
+  (setf (alist-get 'c++-mode apheleia-mode-alist)
+        '(clang-format))
+  (setf (alist-get 'c++-ts-mode apheleia-mode-alist)
+        '(clang-format))
   (setf (alist-get 'js-mode apheleia-mode-alist)
         '(prettier))
   (setf (alist-get 'js-ts-mode apheleia-mode-alist)
@@ -228,7 +240,7 @@
 ;; --- Tree-sitter Language Installation Helper ---
 
 (defun my/install-tree-sitter-languages ()
-  "Install essential tree-sitter language grammars."
+  "Install essential tree-sitter language grammars interactively."
   (interactive)
   (let ((languages '(c cpp css html javascript json python rust yaml typescript tsx))
         (failed-installs '())
@@ -244,7 +256,7 @@
             (error
              (push (cons lang (error-message-string err)) failed-installs)
              (message "❌ Failed to install %s grammar: %s" lang (error-message-string err)))))))
-    
+
     ;; Summary message
     (cond
      ((and successful-installs failed-installs)
@@ -256,6 +268,56 @@
       (message "❌ Some tree-sitter installations failed. Check messages for details."))
      (t
       (message "Tree-sitter language installation check completed - no new grammars needed!")))))
+
+(defun my/auto-install-tree-sitter-languages ()
+  "Automatically install missing tree-sitter language grammars on startup."
+  (let ((languages '(c cpp css html javascript json python rust yaml typescript tsx))
+        (failed-installs '())
+        (successful-installs '())
+        (skipped-installs '())
+        (missing-count 0))
+
+    ;; First, count how many are missing
+    (dolist (lang languages)
+      (unless (treesit-language-available-p lang)
+        (setq missing-count (1+ missing-count))))
+
+    ;; Only proceed if there are missing grammars
+    (when (> missing-count 0)
+      (message "🔧 Installing %d missing tree-sitter grammars..." missing-count)
+
+      (dolist (lang languages)
+        (unless (treesit-language-available-p lang)
+          ;; Check if recipe exists
+          (if (assoc lang treesit-language-source-alist)
+              (condition-case err
+                  (progn
+                    ;; Suppress warnings during installation
+                    (let ((warning-minimum-level :error))
+                      (treesit-install-language-grammar lang))
+                    (push lang successful-installs)
+                    (message "  ✅ Installed %s grammar" lang))
+                (error
+                 (push (cons lang (error-message-string err)) failed-installs)
+                 (message "  ❌ Failed to install %s: %s" lang (error-message-string err))))
+            ;; No recipe found
+            (push lang skipped-installs)
+            (message "  ⏭️  Skipped %s (no recipe)" lang))))
+
+      ;; Summary message
+      (let ((total-attempted (+ (length successful-installs) (length failed-installs))))
+        (cond
+         ((> total-attempted 0)
+          (if (> (length failed-installs) 0)
+              (message "🌳 Tree-sitter: %d/%d installed successfully"
+                       (length successful-installs) total-attempted)
+            (message "🌳 Tree-sitter: All %d grammars installed successfully!"
+                     (length successful-installs))))
+         (t
+          (message "🌳 Tree-sitter: All grammars already installed")))))))
+
+;; Auto-install tree-sitter grammars on startup (runs after 3 seconds idle)
+(run-with-idle-timer 3 nil #'my/auto-install-tree-sitter-languages)
 
 ;; --- Snippet System ---
 

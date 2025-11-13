@@ -1,0 +1,75 @@
+#+TITLE: ${title}
+#+DATE: %<%Y-%m-%d>
+#+FILETAGS: :note:
+
+* 📌 Quick Summary
+
+One-sentence summary of this note:
+
+* 🎯 Context
+
+** Why This Note?
+-
+
+** Category
+[ ] Idea [ ] Concept [ ] Resource [ ] Reference [ ] TODO [ ] Meeting
+
+** Related To
+- Project: [[link][Project Name]]
+- Topic: [[link][Related Topic]]
+- Tags: :tag1:tag2:
+
+* 📝 Main Content
+
+** Key Points
+1.
+2.
+3.
+
+** Details
+
+
+** Code/Examples
+#+begin_src
+
+#+end_src
+
+* 🔗 Connections
+
+** Related Notes
+- [[link][Note 1]]
+- [[link][Note 2]]
+
+** Sources/References
+-
+-
+
+** Links
+-
+-
+
+* ✅ Action Items
+
+- [ ]
+- [ ]
+
+* 💭 Personal Thoughts
+
+** My Take
+
+
+** Questions
+- ?
+- ?
+
+** Ideas Sparked
+-
+-
+
+* 📅 Follow-up
+
+** Review Date
+Schedule: [[date:%<%Y-%m-%d>][Next Review]]
+
+** What's Next?
+-
