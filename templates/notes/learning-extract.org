@@ -1,6 +1,8 @@
 #+TITLE: ${title}
 #+DATE: %<%Y-%m-%d>
 #+FILETAGS: :extract:learning:
+#+ROAM_ALIASES:
+#+CATEGORY: Learning
 
 * 📖 Source Information
 

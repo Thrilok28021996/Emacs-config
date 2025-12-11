@@ -1,6 +1,8 @@
 #+TITLE: Weekly Flow - Week %<%V, %Y>
 #+DATE: %<%Y-%m-%d>
 #+FILETAGS: :weekly:planning:review:
+#+ROAM_ALIASES:
+#+CATEGORY: Planning
 
 * 📅 Week at a Glance
 

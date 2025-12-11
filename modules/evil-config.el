@@ -228,14 +228,54 @@
     "V l" 'conda-env-list
     "V c" 'conda-env-activate-for-buffer
     
-    ;; Compile operations
-    "c c" 'compile
-    "c r" 'recompile
-    "c k" 'kill-compilation
-    "c n" 'next-error
-    "c p" 'previous-error
-    "c l" 'compilation-mode
-    
+    ;; Code operations (compile, format, actions)
+    "c c" 'compile                       ; Compile project
+    "c r" 'recompile                     ; Recompile
+    "c k" 'kill-compilation              ; Kill compilation
+    "c f" 'apheleia-format-buffer        ; Format buffer
+    "c a" 'eglot-code-actions            ; Code actions (LSP)
+    "c R" 'eglot-rename                  ; Rename symbol (LSP)
+
+    ;; Compilation errors
+    "c n" 'next-error                    ; Next error
+    "c p" 'previous-error                ; Previous error
+    "c l" 'compilation-mode              ; Compilation mode
+
+    ;; Debug operations (DAP mode)
+    "d d" 'my/dap-debug-current-file     ; Debug current file (smart)
+    "d D" 'dap-debug                     ; Debug with template selection
+    "d b" 'dap-breakpoint-toggle         ; Toggle breakpoint
+    "d B" 'dap-breakpoint-condition      ; Conditional breakpoint
+    "d l" 'dap-breakpoint-log-message    ; Log point
+    "d a" 'dap-breakpoint-add            ; Add breakpoint
+    "d r" 'dap-breakpoint-delete         ; Remove breakpoint
+    "d R" 'dap-breakpoint-delete-all     ; Remove all breakpoints
+
+    ;; Debug execution
+    "d c" 'dap-continue                  ; Continue execution
+    "d n" 'dap-next                      ; Step over
+    "d s" 'dap-step-in                   ; Step into
+    "d o" 'dap-step-out                  ; Step out
+    "d t" 'dap-restart-frame             ; Restart frame
+    "d q" 'dap-disconnect                ; Stop debugging
+    "d Q" 'dap-delete-all-sessions       ; Kill all debug sessions
+
+    ;; Debug inspection
+    "d e" 'dap-eval                      ; Evaluate expression
+    "d E" 'dap-eval-thing-at-point       ; Evaluate at point
+    "d i" 'dap-ui-inspect-thing-at-point ; Inspect at point
+    "d w" 'dap-ui-expressions-add        ; Add watch expression
+    "d W" 'dap-ui-expressions-remove     ; Remove watch expression
+
+    ;; Debug UI
+    "d u" 'dap-ui-repl                   ; Open REPL
+    "d h" 'dap-hydra                     ; Show all debug commands
+    "d L" 'dap-ui-locals                 ; Show local variables
+    "d S" 'dap-ui-sessions               ; Show debug sessions
+
+    ;; Python-specific debugging
+    "d p" 'my/dap-python-test-method     ; Debug current test method
+
     ;; Comment operations
     ";" 'comment-line
     "/ /" 'comment-or-uncomment-region
@@ -252,29 +292,23 @@
     ;; LSP/Language server operations
     "l e" 'eglot                        ; Start Eglot manually
     "l E" 'eglot-ensure                 ; Ensure Eglot started
-    "l r" 'eglot-find-references
-    "l R" 'eglot-rename
-    "l d" 'eglot-find-definition
-    "l i" 'eglot-find-implementation
-    "l t" 'eglot-find-typeDefinition
-    "l s" 'eldoc
-    "l h" 'eldoc-doc-buffer
-    "l a" 'eglot-code-actions
-    "l f" 'eglot-format
-    "l F" 'eglot-format-buffer
-    "l w r" 'eglot-reconnect
-    "l w s" 'eglot-shutdown
-    "l w A" 'eglot-shutdown-all
+    "l r" 'eglot-find-references        ; Find references
+    "l d" 'eglot-find-definition        ; Go to definition
+    "l i" 'eglot-find-implementation    ; Find implementation
+    "l t" 'eglot-find-typeDefinition    ; Go to type definition
+    "l s" 'eldoc                        ; Show documentation
+    "l h" 'eldoc-doc-buffer             ; Open doc buffer
+    "l f" 'eglot-format-buffer          ; Format buffer
+    "l R" 'eglot-reconnect              ; Reconnect LSP
+    "l S" 'eglot-shutdown               ; Shutdown LSP
+    "l K" 'eglot-shutdown-all           ; Shutdown all LSP
     
     ;; Error/diagnostic navigation
     "e n" 'flymake-goto-next-error
     "e p" 'flymake-goto-prev-error
     "e l" 'flymake-show-buffer-diagnostics
     "e L" 'flymake-show-project-diagnostics
-    
-    ;; Code formatting
-    "c f" 'apheleia-format-buffer
-    
+
     ;; Git operations (if magit is available)
     "g s" 'magit-status
     "g b" 'magit-blame

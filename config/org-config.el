@@ -6,6 +6,21 @@
 
 ;;; Code:
 
+;; Ensure org directory structure exists
+(defun my/ensure-org-directories ()
+  "Create org directory structure if it doesn't exist."
+  (let ((dirs '("~/Documents/org"
+                "~/Documents/org/learning"
+                "~/Documents/org/projects"
+                "~/Documents/org/planning")))
+    (dolist (dir dirs)
+      (let ((expanded-dir (expand-file-name dir)))
+        (unless (file-directory-p expanded-dir)
+          (make-directory expanded-dir t)
+          (message "Created directory: %s" expanded-dir))))))
+
+;; Create directories on load
+(my/ensure-org-directories)
 
 ;; Core org-mode configuration (using stable org from GNU ELPA)
 (use-package org
@@ -136,7 +151,27 @@
         org-refile-use-outline-path 'file
         org-outline-path-complete-in-steps nil
         org-refile-allow-creating-parent-nodes 'confirm)
-  
+
+  ;; Custom agenda commands for better productivity
+  (setq org-agenda-custom-commands
+        '(("d" "Daily Agenda and TODOs"
+           ((agenda "" ((org-agenda-span 1)))
+            (todo "TODO"
+                  ((org-agenda-overriding-header "Unscheduled TODOs:")
+                   (org-agenda-skip-function
+                    '(org-agenda-skip-entry-if 'scheduled 'deadline))))))
+
+          ("w" "Weekly Review"
+           ((agenda "" ((org-agenda-span 7)))
+            (todo "DONE"
+                  ((org-agenda-overriding-header "Completed This Week:")))
+            (todo "TODO"
+                  ((org-agenda-overriding-header "Still TODO:")))))
+
+          ("l" "Learning Tasks"
+           ((tags-todo "learning"
+                       ((org-agenda-overriding-header "Learning TODOs:")))))))
+
   ;; Keybindings now handled in modules/evil-config.el to avoid conflicts
   )
 
@@ -190,42 +225,58 @@
 (use-package org-roam
   :straight t
   :defer 5
-  :commands (org-roam-node-find org-roam-node-insert org-roam-capture)
+  :commands (org-roam-node-find org-roam-node-insert org-roam-capture org-roam-db-sync)
   :config
   (setq org-roam-directory "~/Documents/roam-notes"
         org-roam-completion-everywhere t)
-  (org-roam-db-autosync-mode)
+
+  ;; PERFORMANCE: Delay autosync to prevent freezing on startup
+  ;; Starts 60 seconds after Emacs is idle instead of immediately
+  ;; Use M-x org-roam-db-sync manually if needed sooner
+  (run-with-idle-timer 60 nil #'org-roam-db-autosync-mode)
   
-  ;; Simplified Org-roam Capture Templates
+  ;; Enhanced Org-roam Capture Templates with better organization
   (setq org-roam-capture-templates
         `(;; Default note
           ("d" "Default Note" plain "%?"
            :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
-                              "#+title: ${title}\n#+date: %<%Y-%m-%d>\n#+filetags: \n\n")
+                              "#+title: ${title}\n#+date: %<%Y-%m-%d>\n#+filetags: \n#+roam_aliases: \n\n")
            :unnarrowed t)
 
           ;; Course note (for org-roam)
           ("c" "Course" plain
            (file ,(expand-file-name "templates/notes/course-template.org" user-emacs-directory))
-           :target (file+head "course-%<%Y%m%d%H%M%S>-${slug}.org" "")
+           :target (file+head "course/%<%Y%m%d%H%M%S>-${slug}.org" "")
            :unnarrowed t)
 
           ;; Learning extract (for org-roam)
           ("l" "Learning Extract" plain
            (file ,(expand-file-name "templates/notes/learning-extract.org" user-emacs-directory))
-           :target (file+head "learn-%<%Y%m%d%H%M%S>-${slug}.org" "")
+           :target (file+head "learning/%<%Y%m%d%H%M%S>-${slug}.org" "")
            :unnarrowed t)
 
           ;; Tutorial (for org-roam)
           ("t" "Tutorial" plain
            (file ,(expand-file-name "templates/notes/tutorial-template.org" user-emacs-directory))
-           :target (file+head "tutorial-%<%Y%m%d%H%M%S>-${slug}.org" "")
+           :target (file+head "tutorials/%<%Y%m%d%H%M%S>-${slug}.org" "")
            :unnarrowed t)
 
           ;; Universal note (for org-roam)
           ("n" "Universal Note" plain
            (file ,(expand-file-name "templates/notes/universal-note.org" user-emacs-directory))
-           :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "")
+           :target (file+head "notes/%<%Y%m%d%H%M%S>-${slug}.org" "")
+           :unnarrowed t)
+
+          ;; Project note (for org-roam)
+          ("p" "Project" plain
+           (file ,(expand-file-name "templates/notes/project-template.org" user-emacs-directory))
+           :target (file+head "projects/%<%Y%m%d%H%M%S>-${slug}.org" "")
+           :unnarrowed t)
+
+          ;; Weekly planning note (for org-roam)
+          ("w" "Weekly Flow" plain
+           (file ,(expand-file-name "templates/notes/weekly-flow.org" user-emacs-directory))
+           :target (file+head "weekly/week-%<%Y-W%V>-${slug}.org" "")
            :unnarrowed t)))
   
   ;; Enhanced node display
@@ -233,18 +284,28 @@
         (concat "${type:12} ${title:*} "
                 (propertize "${tags:20}" 'face 'org-tag)))
 
-  ;; Custom node type extraction
+  ;; Custom node type extraction based on directory structure
   (cl-defmethod org-roam-node-type ((node org-roam-node))
-    "Extract note type from filename or tags."
-    (let ((file (org-roam-node-file node)))
+    "Extract note type from directory or filename."
+    (let* ((file (org-roam-node-file node))
+           (relative-path (file-relative-name file org-roam-directory)))
       (cond
-       ((string-match "^course-" (file-name-base file)) "📚 Course")
-       ((string-match "^learn-" (file-name-base file)) "💡 Learning")
-       ((string-match "^tutorial-" (file-name-base file)) "🎓 Tutorial")
-       (t "📝 Note"))))
-  
-  ;; Keybindings now handled in modules/evil-config.el to avoid conflicts
-  )
+       ((string-match "^course/" relative-path) "📚 Course")
+       ((string-match "^learning/" relative-path) "💡 Learning")
+       ((string-match "^tutorials/" relative-path) "🎓 Tutorial")
+       ((string-match "^projects/" relative-path) "🚀 Project")
+       ((string-match "^weekly/" relative-path) "📅 Weekly")
+       ((string-match "^notes/" relative-path) "📝 Note")
+       (t "📄 Default"))))
+
+  ;; Create subdirectories for org-roam organization
+  (let ((roam-subdirs '("course" "learning" "tutorials" "projects" "weekly" "notes")))
+    (dolist (subdir roam-subdirs)
+      (let ((dir-path (expand-file-name subdir org-roam-directory)))
+        (unless (file-directory-p dir-path)
+          (make-directory dir-path t))))))
+
+;; Keybindings now handled in modules/evil-config.el to avoid conflicts
 
 ;; Simplified org-roam utilities
 (defun my/org-roam-find-course ()

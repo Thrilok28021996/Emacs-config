@@ -1,6 +1,8 @@
 #+TITLE: ${title}
 #+DATE: %<%Y-%m-%d>
 #+FILETAGS: :course:learning:
+#+ROAM_ALIASES:
+#+CATEGORY: Course
 
 * 📚 Course Overview
 

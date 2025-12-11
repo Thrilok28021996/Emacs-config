@@ -1,6 +1,8 @@
 #+TITLE: ${title}
 #+DATE: %<%Y-%m-%d>
 #+FILETAGS: :project:
+#+ROAM_ALIASES:
+#+CATEGORY: Project
 
 * 🎯 Project Overview
 

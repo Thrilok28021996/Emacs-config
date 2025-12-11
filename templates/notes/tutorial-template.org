@@ -1,6 +1,8 @@
 #+TITLE: ${title}
 #+DATE: %<%Y-%m-%d>
 #+FILETAGS: :tutorial:howto:
+#+ROAM_ALIASES:
+#+CATEGORY: Tutorial
 
 * 🎯 Tutorial Goal
 

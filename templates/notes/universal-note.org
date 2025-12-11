@@ -1,6 +1,8 @@
 #+TITLE: ${title}
 #+DATE: %<%Y-%m-%d>
 #+FILETAGS: :note:
+#+ROAM_ALIASES:
+#+CATEGORY: Note
 
 * 📌 Quick Summary
 

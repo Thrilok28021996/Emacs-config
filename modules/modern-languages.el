@@ -15,8 +15,8 @@
 ;; This ensures grammars can be installed automatically
 (setq treesit-language-source-alist
       '((c "https://github.com/tree-sitter/tree-sitter-c" "v0.20.7")
-        (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
-        (python "https://github.com/tree-sitter/tree-sitter-python")
+        (cpp "https://github.com/tree-sitter/tree-sitter-cpp" "v0.20.3")
+        (python "https://github.com/tree-sitter/tree-sitter-python" "v0.20.4")
         (javascript "https://github.com/tree-sitter/tree-sitter-javascript")
         (json "https://github.com/tree-sitter/tree-sitter-json")
         (rust "https://github.com/tree-sitter/tree-sitter-rust")
@@ -47,11 +47,12 @@
   :defer t
   :commands (eglot eglot-ensure)
   ;; PERFORMANCE: Manual Eglot activation via SPC l e
-  ;; Auto-enable only for main languages to avoid startup overhead
-  :hook ((python-mode . eglot-ensure)
-         (python-ts-mode . eglot-ensure)
-         (c++-mode . eglot-ensure)
-         (c++-ts-mode . eglot-ensure))
+  ;; Hooks DISABLED to prevent freezing on file open
+  ;; Use M-x eglot or SPC c l to start LSP manually when needed
+  ;; :hook ((python-mode . eglot-ensure)
+  ;;        (python-ts-mode . eglot-ensure)
+  ;;        (c++-mode . eglot-ensure)
+  ;;        (c++-ts-mode . eglot-ensure))
   :config
   ;; Eglot performance optimizations
   (setq eglot-autoshutdown t)                    ; Shutdown server when last buffer is killed
@@ -92,11 +93,19 @@
 (use-package python
   :straight nil
   :mode ("\\.py\\'" . python-ts-mode) ; Use tree-sitter mode by default
+  :hook (python-mode . (lambda ()
+                         (setq-local tab-width 4)
+                         (setq-local python-indent-offset 4)))
   :config
   (setq python-indent-offset 4)
-  (setq python-shell-completion-native-enable nil))
+  (setq python-shell-completion-native-enable nil)
 
-;; Enhanced Python environment management
+  ;; iPython if available
+  (when (executable-find "ipython")
+    (setq python-shell-interpreter "ipython"
+          python-shell-interpreter-args "-i --simple-prompt")))
+
+;; Enhanced Python environment management with conda (primary)
 (use-package conda
   :straight t
   :defer t
@@ -109,15 +118,101 @@
             (expand-file-name "~/opt/anaconda3")
             (expand-file-name "~/opt/miniconda3")))
 
+  ;; Conda configuration
+  (setq conda-env-home-directory conda-anaconda-home)
+
   ;; Only initialize if conda exists
   (when (file-directory-p conda-anaconda-home)
-    (conda-env-initialize-interactive-shells)
-    (conda-env-initialize-eshell)))
+    ;; PERFORMANCE: Delay conda initialization to prevent freezing
+    ;; Initialize only when actually needed (first Python file)
+    ;; (conda-env-initialize-interactive-shells)
+    ;; (conda-env-initialize-eshell)
+
+    ;; Auto-activate conda env when opening Python files
+    (defun my/auto-activate-conda-env ()
+      "Auto-activate conda environment from project."
+      (when-let* ((project-root (locate-dominating-file default-directory "environment.yml"))
+                  (env-file (expand-file-name "environment.yml" project-root)))
+        ;; Try to find env name from environment.yml
+        (with-temp-buffer
+          (insert-file-contents env-file)
+          (goto-char (point-min))
+          (when (re-search-forward "^name:\\s-*\\(.+\\)$" nil t)
+            (let ((env-name (match-string 1)))
+              (unless (string= conda-env-current-name env-name)
+                (conda-env-activate env-name)
+                (message "Activated conda environment: %s" env-name)))))))
+
+    (add-hook 'python-mode-hook #'my/auto-activate-conda-env)
+    (add-hook 'python-ts-mode-hook #'my/auto-activate-conda-env)))
+
+;; Pyvenv (optional fallback for .venv users - disabled by default)
+;; Uncomment if you also use standard venv alongside conda
+;; (use-package pyvenv
+;;   :straight t
+;;   :defer t
+;;   :config
+;;   (pyvenv-mode 1))
+
+;; Pytest integration for Python testing
+(use-package python-pytest
+  :straight t
+  :after python
+  :defer t
+  :config
+  (setq python-pytest-arguments
+        '("--color"           ;; colored output
+          "--failed-first"    ;; run failed tests first
+          "--maxfail=5")))    ;; stop after 5 failures
 
 ;; C/C++ with Tree-sitter
 (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
 (add-to-list 'major-mode-remap-alist '(c++-mode . c++-ts-mode))
 (add-to-list 'major-mode-remap-alist '(c-or-c++-mode . c-or-c++-ts-mode))
+
+;; C/C++ mode configuration
+(use-package cc-mode
+  :straight nil
+  :mode (("\\.cpp\\'" . c++-ts-mode)
+         ("\\.hpp\\'" . c++-ts-mode)
+         ("\\.cc\\'" . c++-ts-mode)
+         ("\\.h\\'" . c++-ts-mode)
+         ("\\.c\\'" . c-ts-mode))
+  :config
+  (setq c-default-style "linux"
+        c-basic-offset 4)
+
+  ;; Better C++ indentation
+  (c-set-offset 'innamespace 0)   ;; Don't indent inside namespaces
+  (c-set-offset 'case-label '+)   ;; Indent case labels
+
+  ;; Quick compile function for C++
+  (defun my/cpp-compile ()
+    "Compile current C++ file with modern standards."
+    (interactive)
+    (let* ((file (buffer-file-name))
+           (output (file-name-sans-extension file)))
+      (compile (format "g++ -std=c++20 -Wall -Wextra -g %s -o %s"
+                       (shell-quote-argument file)
+                       (shell-quote-argument output)))))
+
+  ;; Keybinding for quick compile (C-c C-c)
+  (define-key c++-mode-map (kbd "C-c C-c") 'my/cpp-compile)
+  (define-key c++-ts-mode-map (kbd "C-c C-c") 'my/cpp-compile))
+
+;; CMake support
+(use-package cmake-mode
+  :straight t
+  :defer t
+  :mode (("CMakeLists\\.txt\\'" . cmake-mode)
+         ("\\.cmake\\'" . cmake-mode)))
+
+;; Modern C++ font-lock (better syntax highlighting)
+(use-package modern-cpp-font-lock
+  :straight t
+  :defer t
+  :hook ((c++-mode . modern-c++-font-lock-mode)
+         (c++-ts-mode . modern-c++-font-lock-mode)))
 
 ;; JavaScript/TypeScript with Tree-sitter
 (add-to-list 'major-mode-remap-alist '(js-mode . js-ts-mode))

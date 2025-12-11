@@ -204,14 +204,34 @@ For knowledge base (org-roam):
 ```
 SPC n f - Find/create roam note
 SPC n i - Insert roam link
+SPC n c - Org-roam capture
 ```
 
-Org-roam templates:
-- `d` - Default note
-- `c` - Course note
-- `l` - Learning extract
-- `t` - Tutorial
-- `n` - Universal note
+**Enhanced Org-roam templates with auto-organization:**
+- `d` - Default note (saved to root)
+- `c` - Course note (saved to `course/` subdirectory)
+- `l` - Learning extract (saved to `learning/` subdirectory)
+- `t` - Tutorial (saved to `tutorials/` subdirectory)
+- `n` - Universal note (saved to `notes/` subdirectory)
+- `p` - Project (saved to `projects/` subdirectory)
+- `w` - Weekly flow (saved to `weekly/` subdirectory with week number)
+
+**Roam Directory Structure:**
+```
+~/Documents/roam-notes/
+├── course/          # Course notes
+├── learning/        # Learning extracts
+├── tutorials/       # Tutorial guides
+├── notes/           # Universal notes
+├── projects/        # Project documentation
+└── weekly/          # Weekly planning
+```
+
+**New Features:**
+- ✅ Automatic subdirectory creation
+- ✅ Visual type indicators (📚 Course, 💡 Learning, etc.)
+- ✅ ROAM_ALIASES support for alternative names
+- ✅ Category metadata for better organization
 
 ## Template Location
 
@@ -243,4 +263,49 @@ Add new template:
 
 ---
 
+## Recent Enhancements (2025)
+
+### ✨ What's New
+
+1. **Automatic Directory Creation**
+   - Both `~/Documents/org/` and `~/Documents/roam-notes/` subdirectories are created automatically
+   - No more "file not found" errors on first use!
+
+2. **Enhanced Org-roam Integration**
+   - All templates now include `#+ROAM_ALIASES:` for alternative naming
+   - `#+CATEGORY:` metadata for better organization
+   - Automatic subdirectory organization in org-roam
+
+3. **Tags Reference System**
+   - New comprehensive tags guide: `TAGS-REFERENCE.org`
+   - 100+ pre-defined tags for common use cases
+   - Best practices for tag usage
+
+4. **Visual Type Indicators**
+   - Org-roam nodes now show emojis: 📚 📝 💡 🎓 🚀 📅
+   - Easier to identify note types at a glance
+
+### 📚 Additional Resources
+
+- **TAGS-REFERENCE.org** - Comprehensive tag library and usage guide
+- **TEMPLATES-GUIDE.md** - This file, your template usage guide
+- **ORG-VS-MARKDOWN.md** - Complete comparison: when to use Org vs Markdown
+
+### 🔧 Quick Setup Commands
+
+```elisp
+;; Ensure all directories exist
+(my/ensure-org-directories)
+
+;; Open tags reference
+(find-file (expand-file-name "templates/TAGS-REFERENCE.org" user-emacs-directory))
+
+;; View all roam notes by type
+M-x org-roam-node-find RET (then filter by type)
+```
+
+---
+
 **Happy Learning & Organizing! 🚀**
+
+*Last updated: 2025-01-13*

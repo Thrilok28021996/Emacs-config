@@ -1,0 +1,294 @@
+#+TITLE: Org-mode Tags Reference Guide
+#+DATE: 2025-01-13
+#+AUTHOR: Note-taking System
+
+* 📋 Common Tags Reference
+
+This file provides a comprehensive list of commonly used tags for your note-taking system.
+Copy and paste relevant tags into your notes using ~#+FILETAGS:~ or at the heading level with ~:tag1:tag2:~
+
+* 🎓 Learning & Education
+
+** Primary Categories
+- :learning:       - General learning content
+- :course:         - Course materials
+- :tutorial:       - Step-by-step guides
+- :extract:        - Knowledge extracts from sources
+- :book:           - Book notes and summaries
+- :article:        - Article notes
+- :video:          - Video content notes
+- :podcast:        - Podcast notes
+
+** Learning Stages
+- :beginner:       - Beginner-level content
+- :intermediate:   - Intermediate-level content
+- :advanced:       - Advanced-level content
+- :mastered:       - Fully understood/mastered
+- :review:         - Needs review
+
+** Learning Status
+- :active:         - Currently learning
+- :completed:      - Finished learning
+- :paused:         - Temporarily paused
+- :archived:       - No longer actively using
+
+* 💻 Programming & Technology
+
+** Languages
+- :python:         - Python-related
+- :cpp:            - C++ related
+- :javascript:     - JavaScript/TypeScript
+- :rust:           - Rust programming
+- :go:             - Go programming
+- :java:           - Java programming
+- :bash:           - Shell scripting
+- :sql:            - Database queries
+
+** Concepts
+- :algorithm:      - Algorithms and data structures
+- :design_pattern: - Software design patterns
+- :architecture:   - System architecture
+- :api:            - API design and integration
+- :database:       - Database concepts
+- :devops:         - DevOps practices
+- :testing:        - Testing methodologies
+- :security:       - Security concepts
+
+** Technologies
+- :docker:         - Docker/containers
+- :kubernetes:     - Kubernetes/orchestration
+- :git:            - Version control
+- :cicd:           - CI/CD pipelines
+- :cloud:          - Cloud platforms
+- :aws:            - Amazon Web Services
+- :gcp:            - Google Cloud Platform
+- :azure:          - Microsoft Azure
+
+* 🚀 Projects
+
+** Project Status
+- :project:        - General project tag
+- :active_project: - Currently working on
+- :side_project:   - Side/hobby project
+- :client_project: - Client/work project
+- :open_source:    - Open source contribution
+
+** Project Phases
+- :planning:       - Planning phase
+- :development:    - Active development
+- :testing:        - Testing phase
+- :deployment:     - Deployment/release
+- :maintenance:    - Maintenance mode
+
+* 📝 Content Types
+
+** Notes & Documentation
+- :note:           - General note
+- :reference:      - Reference material
+- :documentation:  - Documentation
+- :howto:          - How-to guide
+- :cheatsheet:     - Quick reference
+- :example:        - Code/concept examples
+
+** Ideas & Planning
+- :idea:           - New idea
+- :brainstorm:     - Brainstorming session
+- :research:       - Research notes
+- :experiment:     - Experimental work
+- :draft:          - Draft content
+
+* 📅 Time & Organization
+
+** Time-based
+- :daily:          - Daily notes
+- :weekly:         - Weekly planning/review
+- :monthly:        - Monthly review
+- :quarterly:      - Quarterly planning
+- :annual:         - Yearly review
+
+** Priority
+- :important:      - High importance
+- :urgent:         - Time-sensitive
+- :someday:        - Future consideration
+- :maybe:          - Potential task/idea
+
+* 🏢 Work & Professional
+
+- :work:           - Work-related
+- :meeting:        - Meeting notes
+- :presentation:   - Presentation material
+- :report:         - Reports
+- :review:         - Performance/code reviews
+- :1on1:           - One-on-one meetings
+
+* 🎯 Goals & Productivity
+
+- :goal:           - Personal/professional goal
+- :habit:          - Habit tracking
+- :reflection:     - Reflection/retrospective
+- :learning_goal:  - Learning objective
+- :milestone:      - Project milestone
+- :achievement:    - Completed achievement
+
+* 🔗 Relationships & Context
+
+** Source Types
+- :source:         - Original source material
+- :derived:        - Derived from other notes
+- :summary:        - Summary of content
+- :synthesis:      - Synthesized from multiple sources
+
+** Connections
+- :related:        - Related to other notes
+- :prerequisite:   - Prerequisite knowledge
+- :followup:       - Follow-up required
+- :dependency:     - Has dependencies
+
+* 🧠 Knowledge Management
+
+** Zettelkasten Tags
+- :permanent:      - Permanent note (well-developed)
+- :literature:     - Literature note (from source)
+- :fleeting:       - Fleeting note (quick capture)
+- :hub:            - Hub/MOC (Map of Content)
+- :index:          - Index note
+
+** Topics (Examples - Customize to Your Field)
+- :ai_ml:          - Artificial Intelligence/ML
+- :web_dev:        - Web development
+- :data_science:   - Data science
+- :networking:     - Computer networking
+- :mathematics:    - Mathematics
+- :physics:        - Physics
+- :biology:        - Biology
+- :economics:      - Economics
+- :philosophy:     - Philosophy
+
+* 📚 Academic & Research
+
+- :paper:          - Research paper
+- :thesis:         - Thesis work
+- :citation:       - Contains citations
+- :literature_review: - Literature review
+- :methodology:    - Research methodology
+- :findings:       - Research findings
+
+* 🎨 Creative & Personal
+
+- :creative:       - Creative work
+- :writing:        - Writing projects
+- :blog:           - Blog post
+- :personal:       - Personal notes
+- :journal:        - Journal entry
+- :quote:          - Memorable quotes
+
+* 💡 How to Use Tags Effectively
+
+** Best Practices
+
+1. *Be Consistent*: Use the same tag for similar content
+2. *Start Broad*: Use general tags, add specific ones as needed
+3. *Limit Tags*: Use 3-7 tags per note for optimal findability
+4. *Combine Tags*: Create context with tag combinations
+   Example: ~:python:algorithm:learning:~ for Python algorithm learning
+
+5. *Use Hierarchies*: Create tag relationships
+   Example: ~:learning:course:python:~
+
+** Tag Syntax
+
+*** File-level Tags (Applies to entire file)
+#+begin_example
+#+FILETAGS: :tag1:tag2:tag3:
+#+end_example
+
+*** Heading-level Tags
+#+begin_example
+* My Heading :tag1:tag2:
+#+end_example
+
+*** Inherited Tags
+Child headings inherit parent tags automatically!
+
+** Searching by Tags
+
+*** In Org-agenda
+- Press ~m~ for tag search
+- Use expressions: ~python+learning~ or ~python|cpp~
+- Exclude tags: ~python-archived~
+
+*** With Org-roam
+- ~SPC n f~ (org-roam-node-find) then filter by tag
+- Search: ~tag:python~
+
+* 🔧 Custom Tag Collections
+
+Create your own tag collections based on your workflow:
+
+** Example: Full-stack Developer
+:fullstack:frontend:backend:database:api:testing:deployment:
+
+** Example: Data Scientist
+:datascience:python:jupyter:ml:visualization:statistics:modeling:
+
+** Example: Academic Researcher
+:research:paper:methodology:analysis:writing:citation:review:
+
+* 📊 Tag Organization Tips
+
+1. *Create a Tag Taxonomy*: Organize tags into categories
+2. *Document Your System*: Keep this file updated with your conventions
+3. *Review Periodically*: Prune unused tags, add new ones
+4. *Use Tag Agenda Views*: Create custom agenda views for tag combinations
+5. *Link to Tag Hubs*: Create hub notes that collect notes by tag
+
+* 🎓 Learning Path Tags
+
+For tracking learning progressions:
+
+** Sequence Tags
+- :level_1:, :level_2:, :level_3:
+- :chapter_1:, :chapter_2:, etc.
+- :part_a:, :part_b:, :part_c:
+
+** Mastery Indicators
+- :needs_practice:
+- :understood:
+- :can_teach:
+- :expert:
+
+* 🔄 Workflow Tags
+
+- :inbox:          - Needs processing
+- :todo:           - Action required
+- :waiting:        - Waiting on someone/something
+- :delegated:      - Delegated to others
+- :blocked:        - Blocked by dependency
+- :done:           - Completed
+
+* 💾 Quick Reference Card
+
+Most commonly used tags (customize this!):
+
+| Purpose | Tags |
+|---------+------|
+| Learning Python | :python:learning:course: |
+| Tutorial | :tutorial:howto:programming: |
+| Project Work | :project:development:active: |
+| Weekly Planning | :weekly:planning:review: |
+| Important Note | :note:important:reference: |
+| Meeting Notes | :meeting:work:notes: |
+| Research | :research:paper:literature: |
+| Idea Capture | :idea:brainstorm:future: |
+
+---
+
+*Pro Tip*: Add this file to your org-roam database and link to it from your notes when you need tag inspiration!
+
+#+begin_src elisp
+;; Quick keybinding to open this file
+(defun my/open-tags-reference ()
+  "Open the tags reference guide."
+  (interactive)
+  (find-file (expand-file-name "templates/TAGS-REFERENCE.org" user-emacs-directory)))
+#+end_src
