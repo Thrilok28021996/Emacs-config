@@ -191,18 +191,54 @@
 
 ;; --- Integration with Evil Mode ---
 
-(with-eval-after-load 'evil
-  (evil-set-initial-state 'dashboard-mode 'normal)
+;; Ensure keybindings are set after evil-collection loads
+;; This prevents evil-collection from overriding our custom bindings
+(with-eval-after-load 'dashboard
+  (with-eval-after-load 'evil
+    (evil-set-initial-state 'dashboard-mode 'normal)
 
-  ;; Dashboard-specific keybindings
-  (evil-define-key 'normal dashboard-mode-map
-    (kbd "r") 'dashboard-jump-to-recents
-    (kbd "p") 'dashboard-jump-to-projects
-    (kbd "m") 'dashboard-jump-to-bookmarks
-    (kbd "a") 'dashboard-jump-to-agenda
-    (kbd "g") 'dashboard-refresh-buffer
-    (kbd "q") 'quit-window
-    (kbd "RET") 'widget-button-press))
+    ;; Dashboard-specific keybindings
+    ;; Sections are numbered based on dashboard-items order:
+    ;; 1=recents, 2=bookmarks, 3=projects, 4=agenda
+    (evil-define-key 'normal dashboard-mode-map
+      (kbd "r") 'dashboard-section-1          ; Jump to recents
+      (kbd "m") 'dashboard-section-2          ; Jump to bookmarks
+      (kbd "p") 'dashboard-section-3          ; Jump to projects
+      (kbd "a") 'dashboard-section-4          ; Jump to agenda
+      (kbd "g") 'dashboard-refresh-buffer     ; Refresh
+      (kbd "q") 'quit-window                  ; Quit
+      (kbd "n") 'dashboard-next-section       ; Next section
+      (kbd "N") 'dashboard-previous-section   ; Previous section
+      (kbd "j") 'dashboard-next-line          ; Next item
+      (kbd "k") 'dashboard-previous-line      ; Previous item
+      (kbd "RET") 'dashboard-return           ; Open item (FIXED!)
+      (kbd "<return>") 'dashboard-return      ; Alternative RET
+      (kbd "TAB") 'dashboard-return           ; Tab also opens
+      (kbd "l") 'dashboard-return             ; Vim-style: l to open
+      (kbd "o") 'dashboard-return))           ; Vim-style: o to open
+
+  ;; Also add to dashboard-mode-hook as a fallback
+  (add-hook 'dashboard-mode-hook
+            (lambda ()
+              (evil-normalize-keymaps)
+              ;; Section shortcuts (based on dashboard-items order)
+              (evil-local-set-key 'normal (kbd "r") 'dashboard-section-1)
+              (evil-local-set-key 'normal (kbd "m") 'dashboard-section-2)
+              (evil-local-set-key 'normal (kbd "p") 'dashboard-section-3)
+              (evil-local-set-key 'normal (kbd "a") 'dashboard-section-4)
+              ;; Navigation
+              (evil-local-set-key 'normal (kbd "n") 'dashboard-next-section)
+              (evil-local-set-key 'normal (kbd "N") 'dashboard-previous-section)
+              (evil-local-set-key 'normal (kbd "j") 'dashboard-next-line)
+              (evil-local-set-key 'normal (kbd "k") 'dashboard-previous-line)
+              ;; Actions
+              (evil-local-set-key 'normal (kbd "g") 'dashboard-refresh-buffer)
+              (evil-local-set-key 'normal (kbd "q") 'quit-window)
+              (evil-local-set-key 'normal (kbd "RET") 'dashboard-return)
+              (evil-local-set-key 'normal (kbd "<return>") 'dashboard-return)
+              (evil-local-set-key 'normal (kbd "TAB") 'dashboard-return)
+              (evil-local-set-key 'normal (kbd "l") 'dashboard-return)
+              (evil-local-set-key 'normal (kbd "o") 'dashboard-return))))
 
 ;; --- ASCII Art Banners (Optional) ---
 

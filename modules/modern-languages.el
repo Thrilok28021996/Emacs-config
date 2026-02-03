@@ -196,9 +196,39 @@
                        (shell-quote-argument file)
                        (shell-quote-argument output)))))
 
-  ;; Keybinding for quick compile (C-c C-c)
+  ;; Header/Source file switching
+  (defun my/switch-header-source ()
+    "Switch between header and source file."
+    (interactive)
+    (let* ((extension (file-name-extension (buffer-file-name)))
+           (base-name (file-name-sans-extension (buffer-file-name)))
+           (other-file
+            (cond
+             ((string= extension "cpp") (concat base-name ".hpp"))
+             ((string= extension "hpp") (concat base-name ".cpp"))
+             ((string= extension "cc") (concat base-name ".h"))
+             ((string= extension "h")
+              ;; Try .cc first, then .cpp
+              (let ((cc-file (concat base-name ".cc"))
+                    (cpp-file (concat base-name ".cpp")))
+                (if (file-exists-p cc-file)
+                    cc-file
+                  cpp-file)))
+             ((string= extension "c") (concat base-name ".h"))
+             (t (concat base-name ".cpp")))))
+      (if (file-exists-p other-file)
+          (find-file other-file)
+        (if (y-or-n-p (format "File %s doesn't exist. Create it? " other-file))
+            (find-file other-file)
+          (message "Other file not found: %s" other-file)))))
+
+  ;; Keybindings
   (define-key c++-mode-map (kbd "C-c C-c") 'my/cpp-compile)
-  (define-key c++-ts-mode-map (kbd "C-c C-c") 'my/cpp-compile))
+  (define-key c++-ts-mode-map (kbd "C-c C-c") 'my/cpp-compile)
+  (define-key c++-mode-map (kbd "C-c o") 'my/switch-header-source)
+  (define-key c++-ts-mode-map (kbd "C-c o") 'my/switch-header-source)
+  (define-key c-mode-map (kbd "C-c o") 'my/switch-header-source)
+  (define-key c-ts-mode-map (kbd "C-c o") 'my/switch-header-source))
 
 ;; CMake support
 (use-package cmake-mode
@@ -507,6 +537,51 @@
          (scheme-mode . aggressive-indent-mode))
   :config
   (add-to-list 'aggressive-indent-excluded-modes 'html-mode))
+
+;; --- Project Management ---
+
+;; Projectile for project-aware operations
+(use-package projectile
+  :straight t
+  :defer 2
+  :init
+  (projectile-mode +1)
+  :config
+  ;; Project search paths
+  (setq projectile-project-search-path '("~/projects/" "~/Documents/" "~/work/"))
+
+  ;; Use default completion system (works with vertico/consult)
+  (setq projectile-completion-system 'default)
+
+  ;; Enable caching for better performance
+  (setq projectile-enable-caching t)
+
+  ;; Indexing method
+  (setq projectile-indexing-method 'alien)  ; Use external tools (faster)
+
+  ;; Project file markers
+  (setq projectile-project-root-files
+        '(".projectile" ".git" ".hg" ".svn" "Makefile" "CMakeLists.txt"
+          "package.json" "setup.py" "requirements.txt" "environment.yml"))
+
+  ;; Compilation commands for different project types
+  (setq projectile-project-compilation-cmd
+        '((cmake . "cmake --build build/")
+          (make . "make")
+          (python . "python -m pytest")
+          (cargo . "cargo build")))
+
+  ;; Test commands
+  (setq projectile-project-test-cmd
+        '((cmake . "cd build && ctest")
+          (make . "make test")
+          (python . "python -m pytest")
+          (cargo . "cargo test")))
+
+  ;; Run commands
+  (setq projectile-project-run-cmd
+        '((python . "python main.py")
+          (cargo . "cargo run"))))
 
 (provide 'modern-languages)
 ;;; modern-languages.el ends here

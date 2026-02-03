@@ -305,6 +305,49 @@
         (unless (file-directory-p dir-path)
           (make-directory dir-path t))))))
 
+;; Org-roam-dailies for daily note-taking
+(use-package org-roam-dailies
+  :straight nil
+  :after org-roam
+  :commands (org-roam-dailies-goto-today
+             org-roam-dailies-goto-yesterday
+             org-roam-dailies-goto-tomorrow
+             org-roam-dailies-goto-date
+             org-roam-dailies-capture-today)
+  :config
+  (setq org-roam-dailies-directory "daily/"
+        org-roam-dailies-capture-templates
+        '(("d" "default" entry
+           "* %?"
+           :target (file+head "%<%Y-%m-%d>.org"
+                              "#+title: %<%Y-%m-%d %A>\n#+filetags: :daily:\n\n* Daily Log\n\n* Tasks\n\n* Notes\n\n* Learnings\n\n"))
+
+          ("j" "journal" entry
+           "* %<%H:%M> Journal\n%?"
+           :target (file+head "%<%Y-%m-%d>.org"
+                              "#+title: %<%Y-%m-%d %A>\n#+filetags: :daily:journal:\n\n"))
+
+          ("l" "learning" entry
+           "* %<%H:%M> Learning: %?\n** Context\n\n** Key Points\n   - \n\n** Connections\n   - \n\n"
+           :target (file+head "%<%Y-%m-%d>.org"
+                              "#+title: %<%Y-%m-%d %A>\n#+filetags: :daily:learning:\n\n"))
+
+          ("m" "meeting" entry
+           "* %<%H:%M> Meeting: %?\n** Attendees\n   - \n\n** Agenda\n\n** Notes\n\n** Action Items\n   - [ ] \n\n"
+           :target (file+head "%<%Y-%m-%d>.org"
+                              "#+title: %<%Y-%m-%d %A>\n#+filetags: :daily:meeting:\n\n")))))
+
+;; Org-Roam UI for visual knowledge graph
+(use-package org-roam-ui
+  :straight t
+  :after org-roam
+  :commands org-roam-ui-mode
+  :config
+  (setq org-roam-ui-sync-theme t
+        org-roam-ui-follow t
+        org-roam-ui-update-on-save t
+        org-roam-ui-open-on-start nil))
+
 ;; Keybindings now handled in modules/evil-config.el to avoid conflicts
 
 ;; Simplified org-roam utilities

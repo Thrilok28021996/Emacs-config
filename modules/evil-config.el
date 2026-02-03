@@ -103,16 +103,21 @@
   :config
   (evil-collection-init))
 
-;; Evil leader for <SPC> prefix commands
-(use-package evil-leader
+;; General.el for keybindings (modern replacement for evil-leader)
+(use-package general
   :straight t
   :after evil
+  :demand t
   :config
-  (global-evil-leader-mode)
-  (evil-leader/set-leader "<SPC>")
-  
-  ;; File operations (aligned with init.el)
-  (evil-leader/set-key
+  ;; Create a leader key definer with SPC as prefix
+  (general-create-definer my/leader-keys
+    :states '(normal visual insert emacs)
+    :keymaps 'override
+    :prefix "SPC"
+    :global-prefix "C-SPC")  ; Also works in insert/emacs states
+
+  ;; Define all leader keybindings
+  (my/leader-keys
     "f f" 'find-file
     "f r" 'consult-recent-file
     "f s" 'save-buffer
@@ -177,12 +182,19 @@
     "t H" 'hl-todo-mode
     "t d" 'diff-hl-mode
 
-    ;; Project operations
-    "p f" 'consult-find
-    "p s" 'consult-ripgrep
-    "p b" 'consult-project-buffer
-    "p p" 'project-switch-project
-    
+    ;; Project operations (Projectile + built-in)
+    "p f" 'projectile-find-file          ; Find file in project
+    "p s" 'consult-ripgrep               ; Search in project
+    "p b" 'consult-project-buffer        ; Switch project buffer
+    "p p" 'projectile-switch-project     ; Switch project
+    "p c" 'projectile-compile-project    ; Compile project
+    "p t" 'projectile-test-project       ; Test project
+    "p r" 'projectile-run-project        ; Run project
+    "p d" 'projectile-dired              ; Open project root in dired
+    "p k" 'projectile-kill-buffers       ; Kill project buffers
+    "p i" 'projectile-invalidate-cache   ; Refresh project cache
+    "p g" 'consult-find                  ; Generic find (fallback)
+
     ;; Search operations
     "s s" 'consult-line
     "s S" 'consult-line-multi
@@ -227,7 +239,15 @@
     "V d" 'conda-env-deactivate
     "V l" 'conda-env-list
     "V c" 'conda-env-activate-for-buffer
-    
+
+    ;; Python REPL operations (capital P for Python)
+    "P e" 'python-shell-send-buffer       ; Execute buffer in REPL
+    "P r" 'python-shell-send-region       ; Execute region
+    "P d" 'python-shell-send-defun        ; Execute function
+    "P l" 'python-shell-send-statement    ; Execute statement
+    "P s" 'run-python                     ; Start Python REPL
+    "P i" 'python-shell-switch-to-shell   ; Switch to REPL
+
     ;; Code operations (compile, format, actions)
     "c c" 'compile                       ; Compile project
     "c r" 'recompile                     ; Recompile
@@ -344,12 +364,22 @@
     "n c" 'org-roam-capture
     "n b" 'org-roam-buffer-toggle
     "n g" 'org-roam-graph
+    "n u" 'org-roam-ui-mode              ; Open knowledge graph UI
     "n j" 'org-journal-new-entry
     "n n" 'org-capture
     "n l" 'org-cliplink
-    "n d" 'org-download-screenshot
-    "n D" 'org-download-yank
     "n s" 'org-super-agenda-mode
+
+    ;; Org-roam dailies
+    "n d" 'org-roam-dailies-goto-today
+    "n D" 'org-roam-dailies-goto-date
+    "n y" 'org-roam-dailies-goto-yesterday
+    "n t" 'org-roam-dailies-goto-tomorrow
+    "n C" 'org-roam-dailies-capture-today
+
+    ;; Org download (moved to different prefix to avoid conflict)
+    "n S" 'org-download-screenshot
+    "n Y" 'org-download-yank
 
     ;; Markdown operations
     "M m" 'markdown-mode
@@ -476,13 +506,13 @@
     "y C" 'customize
     "y G" 'customize-group
     
-    ;; Diff and comparison
-    "d d" 'diff
-    "d b" 'diff-buffer-with-file
-    "d e" 'ediff
-    "d f" 'ediff-files
-    "d B" 'ediff-buffers
-    "d w" 'compare-windows
+    ;; Diff and comparison (moved from 'd' to 'D' prefix to avoid debug conflict)
+    "D d" 'diff
+    "D b" 'diff-buffer-with-file
+    "D e" 'ediff
+    "D f" 'ediff-files
+    "D B" 'ediff-buffers
+    "D w" 'compare-windows
     
     ;; Search and analysis operations
     "S o" 'occur
@@ -503,6 +533,20 @@
     "t B" 'abbrev-mode
     "t P" 'show-paren-mode
     "t E" 'electric-pair-mode))
+
+;; Mode-specific keybindings using general.el
+(with-eval-after-load 'nov
+  (general-define-key
+   :states 'normal
+   :keymaps 'nov-mode-map
+   :prefix "SPC"
+   "n n" 'nov-next-document
+   "n p" 'nov-previous-document
+   "n g" 'nov-goto-document
+   "n t" 'nov-display-metadata
+   "n r" 'nov-render-document
+   "n b" 'bookmark-set
+   "n l" 'bookmark-bmenu-list))
 
 ;; Evil surround for vim-surround functionality
 (use-package evil-surround
@@ -627,17 +671,6 @@
 ;; Set nov-mode to use normal state by default
 (with-eval-after-load 'nov
   (evil-set-initial-state 'nov-mode 'normal))
-
-;; Leader key bindings for nov-mode (EPUB reading)
-(with-eval-after-load 'evil-leader
-  (evil-leader/set-key-for-mode 'nov-mode
-    "n n" 'nov-next-document
-    "n p" 'nov-previous-document
-    "n g" 'nov-goto-document
-    "n t" 'nov-display-metadata
-    "n r" 'nov-render-document
-    "n b" 'bookmark-set
-    "n l" 'bookmark-bmenu-list))
 
 (provide 'evil-config)
 ;;; evil-config.el ends here
