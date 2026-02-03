@@ -262,5 +262,78 @@
     (message "No performance statistics collected yet")))
 
 
+;; --- Byte Compilation ---
+
+(defun my/byte-compile-config ()
+  "Byte-compile all Emacs Lisp files in the configuration."
+  (interactive)
+  (let ((default-directory user-emacs-directory)
+        (compiled 0)
+        (failed 0))
+    ;; Compile init.el
+    (condition-case nil
+        (when (byte-compile-file (expand-file-name "init.el" user-emacs-directory))
+          (setq compiled (1+ compiled)))
+      (error (setq failed (1+ failed))))
+    ;; Compile early-init.el
+    (condition-case nil
+        (when (byte-compile-file (expand-file-name "early-init.el" user-emacs-directory))
+          (setq compiled (1+ compiled)))
+      (error (setq failed (1+ failed))))
+    ;; Compile modules
+    (dolist (file (directory-files (expand-file-name "modules" user-emacs-directory) t "\\.el$"))
+      (condition-case nil
+          (when (byte-compile-file file)
+            (setq compiled (1+ compiled)))
+        (error (setq failed (1+ failed)))))
+    (message "Byte-compilation: %d compiled, %d failed" compiled failed)))
+
+(defun my/clean-compiled-files ()
+  "Remove all .elc byte-compiled files from the configuration."
+  (interactive)
+  (let ((cleaned 0))
+    (dolist (file (directory-files user-emacs-directory t "\\.elc$"))
+      (delete-file file)
+      (setq cleaned (1+ cleaned)))
+    (dolist (file (directory-files (expand-file-name "modules" user-emacs-directory) t "\\.elc$"))
+      (delete-file file)
+      (setq cleaned (1+ cleaned)))
+    (message "Cleaned %d compiled files" cleaned)))
+
+;; --- Sync / Upgrade / Rollback ---
+
+(defun my/sync ()
+  "Sync configuration: ensure directories, freeze versions, byte-compile."
+  (interactive)
+  (message "Syncing configuration...")
+  (my/ensure-all-directories)
+  (when (fboundp 'straight-freeze-versions)
+    (straight-freeze-versions))
+  (my/byte-compile-config)
+  (message "Sync complete."))
+
+(defun my/upgrade ()
+  "Upgrade all packages: clean compiled files, pull updates, rebuild, sync."
+  (interactive)
+  (when (y-or-n-p "Upgrade all packages? This may take a while. ")
+    (message "Upgrading packages...")
+    (my/clean-compiled-files)
+    (when (fboundp 'straight-pull-all)
+      (straight-pull-all))
+    (when (fboundp 'straight-rebuild-all)
+      (straight-rebuild-all))
+    (my/sync)
+    (message "Upgrade complete. Restart Emacs for full effect.")))
+
+(defun my/rollback ()
+  "Rollback packages to the last frozen lockfile versions."
+  (interactive)
+  (when (y-or-n-p "Rollback all packages to lockfile versions? ")
+    (if (fboundp 'straight-thaw-versions)
+        (progn
+          (straight-thaw-versions)
+          (message "Rollback complete. Restart Emacs for full effect."))
+      (message "straight-thaw-versions not available."))))
+
 (provide 'utilities)
 ;;; utilities.el ends here

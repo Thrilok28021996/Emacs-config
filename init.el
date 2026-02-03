@@ -42,11 +42,41 @@
 
 ;; Set up use-package
 (straight-use-package 'use-package)
-(setq package-enable-at-startup nil)
 
 ;; Essential early settings
 (set-language-environment "UTF-8")
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+
+;; --- Module System ---
+
+(defvar my/modules
+  '((performance)
+    (ui)
+    (evil)
+    (completion)
+    (languages +python +cpp +html +css +lsp +tree-sitter)
+    (colors)
+    (dashboard)
+    (utilities)
+    (robustness))
+  "List of enabled modules with feature flags.
+Each entry is (MODULE-NAME +FLAG1 +FLAG2 ...).")
+
+(defun my/module-enabled-p (module)
+  "Return non-nil if MODULE is enabled in `my/modules'."
+  (assq module my/modules))
+
+(defun my/module-flag-p (module flag)
+  "Return non-nil if MODULE has FLAG enabled.
+FLAG should be a symbol like +python."
+  (when-let ((entry (assq module my/modules)))
+    (memq flag (cdr entry))))
+
+(defun my/lang-enabled-p (lang)
+  "Return non-nil if language LANG is enabled.
+LANG should be a symbol like python, cpp, html, css."
+  (my/module-flag-p 'languages
+                    (intern (concat "+" (symbol-name lang)))))
 
 ;; --- Platform-Specific Setup ---
 
@@ -74,17 +104,25 @@
      (message "❌ Failed to load %s: %s" module (error-message-string err))
      nil)))
 
-;; Load modules
-(my/safe-require-module 'modern-performance "Performance optimizations")
+;; Load modules conditionally based on my/modules
+(when (my/module-enabled-p 'performance)
+  (my/safe-require-module 'modern-performance "Performance optimizations"))
 (my/safe-require-module 'core-ui "UI settings")
-(my/safe-require-module 'evil-config "Evil mode")
-(my/safe-require-module 'modern-completion "Completion system")
-(my/safe-require-module 'modern-languages "Language support")
-(my/safe-require-module 'modern-ui "Modern UI")
-(my/safe-require-module 'enhanced-colors "Syntax highlighting")
-(my/safe-require-module 'startup-dashboard "Startup dashboard")
+(when (my/module-enabled-p 'evil)
+  (my/safe-require-module 'evil-config "Evil mode"))
+(when (my/module-enabled-p 'completion)
+  (my/safe-require-module 'modern-completion "Completion system"))
+(when (my/module-enabled-p 'languages)
+  (my/safe-require-module 'modern-languages "Language support"))
+(when (my/module-enabled-p 'ui)
+  (my/safe-require-module 'modern-ui "Modern UI"))
+(when (my/module-enabled-p 'colors)
+  (my/safe-require-module 'enhanced-colors "Syntax highlighting"))
+(when (my/module-enabled-p 'dashboard)
+  (my/safe-require-module 'startup-dashboard "Startup dashboard"))
 (my/safe-require-module 'utilities "Utilities")
-(my/safe-require-module 'robustness-enhancements "Robustness")
+(when (my/module-enabled-p 'robustness)
+  (my/safe-require-module 'robustness-enhancements "Robustness"))
 
 ;; Essential packages
 (use-package which-key

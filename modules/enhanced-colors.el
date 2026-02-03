@@ -106,18 +106,23 @@
  '(magit-diff-hunk-heading ((t (:background "#282c34" :foreground "#56b6c2"))))
  '(magit-diff-hunk-heading-highlight ((t (:background "#3c424c" :foreground "#56b6c2")))))
 
-;; --- Language-Specific Color Enhancements ---
+;; --- Rainbow Mode ---
+;; Inline color preview for CSS/HTML color values
 
-;; JavaScript/TypeScript enhanced highlighting
-(defun my/enhance-js-colors ()
-  "Enhance JavaScript/TypeScript syntax highlighting."
-  (font-lock-add-keywords
-   nil
-   '(("\\(console\\)\\." 1 font-lock-builtin-face)
-     ("\\(\\w+\\)(" 1 font-lock-function-name-face)
-     ("\\b\\(const\\|let\\|var\\)\\b" . font-lock-keyword-face)
-     ("\\b\\(async\\|await\\)\\b" . font-lock-keyword-face)
-     ("\\b\\(import\\|export\\|from\\|as\\)\\b" . font-lock-keyword-face))))
+(use-package rainbow-mode
+  :straight t
+  :defer my/defer-medium
+  :hook ((css-mode . rainbow-mode)
+         (css-ts-mode . rainbow-mode)
+         (scss-mode . rainbow-mode)
+         (html-mode . rainbow-mode)
+         (html-ts-mode . rainbow-mode)
+         (web-mode . rainbow-mode))
+  :config
+  (setq rainbow-x-colors-major-mode-list
+        '(css-mode css-ts-mode scss-mode html-mode html-ts-mode web-mode)))
+
+;; --- Language-Specific Color Enhancements ---
 
 ;; Python enhanced highlighting
 (defun my/enhance-python-colors ()
@@ -130,9 +135,6 @@
      ("\\(@\\w+\\)" . font-lock-preprocessor-face))))
 
 ;; Apply language-specific enhancements
-(add-hook 'js-mode-hook #'my/enhance-js-colors)
-(add-hook 'js2-mode-hook #'my/enhance-js-colors)
-(add-hook 'typescript-mode-hook #'my/enhance-js-colors)
 (add-hook 'python-mode-hook #'my/enhance-python-colors)
 
 ;; --- Bracket Pair Highlighting ---

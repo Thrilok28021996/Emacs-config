@@ -32,10 +32,24 @@
         org-agenda-files (list org-directory)
         org-default-notes-file (concat org-directory "/notes.org")
         org-log-done 'time
+        org-log-into-drawer t
         org-startup-indented t
         org-hide-emphasis-markers t
         org-pretty-entities t
         org-ellipsis " ▾")
+
+  ;; TODO state keywords with logging
+  (setq org-todo-keywords
+        '((sequence "TODO(t)" "NEXT(n)" "WAITING(w@/!)" "HOLD(h@/!)" "|" "DONE(d!)" "CANCELLED(c@/!)")))
+
+  ;; TODO state faces
+  (setq org-todo-keyword-faces
+        '(("TODO" . (:foreground "#ff6c6b" :weight bold))
+          ("NEXT" . (:foreground "#da8548" :weight bold))
+          ("WAITING" . (:foreground "#ecbe7b" :weight bold))
+          ("HOLD" . (:foreground "#a9a1e1" :weight bold))
+          ("DONE" . (:foreground "#98be65" :weight bold))
+          ("CANCELLED" . (:foreground "#5B6268" :weight bold))))
   
   
   ;; Enhanced org capture templates for writing and learning
@@ -562,6 +576,18 @@
   (setq org-babel-C++-compiler "g++")
   (setq org-babel-C-compiler "gcc"))
 
+;; ob-async: Non-blocking code block execution
+(use-package ob-async
+  :straight t
+  :defer t
+  :after org
+  :config
+  ;; Allow async execution for these languages
+  (setq ob-async-no-async-languages-alist '("ipython" "jupyter-python"))
+  ;; Use :async header arg to run blocks in background
+  ;; e.g. #+begin_src python :async
+  )
+
 ;; Org Tempo for structure templates (< s TAB, etc.)
 (use-package org-tempo
   :straight (:type built-in)
@@ -584,6 +610,45 @@
   :after org
   :config
   (setq org-archive-location "archive/%s_archive::"))
+
+;; --- Evil-Org: Proper Evil keybindings in Org ---
+
+(use-package evil-org
+  :straight t
+  :defer t
+  :after (evil org)
+  :hook (org-mode . evil-org-mode)
+  :config
+  (require 'evil-org-agenda)
+  (evil-org-agenda-set-keys)
+  (evil-org-set-key-theme '(navigation insert textobjects additional calendar todo heading)))
+
+;; --- Org Habit: Habit tracking with consistency graphs ---
+
+(use-package org-habit
+  :straight (:type built-in)
+  :after org
+  :config
+  (add-to-list 'org-modules 'org-habit)
+  (setq org-habit-graph-column 60
+        org-habit-show-habits t
+        org-habit-show-habits-only-for-today nil
+        org-habit-show-all-today t))
+
+;; --- Org Pomodoro: Timer integration with Org clocking ---
+
+(use-package org-pomodoro
+  :straight t
+  :defer t
+  :after org
+  :commands org-pomodoro
+  :config
+  (setq org-pomodoro-length 25
+        org-pomodoro-short-break-length 5
+        org-pomodoro-long-break-length 15
+        org-pomodoro-long-break-frequency 4
+        org-pomodoro-play-sounds t
+        org-pomodoro-keep-killed-pomodoro-time t))
 
 (provide 'org-config)
 ;;; org-config.el ends here

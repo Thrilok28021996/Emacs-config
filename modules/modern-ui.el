@@ -281,8 +281,46 @@
   
   ;; Configure window behavior
   (setq switch-to-buffer-obey-display-actions t)
+
+  ;; Comprehensive popup / window placement rules
   (setq display-buffer-alist
-        `((,my/buffer-help display-buffer-reuse-window)
+        `(;; Help buffers: right side, 42% width
+          ("\\*[Hh]elp\\*\\|\\*helpful"
+           (display-buffer-reuse-window display-buffer-in-side-window)
+           (side . right) (window-width . 0.42))
+          ;; Compilation: bottom, 30% height
+          ("\\*compilation\\*\\|\\*Compile-Log\\*"
+           (display-buffer-reuse-window display-buffer-in-side-window)
+           (side . bottom) (window-height . 0.30))
+          ;; Flymake diagnostics: bottom, 25%
+          ("\\*Flymake\\|\\*flymake"
+           (display-buffer-reuse-window display-buffer-in-side-window)
+           (side . bottom) (window-height . 0.25))
+          ;; Shell/terminal/eshell: bottom, 35%
+          ("\\*e?shell\\*\\|\\*term\\*\\|\\*vterm\\*\\|\\*Shell Command"
+           (display-buffer-reuse-window display-buffer-in-side-window)
+           (side . bottom) (window-height . 0.35))
+          ;; Python REPL: bottom, 35%
+          ("\\*Python\\*\\|\\*inferior-python\\*"
+           (display-buffer-reuse-window display-buffer-in-side-window)
+           (side . bottom) (window-height . 0.35))
+          ;; Grep/occur: bottom, 30%
+          ("\\*grep\\*\\|\\*Occur\\*\\|\\*rg\\*"
+           (display-buffer-reuse-window display-buffer-in-side-window)
+           (side . bottom) (window-height . 0.30))
+          ;; Messages/warnings: bottom, 20%
+          ("\\*Messages\\*\\|\\*Warnings\\*"
+           (display-buffer-reuse-window display-buffer-in-side-window)
+           (side . bottom) (window-height . 0.20))
+          ;; Eldoc: bottom, 25%
+          ("\\*eldoc\\*\\|\\*Eldoc"
+           (display-buffer-reuse-window display-buffer-in-side-window)
+           (side . bottom) (window-height . 0.25))
+          ;; Xref: bottom, 30%
+          ("\\*xref\\*"
+           (display-buffer-reuse-window display-buffer-in-side-window)
+           (side . bottom) (window-height . 0.30))
+          ;; Completions fallback
           (,my/buffer-completions display-buffer-below-selected))))
 
 ;; Apply UI setup
@@ -331,6 +369,26 @@
 ;; <backtab> - jump to previous link
 ;; RET       - follow link
 ;; C-x C-+/- - increase/decrease font size
+
+;; --- Ligatures (Fira Code) ---
+
+(use-package ligature
+  :straight t
+  :defer my/defer-medium
+  :config
+  (ligature-set-ligatures
+   'prog-mode
+   '("www" "**" "***" "**/" "*>" "*/" "\\\\" "\\\\\\" "{-" "[]" "::"
+     ":::" ":=" "!!" "!=" "!==" "-}" "--" "---" "-->" "->" "->>" "-<"
+     "-<<" "-~" "#{" "#[" "##" "###" "####" "#(" "#?" "#_" "#_(" ".-"
+     ".=" ".." "..<" "..." "?=" "??" ";;" "/*" "/**" "/=" "/==" "/>"
+     "//" "///" "&&" "||" "||=" "|=" "|>" "^=" "$>" "++" "+++" "+>"
+     "=:=" "==" "===" "==>" "=>" "=>>" "<=" "=<<" "=/=" ">-" ">="
+     ">=>" ">>" ">>-" ">>=" ">>>" "<*" "<*>" "<|" "<|>" "<$" "<$>"
+     "<!--" "<-" "<--" "<->" "<+" "<+>" "<=" "<==" "<=>" "<=<" "<>"
+     "<<" "<<-" "<<=" "<<<" "<~" "<~~" "</" "</>" "~@" "~-" "~="
+     "~>" "~~" "~~>" "%%"))
+  (global-ligature-mode t))
 
 (provide 'modern-ui)
 ;;; modern-ui.el ends here

@@ -17,14 +17,9 @@
       '((c "https://github.com/tree-sitter/tree-sitter-c" "v0.20.7")
         (cpp "https://github.com/tree-sitter/tree-sitter-cpp" "v0.20.3")
         (python "https://github.com/tree-sitter/tree-sitter-python" "v0.20.4")
-        (javascript "https://github.com/tree-sitter/tree-sitter-javascript")
         (json "https://github.com/tree-sitter/tree-sitter-json")
-        (rust "https://github.com/tree-sitter/tree-sitter-rust")
-        (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
-        (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
         (css "https://github.com/tree-sitter/tree-sitter-css")
-        (html "https://github.com/tree-sitter/tree-sitter-html")
-        (yaml "https://github.com/tree-sitter/tree-sitter-yaml")))
+        (html "https://github.com/tree-sitter/tree-sitter-html")))
 
 ;; Treesit-auto: Automatically use tree-sitter modes
 (use-package treesit-auto
@@ -35,7 +30,7 @@
   (global-treesit-auto-mode)
 
   ;; PERFORMANCE: Only enable essential languages by default
-  (setq treesit-auto-langs '(c cpp python javascript json rust typescript)))
+  (setq treesit-auto-langs '(c cpp python json css html)))
 
 ;; Tree-sitter font-lock - balanced performance
 (setq treesit-font-lock-level 3) ; Level 3 for speed (was 4)
@@ -71,12 +66,6 @@
   ;; Configure specific language servers
   (add-to-list 'eglot-server-programs
                '((python-mode python-ts-mode) . ("pyright-langserver" "--stdio")))
-  (add-to-list 'eglot-server-programs
-               '((rust-mode rust-ts-mode) . ("rust-analyzer")))
-  (add-to-list 'eglot-server-programs
-               '((go-mode go-ts-mode) . ("gopls")))
-  (add-to-list 'eglot-server-programs
-               '((js-mode js-ts-mode typescript-mode typescript-ts-mode tsx-ts-mode) . ("typescript-language-server" "--stdio")))
   (add-to-list 'eglot-server-programs
                '((c-mode c-ts-mode c++-mode c++-ts-mode) . ("clangd")))
   (add-to-list 'eglot-server-programs
@@ -165,6 +154,13 @@
           "--failed-first"    ;; run failed tests first
           "--maxfail=5")))    ;; stop after 5 failures
 
+;; py-isort: Automatic Python import sorting
+(use-package py-isort
+  :straight t
+  :defer t
+  :hook ((python-mode . py-isort-before-save)
+         (python-ts-mode . py-isort-before-save)))
+
 ;; C/C++ with Tree-sitter
 (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
 (add-to-list 'major-mode-remap-alist '(c++-mode . c++-ts-mode))
@@ -244,10 +240,6 @@
   :hook ((c++-mode . modern-c++-font-lock-mode)
          (c++-ts-mode . modern-c++-font-lock-mode)))
 
-;; JavaScript/TypeScript with Tree-sitter
-(add-to-list 'major-mode-remap-alist '(js-mode . js-ts-mode))
-(add-to-list 'major-mode-remap-alist '(javascript-mode . js-ts-mode))
-
 ;; CSS with Tree-sitter
 (add-to-list 'major-mode-remap-alist '(css-mode . css-ts-mode))
 
@@ -257,8 +249,63 @@
 ;; JSON with Tree-sitter
 (add-to-list 'major-mode-remap-alist '(json-mode . json-ts-mode))
 
-;; YAML with Tree-sitter
-(add-to-list 'major-mode-remap-alist '(yaml-mode . yaml-ts-mode))
+;; --- Web Development Enhancements ---
+
+;; Web-mode: Multi-language editing for HTML templates
+(use-package web-mode
+  :straight t
+  :defer t
+  :mode (("\\.phtml\\'" . web-mode)
+         ("\\.tpl\\'" . web-mode)
+         ("\\.erb\\'" . web-mode)
+         ("\\.ejs\\'" . web-mode)
+         ("\\.hbs\\'" . web-mode)
+         ("\\.mustache\\'" . web-mode)
+         ("\\.djhtml\\'" . web-mode)
+         ("\\.jinja2?\\'" . web-mode)
+         ("\\.blade\\.php\\'" . web-mode)
+         ("\\.svelte\\'" . web-mode)
+         ("\\.vue\\'" . web-mode))
+  :config
+  (setq web-mode-markup-indent-offset 2)
+  (setq web-mode-css-indent-offset 2)
+  (setq web-mode-code-indent-offset 2)
+  (setq web-mode-enable-auto-pairing t)
+  (setq web-mode-enable-auto-closing t)
+  (setq web-mode-enable-auto-quoting t)
+  (setq web-mode-enable-css-colorization t)
+  (setq web-mode-enable-current-element-highlight t)
+  (setq web-mode-enable-current-column-highlight nil))
+
+;; Emmet: Abbreviation expansion for HTML/CSS
+(use-package emmet-mode
+  :straight t
+  :defer t
+  :hook ((html-mode . emmet-mode)
+         (html-ts-mode . emmet-mode)
+         (css-mode . emmet-mode)
+         (css-ts-mode . emmet-mode)
+         (web-mode . emmet-mode)
+         (scss-mode . emmet-mode))
+  :config
+  (setq emmet-move-cursor-between-quotes t)
+  (setq emmet-expand-jsx-className? nil))
+
+;; Auto-rename-tag: Sync opening/closing HTML tags
+(use-package auto-rename-tag
+  :straight t
+  :defer t
+  :hook ((html-mode . auto-rename-tag-mode)
+         (html-ts-mode . auto-rename-tag-mode)
+         (web-mode . auto-rename-tag-mode)))
+
+;; SCSS/SASS support
+(use-package scss-mode
+  :straight t
+  :defer t
+  :mode ("\\.scss\\'" . scss-mode)
+  :config
+  (setq scss-compile-at-save nil))
 
 ;; --- Modern Syntax Checking ---
 
@@ -299,16 +346,6 @@
         '(clang-format))
   (setf (alist-get 'c++-ts-mode apheleia-mode-alist)
         '(clang-format))
-  (setf (alist-get 'js-mode apheleia-mode-alist)
-        '(prettier))
-  (setf (alist-get 'js-ts-mode apheleia-mode-alist)
-        '(prettier))
-  (setf (alist-get 'typescript-mode apheleia-mode-alist)
-        '(prettier))
-  (setf (alist-get 'typescript-ts-mode apheleia-mode-alist)
-        '(prettier))
-  (setf (alist-get 'tsx-ts-mode apheleia-mode-alist)
-        '(prettier))
   (setf (alist-get 'css-mode apheleia-mode-alist)
         '(prettier))
   (setf (alist-get 'css-ts-mode apheleia-mode-alist)
@@ -321,14 +358,6 @@
         '(prettier))
   (setf (alist-get 'json-ts-mode apheleia-mode-alist)
         '(prettier))
-  (setf (alist-get 'rust-mode apheleia-mode-alist)
-        '(rustfmt))
-  (setf (alist-get 'rust-ts-mode apheleia-mode-alist)
-        '(rustfmt))
-  (setf (alist-get 'go-mode apheleia-mode-alist)
-        '(gofmt))
-  (setf (alist-get 'go-ts-mode apheleia-mode-alist)
-        '(gofmt))
   
   ;; Apheleia keybindings are configured in evil-config.el
   )
@@ -346,6 +375,45 @@
   
   ;; Integration with xref
   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
+
+;; --- Lookup System ---
+;; Doom-style lookup with Eglot -> xref fallback chain
+
+(defun my/lookup-definition ()
+  "Jump to definition using Eglot if available, falling back to xref."
+  (interactive)
+  (if (and (bound-and-true-p eglot--managed-mode)
+           (eglot-current-server))
+      (eglot-find-definition)
+    (xref-find-definitions (thing-at-point 'symbol t))))
+
+(defun my/lookup-references ()
+  "Find references using Eglot if available, falling back to xref."
+  (interactive)
+  (if (and (bound-and-true-p eglot--managed-mode)
+           (eglot-current-server))
+      (eglot-find-references)
+    (xref-find-references (thing-at-point 'symbol t))))
+
+(defun my/lookup-documentation ()
+  "Show documentation using Eglot eldoc, helpful, or eldoc fallback."
+  (interactive)
+  (cond
+   ((and (bound-and-true-p eglot--managed-mode)
+         (eglot-current-server))
+    (eldoc-doc-buffer))
+   ((fboundp 'helpful-at-point)
+    (helpful-at-point))
+   (t
+    (eldoc))))
+
+(defun my/lookup-type-definition ()
+  "Jump to type definition using Eglot."
+  (interactive)
+  (if (and (bound-and-true-p eglot--managed-mode)
+           (eglot-current-server))
+      (eglot-find-typeDefinition)
+    (message "Type definition requires an active LSP server (start with SPC l e)")))
 
 ;; Enhanced parentheses handling
 (use-package smartparens
@@ -367,7 +435,7 @@
 (defun my/install-tree-sitter-languages ()
   "Install essential tree-sitter language grammars interactively."
   (interactive)
-  (let ((languages '(c cpp css html javascript json python rust yaml typescript tsx))
+  (let ((languages '(c cpp css html json python))
         (failed-installs '())
         (successful-installs '()))
     (dolist (lang languages)
@@ -396,7 +464,7 @@
 
 (defun my/auto-install-tree-sitter-languages ()
   "Automatically install missing tree-sitter language grammars on startup."
-  (let ((languages '(c cpp css html javascript json python rust yaml typescript tsx))
+  (let ((languages '(c cpp css html json python))
         (failed-installs '())
         (successful-installs '())
         (skipped-installs '())
@@ -459,6 +527,12 @@
     :straight t
     :defer t)
 
+  ;; Doom Emacs snippets
+  (use-package doom-snippets
+    :straight (doom-snippets :type git :host github :repo "doomemacs/snippets" :files ("*.el" "*"))
+    :after yasnippet
+    :defer t)
+
   ;; Integrate with completion
   (add-hook 'yas-minor-mode-hook
             (lambda ()
@@ -509,13 +583,22 @@
 (use-package perspective
   :straight t
   :defer my/defer-slow
-  :commands (persp-switch persp-kill persp-rename)
+  :commands (persp-switch persp-kill persp-rename persp-switch-to-buffer)
   :init
   (setq persp-mode-prefix-key (kbd "C-c p"))
   :config
   (persp-mode 1)
   (setq persp-auto-save-fname (expand-file-name "perspectives" user-emacs-directory))
+  (setq persp-show-modestring t)
+  (setq persp-modestring-short t)
   (add-hook 'kill-emacs-hook #'persp-state-save))
+
+(defun my/persp-switch-by-number (n)
+  "Switch to perspective number N."
+  (let ((names (persp-names)))
+    (if (<= n (length names))
+        (persp-switch (nth (1- n) names))
+      (message "Workspace %d does not exist" n))))
 
 ;; --- Additional Development Tools ---
 
@@ -562,26 +645,60 @@
   ;; Project file markers
   (setq projectile-project-root-files
         '(".projectile" ".git" ".hg" ".svn" "Makefile" "CMakeLists.txt"
-          "package.json" "setup.py" "requirements.txt" "environment.yml"))
+          "setup.py" "requirements.txt" "environment.yml"))
 
   ;; Compilation commands for different project types
   (setq projectile-project-compilation-cmd
         '((cmake . "cmake --build build/")
           (make . "make")
-          (python . "python -m pytest")
-          (cargo . "cargo build")))
+          (python . "python -m pytest")))
 
   ;; Test commands
   (setq projectile-project-test-cmd
         '((cmake . "cd build && ctest")
           (make . "make test")
-          (python . "python -m pytest")
-          (cargo . "cargo test")))
+          (python . "python -m pytest")))
 
   ;; Run commands
   (setq projectile-project-run-cmd
-        '((python . "python main.py")
-          (cargo . "cargo run"))))
+        '((python . "python main.py"))))
+
+;; --- File Templates (Auto-Insert) ---
+
+(defvar my/template-dir (expand-file-name "templates/code" user-emacs-directory)
+  "Directory containing file templates.")
+
+(defun my/template-expand ()
+  "Expand placeholders in the current buffer after auto-insert."
+  (let ((filename (file-name-nondirectory (or buffer-file-name "")))
+        (date (format-time-string "%Y-%m-%d")))
+    (save-excursion
+      (goto-char (point-min))
+      (while (search-forward "__FILENAME__" nil t)
+        (replace-match filename t t))
+      (goto-char (point-min))
+      (while (search-forward "__DATE__" nil t)
+        (replace-match date t t))
+      (goto-char (point-min))
+      (while (search-forward "__GUARD__" nil t)
+        (replace-match
+         (upcase (replace-regexp-in-string
+                  "[^a-zA-Z0-9]" "_"
+                  (file-name-nondirectory (or buffer-file-name "HEADER"))))
+         t t)))))
+
+(use-package autoinsert
+  :straight nil
+  :config
+  (auto-insert-mode 1)
+  (setq auto-insert-query nil)
+  (setq auto-insert-directory my/template-dir)
+
+  (define-auto-insert "\\.py\\'" ["python.py" my/template-expand])
+  (define-auto-insert "\\.\\(cpp\\|cc\\)\\'" ["cpp.cpp" my/template-expand])
+  (define-auto-insert "\\.\\(h\\|hpp\\)\\'" ["header.h" my/template-expand])
+  (define-auto-insert "\\.html\\'" ["html.html" my/template-expand])
+  (define-auto-insert "\\.css\\'" ["css.css" my/template-expand]))
 
 (provide 'modern-languages)
 ;;; modern-languages.el ends here

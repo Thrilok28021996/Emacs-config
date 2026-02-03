@@ -138,6 +138,113 @@
     
     (display-buffer (current-buffer))))
 
+;; --- Config Doctor ---
+
+(defun my/doctor ()
+  "Run a health check on the configuration, Doom-style.
+Checks external tools, LSP servers, fonts, tree-sitter grammars,
+native compilation, and package load failures."
+  (interactive)
+  (let ((buf (get-buffer-create "*Config Doctor*"))
+        (pass 0) (warn 0) (fail 0))
+    (with-current-buffer buf
+      (erase-buffer)
+      (insert "Config Doctor\n")
+      (insert (make-string 60 ?=) "\n\n")
+
+      ;; --- External tools ---
+      (insert "External Tools\n")
+      (insert (make-string 40 ?-) "\n")
+      (dolist (tool '("git" "rg" "python3" "g++" "cmake" "clang-format" "black"))
+        (if (executable-find tool)
+            (progn
+              (insert (format "  OK  %s (%s)\n" tool (executable-find tool)))
+              (setq pass (1+ pass)))
+          (insert (format "  MISS %s\n" tool))
+          (setq fail (1+ fail))))
+      (insert "\n")
+
+      ;; --- LSP servers ---
+      (insert "LSP Servers\n")
+      (insert (make-string 40 ?-) "\n")
+      (dolist (server '("pyright-langserver" "clangd"
+                        "vscode-html-language-server" "vscode-css-language-server"))
+        (if (executable-find server)
+            (progn
+              (insert (format "  OK  %s\n" server))
+              (setq pass (1+ pass)))
+          (insert (format "  MISS %s\n" server))
+          (setq warn (1+ warn))))
+      (insert "\n")
+
+      ;; --- Fonts ---
+      (insert "Fonts\n")
+      (insert (make-string 40 ?-) "\n")
+      (if (display-graphic-p)
+          (dolist (font '("Fira Code" "Symbols Nerd Font Mono"))
+            (if (find-font (font-spec :name font))
+                (progn
+                  (insert (format "  OK  %s\n" font))
+                  (setq pass (1+ pass)))
+              (insert (format "  MISS %s\n" font))
+              (setq warn (1+ warn))))
+        (progn
+          (insert "  SKIP (non-graphical session)\n")
+          (setq warn (1+ warn))))
+      (insert "\n")
+
+      ;; --- Tree-sitter grammars ---
+      (insert "Tree-sitter Grammars\n")
+      (insert (make-string 40 ?-) "\n")
+      (if (fboundp 'treesit-language-available-p)
+          (dolist (lang '(c cpp python json css html))
+            (if (treesit-language-available-p lang)
+                (progn
+                  (insert (format "  OK  %s\n" lang))
+                  (setq pass (1+ pass)))
+              (insert (format "  MISS %s\n" lang))
+              (setq warn (1+ warn))))
+        (progn
+          (insert "  SKIP (tree-sitter not available)\n")
+          (setq warn (1+ warn))))
+      (insert "\n")
+
+      ;; --- Native compilation ---
+      (insert "Native Compilation\n")
+      (insert (make-string 40 ?-) "\n")
+      (if (and (fboundp 'native-comp-available-p)
+               (native-comp-available-p))
+          (progn
+            (insert "  OK  Native compilation available\n")
+            (setq pass (1+ pass)))
+        (insert "  WARN Native compilation NOT available\n")
+        (setq warn (1+ warn)))
+      (insert "\n")
+
+      ;; --- Package load failures ---
+      (insert "Package Load Failures\n")
+      (insert (make-string 40 ?-) "\n")
+      (if (and (boundp 'my/package-load-failures) my/package-load-failures)
+          (dolist (failure my/package-load-failures)
+            (insert (format "  FAIL %s: %s\n"
+                           (plist-get failure :package)
+                           (plist-get failure :error)))
+            (setq fail (1+ fail)))
+        (progn
+          (insert "  OK  No package failures recorded\n")
+          (setq pass (1+ pass))))
+      (insert "\n")
+
+      ;; --- Summary ---
+      (insert (make-string 60 ?=) "\n")
+      (insert (format "Summary: %d passed, %d warnings, %d failures\n" pass warn fail))
+      (when (= fail 0)
+        (insert "Your config looks healthy!\n")))
+
+    (display-buffer buf)
+    (with-current-buffer buf
+      (goto-char (point-min)))))
+
 ;; Initialize on load
 (add-hook 'emacs-startup-hook #'my/initialize-robustness-enhancements)
 

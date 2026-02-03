@@ -27,10 +27,47 @@
   :defer t
   :commands grip-mode
   :config
-  (setq grip-preview-use-webkit t)
-  
-  ;; Keybindings now handled in modules/evil-config.el to avoid conflicts
-  )
+  (setq grip-preview-use-webkit t))
+
+;; markdown-toc: Auto-generate table of contents
+(use-package markdown-toc
+  :straight t
+  :defer t
+  :after markdown-mode
+  :commands (markdown-toc-generate-toc
+             markdown-toc-generate-or-refresh-toc
+             markdown-toc-refresh-toc))
+
+;; evil-markdown: Better Evil keybindings in Markdown
+(use-package evil-markdown
+  :straight (evil-markdown :type git :host github :repo "Somelauw/evil-markdown")
+  :after (evil markdown-mode)
+  :defer t
+  :hook (markdown-mode . evil-markdown-mode))
+
+;; edit-indirect: Edit embedded code blocks in their native major mode
+(use-package edit-indirect
+  :straight t
+  :defer t
+  :commands edit-indirect-region
+  :config
+  (defun my/markdown-edit-code-block ()
+    "Edit the current markdown code block in its native major mode."
+    (interactive)
+    (save-excursion
+      (let ((start (progn
+                     (re-search-backward "^```" nil t)
+                     (forward-line 1)
+                     (point)))
+            (end (progn
+                   (re-search-forward "^```" nil t)
+                   (forward-line 0)
+                   (point))))
+        (edit-indirect-region start end t)))))
+
+;; Bind code block editing in markdown-mode
+(with-eval-after-load 'markdown-mode
+  (define-key markdown-mode-map (kbd "C-c '") #'my/markdown-edit-code-block))
 
 (provide 'markdown)
 ;;; markdown.el ends here

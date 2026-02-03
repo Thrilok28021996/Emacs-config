@@ -154,7 +154,8 @@
 ;; my/gc-restore-normal is hooked to emacs-startup-hook
 
 ;; Apply startup optimizations
-(my/gc-optimize-for-startup)
+;; GC threshold is now set to most-positive-fixnum in early-init.el
+;; (my/gc-optimize-for-startup)
 (add-hook 'emacs-startup-hook #'my/gc-restore-normal)
 
 ;; --- Enhanced File Handling ---

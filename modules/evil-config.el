@@ -91,6 +91,19 @@
   (define-key evil-insert-state-map (kbd "C-w") 'backward-kill-word)
   (define-key evil-insert-state-map (kbd "C-u") 'backward-kill-line)
   
+  ;; Doom-style g-prefix lookup bindings (normal state, no leader)
+  (define-key evil-normal-state-map (kbd "g d") 'my/lookup-definition)
+  (define-key evil-normal-state-map (kbd "g D") 'my/lookup-references)
+  (define-key evil-normal-state-map (kbd "K") 'my/lookup-documentation)
+
+  ;; Bracket navigation (normal state, no leader)
+  (define-key evil-normal-state-map (kbd "] e") 'flymake-goto-next-error)
+  (define-key evil-normal-state-map (kbd "[ e") 'flymake-goto-prev-error)
+  (define-key evil-normal-state-map (kbd "] d") 'flymake-goto-next-error)
+  (define-key evil-normal-state-map (kbd "[ d") 'flymake-goto-prev-error)
+  (define-key evil-normal-state-map (kbd "] h") 'diff-hl-next-hunk)
+  (define-key evil-normal-state-map (kbd "[ h") 'diff-hl-previous-hunk)
+
   ;; Global quit keybindings that work everywhere (safe bindings)
   (define-key evil-normal-state-map (kbd "C-c q") 'my/smart-quit)
   (define-key evil-emacs-state-map (kbd "C-c q") 'my/smart-quit))
@@ -118,6 +131,12 @@
 
   ;; Define all leader keybindings
   (my/leader-keys
+    ;; Quick-access keys (Doom-style)
+    "'" 'eshell
+    "." 'find-file
+    "," 'persp-switch-to-buffer
+    "<" 'consult-buffer
+
     "f f" 'find-file
     "f r" 'consult-recent-file
     "f s" 'save-buffer
@@ -255,6 +274,7 @@
     "c f" 'apheleia-format-buffer        ; Format buffer
     "c a" 'eglot-code-actions            ; Code actions (LSP)
     "c R" 'eglot-rename                  ; Rename symbol (LSP)
+    "c i" 'py-isort-buffer               ; Sort Python imports
 
     ;; Compilation errors
     "c n" 'next-error                    ; Next error
@@ -357,6 +377,7 @@
     "o a" 'org-archive-subtree
     "o x" 'org-clock-in
     "o z" 'org-clock-out
+    "o p" 'org-pomodoro
     
     ;; Note-taking and roam (if available)
     "n f" 'org-roam-node-find
@@ -386,6 +407,7 @@
     "M p" 'markdown-preview
     "M t" 'markdown-toc-generate-toc
     "M g" 'grip-mode
+    "M e" 'my/markdown-edit-code-block
     
     ;; Text operations
     "x d" 'delete-trailing-whitespace
@@ -428,7 +450,17 @@
     "TAB n" 'persp-next
     "TAB p" 'persp-prev
     "TAB c" 'persp-kill
+    "TAB d" 'persp-kill
     "TAB r" 'persp-rename
+    "TAB 1" '(lambda () (interactive) (my/persp-switch-by-number 1))
+    "TAB 2" '(lambda () (interactive) (my/persp-switch-by-number 2))
+    "TAB 3" '(lambda () (interactive) (my/persp-switch-by-number 3))
+    "TAB 4" '(lambda () (interactive) (my/persp-switch-by-number 4))
+    "TAB 5" '(lambda () (interactive) (my/persp-switch-by-number 5))
+    "TAB 6" '(lambda () (interactive) (my/persp-switch-by-number 6))
+    "TAB 7" '(lambda () (interactive) (my/persp-switch-by-number 7))
+    "TAB 8" '(lambda () (interactive) (my/persp-switch-by-number 8))
+    "TAB 9" '(lambda () (interactive) (my/persp-switch-by-number 9))
 
     ;; Git diff operations (using diff-hl)
     "g g" 'diff-hl-next-hunk
@@ -448,12 +480,18 @@
     "h a" 'apropos
     "h i" 'info
     "h h" 'helpful-at-point
+    "h p" 'describe-package
+    "h t" 'consult-theme
+    "h w" 'where-is
+    "h W" 'my/optimize-for-low-memory
 
     ;; Available diagnostic functions
+    "h d" 'my/doctor                    ; Doom-style config doctor
     "h D" 'my/validate-modern-config    ; Validation from init.el
     "h e" 'my/show-error-summary        ; Error summary from robustness-enhancements.el
     "h s" 'my/show-startup-errors       ; Startup errors from init.el
-    "h w" 'my/optimize-for-low-memory   ; Memory optimization from utilities.el
+    "h S" 'my/sync                      ; Sync config
+    "h U" 'my/upgrade                   ; Upgrade packages
     "h r" 'my/recover-from-errors       ; Error recovery from robustness-enhancements.el
     
     ;; Quick utilities
