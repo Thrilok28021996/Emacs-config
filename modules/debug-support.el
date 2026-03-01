@@ -1,30 +1,64 @@
 ;;; modules/debug-support.el --- Debugging support with DAP mode -*- lexical-binding: t; -*-
 
 ;;; Commentary:
-;;; DAP (Debug Adapter Protocol) integration for Python and C++ debugging
-;;; Provides breakpoints, step-through debugging, and variable inspection
+;; Debug Adapter Protocol (DAP) integration, loaded on-demand when
+;; you first call `dap-debug` or `dap-breakpoint-toggle`.
+;;
+;; Architecture:
+;;   dap-mode        — core DAP client (talks to debug adapters)
+;;   dap-ui          — sidebar windows (locals, breakpoints, REPL)
+;;   dap-python      — Python adapter using debugpy
+;;   dap-gdb-lldb    — C/C++ adapter using LLDB (macOS) or GDB
+;;
+;; Requirements (install externally):
+;;   Python:  pip install debugpy
+;;   C/C++:   lldb-vscode (ships with Xcode on macOS)
+;;            or gdb (install via Homebrew)
+;;
+;; Usage:
+;;   M-x my/dap-debug-current-file  — auto-detect language and debug
+;;   SPC d b                         — toggle breakpoint at point
+;;   SPC d d                         — debug current file (smart)
+;;   SPC d h                         — show all debug commands (hydra)
+;;
+;; Debug templates are pre-configured for:
+;;   Python: run file, run with args, pytest, Flask, Django
+;;   C/C++:  run binary (LLDB), run with args, GDB fallback
 
 ;;; Code:
 
 (require 'utilities)  ; For defer timing constants
 
-;; --- DAP Mode (Debug Adapter Protocol) ---
+;; Silence byte-compiler warnings for deferred functions/variables
+(declare-function dap-debug "dap-mode")
+(declare-function dap-register-debug-template "dap-mode")
+(declare-function which-function "which-func")
+(defvar compilation-in-progress)
+
+;; ══════════════════════════════════════════════════════════════════
+;;  1. DAP Core Configuration
+;; ══════════════════════════════════════════════════════════════════
+;; dap-mode implements the Debug Adapter Protocol — the same protocol
+;; VS Code uses for debugging.  It communicates with language-specific
+;; debug adapters over JSON-RPC.
 
 (use-package dap-mode
   :straight t
-  :defer t
+  :defer t                                     ; only load when a debug command is invoked
   :commands (dap-debug dap-hydra dap-breakpoint-toggle)
   :config
-  ;; Enable DAP features
-  (dap-mode 1)
-  (dap-ui-mode 1)        ; Enable UI features (locals, breakpoints windows)
-  (dap-tooltip-mode 1)   ; Show values on hover
-  (tooltip-mode 1)       ; Enable tooltips globally for dap
+  (dap-mode 1)                                 ; enable DAP protocol handling
+  (dap-ui-mode 1)                              ; show locals/breakpoints/sessions sidebars
+  (dap-tooltip-mode 1)                         ; hover over variable → show value
+  (tooltip-mode 1)                             ; ensure tooltips are enabled globally
 
-  ;; UI Configuration
+  ;; Which UI panels to auto-configure when a debug session starts
   (setq dap-auto-configure-features '(sessions locals breakpoints expressions repl controls tooltip))
 
-  ;; Better UI layout
+  ;; Window layout for debug UI panels.
+  ;; Right side: locals, expressions, sessions (stacked vertically)
+  ;; Left side: breakpoints list
+  ;; Bottom: REPL and console output
   (setq dap-ui-buffer-configurations
         `((,"*dap-ui-locals*" . ((side . right) (slot . 1) (window-width . 0.30)))
           (,"*dap-ui-expressions*" . ((side . right) (slot . 2) (window-width . 0.30)))
@@ -39,7 +73,12 @@
   ;; Don't ask for confirmation when debugging
   (setq dap-auto-configure-mode t))
 
-;; --- Python Debugging ---
+;; ══════════════════════════════════════════════════════════════════
+;;  2. Python Debugging (debugpy)
+;; ══════════════════════════════════════════════════════════════════
+;; Uses debugpy (Microsoft's Python debug adapter, same as VS Code).
+;; Install: pip install debugpy
+;; Templates cover common scenarios: script, pytest, Flask, Django.
 
 (use-package dap-python
   :straight nil  ; Included with dap-mode
@@ -102,7 +141,11 @@
          :request "launch"
          :name "Python :: Django")))
 
-;; --- C/C++ Debugging ---
+;; ══════════════════════════════════════════════════════════════════
+;;  3. C/C++ Debugging (LLDB / GDB)
+;; ══════════════════════════════════════════════════════════════════
+;; Uses lldb-vscode on macOS (ships with Xcode command line tools).
+;; GDB template is available as a fallback for Linux or preference.
 
 (use-package dap-gdb-lldb
   :straight nil  ; Included with dap-mode
@@ -138,7 +181,12 @@
          :target nil
          :cwd nil)))
 
-;; --- Debugging Helper Functions ---
+;; ══════════════════════════════════════════════════════════════════
+;;  4. Smart Debug Helpers
+;; ══════════════════════════════════════════════════════════════════
+;; my/dap-debug-current-file — detects the file extension and
+;; launches the appropriate debug adapter.  For C++, it compiles
+;; with -g -O0 first if the binary is missing or outdated.
 
 (defun my/dap-debug-current-file ()
   "Debug the current Python or C++ file intelligently."
@@ -192,7 +240,11 @@
            :request "launch"
            :name "Python :: Debug test method"))))
 
-;; --- Keybindings (to be added to evil-config.el) ---
+;; ══════════════════════════════════════════════════════════════════
+;;  5. Keybinding Reference (SPC d prefix)
+;; ══════════════════════════════════════════════════════════════════
+;; These keybindings should be defined in evil-config.el under the
+;; SPC d prefix.  Listed here as documentation.
 
 ;; These keybindings should be added to evil-leader/set-key in evil-config.el:
 ;;

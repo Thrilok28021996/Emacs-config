@@ -1,224 +1,279 @@
 ;;; modules/modern-performance.el --- Emacs 29/30 features and advanced performance -*- lexical-binding: t; -*-
 
 ;;; Commentary:
-;;; Advanced performance optimizations and modern Emacs features
-;;; Leverages Emacs 29/30 capabilities including native compilation, pixel-perfect scrolling,
-;;; and enhanced built-in features for maximum performance
+;; Performance optimizations loaded in Phase 1 (eager).
+;; Tunes GC, I/O, scrolling, and native compilation for fast editing.
+;;
+;; Key optimizations:
+;;   GC (gcmh)       — runs GC only when idle, not during editing
+;;   Native comp     — JIT-compiles Elisp to machine code in background
+;;   Scrolling       — pixel-precise scrolling for smooth trackpad UX
+;;   File I/O        — reduced backup versions, dedicated backup directory
+;;   Process I/O     — 1MB read buffer for fast LSP communication
+;;   UTF-8           — system-wide UTF-8 with unix line endings
+;;   Repeat mode     — press a key repeatedly without re-pressing prefix
 
 ;;; Code:
 
-;; No external dependencies required
+;; Silence byte-compiler warnings for native-comp variables (only
+;; exist when Emacs is built with libgccjit support).
+(defvar native-comp-jit-compilation)
+(defvar native-comp-async-report-warnings-errors)
+(defvar native-comp-async-jobs-number)
+(defvar native-comp-speed)
+(defvar native-comp-debug)
+(defvar native-comp-eln-load-path)
 
-;; --- Native Compilation Optimizations (Emacs 28+) ---
+;; Silence byte-compiler warnings for pixel-scroll variables (Emacs 29+)
+(defvar pixel-scroll-precision-large-scroll-height)
+(defvar pixel-scroll-precision-interpolation-factor)
+(defvar pixel-scroll-precision-use-momentum)
+
+;; Silence byte-compiler warnings for repeat-mode and project.el variables
+(defvar repeat-exit-timeout)
+(defvar project-vc-merge-submodules)
+
+;; ══════════════════════════════════════════════════════════════════
+;;  Native Compilation (Emacs 28+)
+;; ══════════════════════════════════════════════════════════════════
+;; libgccjit compiles Elisp to native machine code, giving ~2-5x
+;; speedup for compute-heavy packages (magit, treesit, org).
 
 (when (and (fboundp 'native-comp-available-p)
            (native-comp-available-p))
-  ;; Enable native compilation for better performance
-  (setq native-comp-jit-compilation t)
-  ;; native-comp-deferred-compilation is obsolete in Emacs 29+, use native-comp-jit-compilation
-  (setq native-comp-async-report-warnings-errors nil)
-  (setq native-comp-async-jobs-number (max 1 (/ (num-processors) 2)))
-  
-  ;; Optimize native compilation for startup
-  (setq native-comp-speed 2) ; Balance between compilation time and performance
-  (setq native-comp-debug 0) ; Disable debug info for better performance
-  
-  ;; Ensure native compilation directory is added to path
+  (setq native-comp-jit-compilation t               ; compile on first use
+        native-comp-async-report-warnings-errors nil ; suppress *Warnings* popups
+        native-comp-async-jobs-number (max 1 (/ (num-processors) 2))  ; use half the CPU cores
+        native-comp-speed 2                          ; optimization level (0-3, 2=balanced)
+        native-comp-debug 0)                         ; no debug symbols (smaller .eln files)
+
+  ;; Ensure our eln-cache directory is in the search path
   (let ((native-dir (expand-file-name "eln-cache" user-emacs-directory)))
     (add-to-list 'native-comp-eln-load-path native-dir))
-  
+
   (message "✅ Native compilation enabled"))
 
-;; --- Advanced Garbage Collection Tuning ---
+;; ══════════════════════════════════════════════════════════════════
+;;  Garbage Collection Tuning
+;; ══════════════════════════════════════════════════════════════════
+;; Emacs's default GC threshold (800KB) causes frequent pauses during
+;; editing.  We raise it to 32MB for normal use.  gcmh handles the
+;; idle-GC strategy so you never notice GC pauses.
 
-;; PERFORMANCE: Optimized GC settings for programming
 (defvar my/gc-cons-threshold-normal (* 32 1024 1024)
-  "Normal GC threshold for interactive use (32MB for better performance).")
-
-(defvar my/gc-cons-threshold-high (* 100 1024 1024)
-  "High GC threshold for heavy operations (100MB).")
+  "Normal GC threshold (32MB) — balances memory usage and pause frequency.")
 
 (defvar my/gc-cons-percentage-normal 0.15
-  "Normal GC percentage for balanced performance.")
+  "Normal GC percentage — controls how much heap growth triggers GC.")
 
-(defvar my/gc-cons-percentage-high 0.6
-  "High GC percentage for heavy operations.")
+;; ── GCMH (GC Magic Hack) ──────────────────────────────────────────
+;; The single most impactful performance package.  Strategy:
+;;   - While you're actively typing/navigating: GC threshold stays HIGH
+;;     (32MB) so GC never triggers during editing.
+;;   - When Emacs is idle: threshold drops and GC runs in the background.
+;; This eliminates the 50-200ms freezes caused by default GC behavior.
 
-(defun my/gc-optimize-for-startup ()
-  "Optimize GC for startup performance with reasonable limits."
-  (setq gc-cons-threshold (* 100 1024 1024)  ; 100MB instead of max value
-        gc-cons-percentage my/gc-cons-percentage-high)
-  (when (fboundp 'gcmh-mode)
-    (gcmh-mode -1))  ; Disable GCMH if present during startup
-  )
+(use-package gcmh
+  :straight t
+  :demand t                                    ; load immediately (needed from the start)
+  :config
+  (setq gcmh-idle-delay 'auto                  ; auto-tune idle delay based on usage
+        gcmh-auto-idle-delay-factor 10         ; multiplier for auto delay calculation
+        gcmh-high-cons-threshold (* 32 1024 1024))  ; 32MB threshold during active use
+  (gcmh-mode 1))
 
-(defun my/gc-restore-normal ()
-  "Restore normal GC settings after startup."
-  (setq gc-cons-threshold my/gc-cons-threshold-normal
-        gc-cons-percentage my/gc-cons-percentage-normal)
-  (when (fboundp 'gcmh-mode)
-    (gcmh-mode 1))  ; Re-enable GCMH after startup
-  (run-with-idle-timer 2 nil #'garbage-collect)  ; Clean up after startup
-  )
+;; ══════════════════════════════════════════════════════════════════
+;;  Scrolling & Display (Emacs 29+)
+;; ══════════════════════════════════════════════════════════════════
 
-(defun my/gc-temporarily-increase ()
-  "Temporarily increase GC threshold for heavy operations."
-  (setq gc-cons-threshold my/gc-cons-threshold-high))
-
-(defun my/gc-restore-after-operation ()
-  "Restore GC threshold after heavy operation."
-  (setq gc-cons-threshold my/gc-cons-threshold-normal))
-
-;; Hook into heavy operations
-(add-hook 'minibuffer-setup-hook #'my/gc-temporarily-increase)
-(add-hook 'minibuffer-exit-hook #'my/gc-restore-after-operation)
-
-;; --- Modern Scrolling and Display Optimizations (Emacs 29+) ---
-
+;; Pixel-precision scrolling — makes trackpad scrolling smooth like
+;; a native macOS app instead of jumping line-by-line.
 (when (boundp 'pixel-scroll-precision-mode)
-  ;; Enable pixel-perfect scrolling in Emacs 29+
   (pixel-scroll-precision-mode 1)
-  (setq pixel-scroll-precision-large-scroll-height 40.0)
-  (setq pixel-scroll-precision-interpolation-factor 30.0)
-  (setq pixel-scroll-precision-use-momentum t))
+  (setq pixel-scroll-precision-large-scroll-height 40.0   ; threshold for "large" scroll
+        pixel-scroll-precision-interpolation-factor 30.0   ; smoothing factor
+        pixel-scroll-precision-use-momentum t))            ; inertial scrolling
 
-;; Enhanced scrolling settings with error handling
+;; Conservative scrolling — scroll just enough to keep the cursor
+;; visible instead of recentering.  This prevents the jarring
+;; "jump to center" behavior when cursor reaches screen edge.
 (condition-case err
     (progn
-      (setq scroll-preserve-screen-position t)
-      (setq scroll-conservatively 101)
-      (setq scroll-margin 0)
-      (setq scroll-step 1)
-      (setq auto-window-vscroll nil)
-      (setq fast-but-imprecise-scrolling t)
-      (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
-      (setq mouse-wheel-progressive-speed nil))
+      (setq scroll-preserve-screen-position t   ; keep cursor at same screen position
+            scroll-conservatively 101            ; never recenter (scroll minimally)
+            scroll-margin 0                      ; no margin at screen edges
+            scroll-step 1                        ; scroll one line at a time
+            auto-window-vscroll nil              ; don't auto-adjust for tall lines
+            fast-but-imprecise-scrolling t        ; skip fontification during fast scroll
+            mouse-wheel-scroll-amount '(1 ((shift) . 1))  ; 1 line per wheel click
+            mouse-wheel-progressive-speed nil))  ; don't accelerate wheel speed
   (error
    (message "⚠️ Some scrolling optimizations failed: %s" (error-message-string err))))
 
-;; --- Font and Display Optimizations ---
+;; ══════════════════════════════════════════════════════════════════
+;;  Font & Display Rendering
+;; ══════════════════════════════════════════════════════════════════
+;; Fine-tune how Emacs renders text and resizes frames.
 
-;; Optimize font rendering
+;; nil = use the font's natural line spacing (no extra padding).
+;; Extra line-spacing slows redisplay because more lines must be
+;; rendered to fill the same screen height.
 (setq-default line-spacing nil)
+
+;; Draw underlines at the descent line (bottom of character cell)
+;; instead of the baseline.  Looks better with most programming fonts.
 (setq x-underline-at-descent-line t)
 
-;; Better frame resizing
+;; Allow pixel-exact frame resizing instead of snapping to character
+;; grid.  This lets the window manager tile Emacs precisely.
+;; Window resizing stays character-aligned to avoid partial-line display.
 (setq frame-resize-pixelwise t)
 (setq window-resize-pixelwise nil)
 
-;; Improve large file handling with reasonable threshold
-(setq large-file-warning-threshold 25000000) ; 25MB (more reasonable than 100MB)
-(setq vc-handled-backends '(Git)) ; Only use Git for version control
+;; Warn before opening files larger than 25MB.  Emacs can handle large
+;; files but they trigger expensive fontification and undo tracking.
+(setq large-file-warning-threshold 25000000) ; 25MB
 
-;; --- Advanced I/O Optimizations ---
+;; Only check Git for version control status — skip SVN, Hg, Bazaar,
+;; etc.  Reduces the number of subprocess calls when visiting files.
+(setq vc-handled-backends '(Git))
 
-;; PERFORMANCE: Increase process output buffer size for LSP/Eglot
-(setq read-process-output-max (* 1 1024 1024)) ; 1MB (was 3MB, reduced for stability)
-(setq process-adaptive-read-buffering nil)      ; Disable adaptive buffering
+;; ══════════════════════════════════════════════════════════════════
+;;  Process & File I/O
+;; ══════════════════════════════════════════════════════════════════
+;; Tune how Emacs communicates with subprocesses (LSP, formatters)
+;; and how it handles file backups / auto-saves.
 
-;; PERFORMANCE: Optimize file I/O for programming
-(setq create-lockfiles nil        ; Don't create .# lock files
-      make-backup-files t         ; Keep backup files for safety
-      backup-by-copying t         ; Use copying instead of renaming
-      backup-directory-alist      ; Store backups in dedicated directory
+;; Increase the chunk size Emacs reads from subprocesses per cycle.
+;; Default is 4KB which means many read() syscalls for LSP responses.
+;; 1MB lets Eglot/LSP ingest large JSON payloads in fewer reads.
+(setq read-process-output-max (* 1 1024 1024)) ; 1MB
+
+;; Disable adaptive read buffering — Emacs normally delays reading
+;; subprocess output to batch it up.  Disabling gives lower latency
+;; for interactive tools like LSP and compilation buffers.
+(setq process-adaptive-read-buffering nil)
+
+;; File backup strategy:
+;;   - No .#lockfiles (interfere with file watchers like webpack/vite)
+;;   - Backups enabled and stored in ~/.emacs.d/backups/ (not alongside files)
+;;   - Copy-based backups preserve hard links and ownership
+;;   - Numbered backups keep a rolling history (3 recent + 1 oldest)
+(setq create-lockfiles nil
+      make-backup-files t
+      backup-by-copying t
+      backup-directory-alist
       `(("." . ,(expand-file-name "backups/" user-emacs-directory)))
-      delete-old-versions t       ; Delete old backup versions
-      version-control t          ; Use numbered backups
-      kept-new-versions 3        ; Keep 3 new versions (reduced from 5)
-      kept-old-versions 1        ; Keep 1 old version (reduced from 2)
-      auto-save-default t        ; Keep auto-save
-      auto-save-interval 200     ; Auto-save every 200 keystrokes (was 300)
-      auto-save-timeout 20)      ; Auto-save after 20 seconds idle (was 30)
+      delete-old-versions t
+      version-control t
+      kept-new-versions 3
+      kept-old-versions 1
+      auto-save-default t         ; auto-save protects against crashes
+      auto-save-interval 200      ; auto-save every 200 keystrokes
+      auto-save-timeout 20)       ; auto-save after 20s idle
 
-;; Better UTF-8 performance with error handling
+;; ══════════════════════════════════════════════════════════════════
+;;  UTF-8 Everywhere
+;; ══════════════════════════════════════════════════════════════════
+;; Force UTF-8 as the default encoding at every level — file I/O,
+;; terminal, clipboard, and new buffers.  This prevents Emacs from
+;; wasting time probing encodings and avoids mojibake in mixed
+;; environments.  `utf-8-unix` uses LF line endings (no CR overhead).
 (condition-case err
     (progn
       (set-default-coding-systems 'utf-8)
       (setq locale-coding-system 'utf-8)
       (set-terminal-coding-system 'utf-8)
       (set-keyboard-coding-system 'utf-8)
-      (set-selection-coding-system 'utf-8)
-      (prefer-coding-system 'utf-8)
-      ;; Additional UTF-8 optimizations
-      (setq-default buffer-file-coding-system 'utf-8-unix)
+      (set-selection-coding-system 'utf-8)       ; clipboard paste encoding
+      (prefer-coding-system 'utf-8)              ; priority when auto-detecting
+      (setq-default buffer-file-coding-system 'utf-8-unix)  ; LF line endings
       (setq default-file-name-coding-system 'utf-8))
   (error
    (message "⚠️ UTF-8 setup failed: %s" (error-message-string err))))
 
 
 
-;; --- Advanced Startup Optimizations ---
+;; ══════════════════════════════════════════════════════════════════
+;;  File Handling & Auto-Save
+;; ══════════════════════════════════════════════════════════════════
+;; Note: GC threshold is set to most-positive-fixnum in early-init.el
+;; during startup; gcmh-mode restores sane values after init completes.
 
-;; GC optimizations are handled by the existing functions above
-;; my/gc-optimize-for-startup is called in init.el
-;; my/gc-restore-normal is hooked to emacs-startup-hook
+;; Skip confirmation prompts when quitting — Emacs auto-saves protect
+;; against accidental data loss, so the "really quit?" dialog is just
+;; friction for keyboard-driven workflows.
+(setq confirm-kill-emacs nil)
+(setq confirm-kill-processes nil)
 
-;; Apply startup optimizations
-;; GC threshold is now set to most-positive-fixnum in early-init.el
-;; (my/gc-optimize-for-startup)
-(add-hook 'emacs-startup-hook #'my/gc-restore-normal)
-
-;; --- Enhanced File Handling ---
-
-;; Optimize file operations
-(setq confirm-kill-emacs nil) ; Don't confirm on exit
-(setq confirm-kill-processes nil) ; Don't confirm killing processes
-
-;; Basic auto-save handling (backups handled by robustness-enhancements.el)
+;; Redirect auto-save files (#filename#) to a dedicated directory
+;; instead of cluttering project directories.  The `t` at the end
+;; means use just the basename (flatten the directory structure).
 (setq auto-save-file-name-transforms
       `((".*" ,(expand-file-name "auto-saves/" user-emacs-directory) t)))
 
-;; Ensure auto-save directory exists
+;; Create the auto-save directory on first load if it doesn't exist
 (let ((auto-save-dir (expand-file-name "auto-saves" user-emacs-directory)))
   (unless (file-directory-p auto-save-dir)
     (make-directory auto-save-dir t)))
 
-;; --- Modern Built-in Enhancements (Emacs 29+) ---
+;; ══════════════════════════════════════════════════════════════════
+;;  Modern Built-in Features (Emacs 28+/29+)
+;; ══════════════════════════════════════════════════════════════════
+;; Enable useful built-in features that ship with modern Emacs.
+;; Each is guarded by `fboundp` so this file works on older versions.
 
-;; Modern built-in enhancements with error handling
 (condition-case err
     (progn
-      ;; Use built-in tab-bar if available
+      ;; tab-bar — workspace tabs at the top of the frame.
+      ;; Show the tab bar only when 2+ tabs exist (tab-bar-show 1).
+      ;; Hide close/new buttons — we use keybindings instead.
       (when (fboundp 'tab-bar-mode)
         (setq tab-bar-show 1)
-        (setq tab-bar-close-button-show nil)
-        ;; tab-bar-new-button-show is obsolete in 28.1+, use tab-bar-format instead
-        (when (version< emacs-version "28.1")
-          (setq tab-bar-new-button-show nil)))
+        (setq tab-bar-close-button-show nil))
 
-      ;; Enhanced repeat mode (Emacs 28+)
+      ;; repeat-mode — after pressing a prefix like C-x o (other-window),
+      ;; you can keep pressing just `o` to repeat.  The repeat map exits
+      ;; after 2 seconds of inactivity.
       (when (fboundp 'repeat-mode)
         (repeat-mode 1)
         (setq repeat-exit-timeout 2))
 
-      ;; Use built-in project.el enhancements
+      ;; project.el — don't merge git submodule contents into the
+      ;; parent project's file list.  Keeps project-find-file fast
+      ;; in monorepos with vendored dependencies.
       (when (fboundp 'project-remember-projects-under)
         (setq project-vc-merge-submodules nil)))
   (error
    (message "⚠️ Some modern feature initialization failed: %s" (error-message-string err))))
 
 
-;; --- Simplified GC Monitoring ---
+;; ══════════════════════════════════════════════════════════════════
+;;  GC Monitoring & Recovery
+;; ══════════════════════════════════════════════════════════════════
+;; Safety net: if Emacs accumulates too many GC cycles (indicating
+;; the threshold is too low or a package is allocating excessively),
+;; bump the threshold to 50MB.  Use M-x my/reset-gc-settings to
+;; restore defaults, or M-x my/handle-excessive-gc to check now.
 
 (defun my/handle-excessive-gc ()
-  "Handle excessive garbage collection by optimizing settings."
+  "Detect excessive GC and raise the threshold to reduce pauses.
+Triggers when `gcs-done' exceeds 300 cycles (a sign the threshold
+is too low for the current workload)."
   (interactive)
-  (when (> gcs-done 300)  ; Increased threshold to reduce false positives
-    (setq gc-cons-threshold (* 50 1024 1024))  ; Increase to 50MB
-    (setq gc-cons-percentage 0.2)              ; Increase percentage
+  (when (> gcs-done 300)
+    (setq gc-cons-threshold (* 50 1024 1024))  ; bump to 50MB
+    (setq gc-cons-percentage 0.2)
     (message "🗑️ Excessive GC detected (%d cycles), adjusting thresholds" gcs-done)))
 
 (defun my/reset-gc-settings ()
-  "Reset GC settings to normal values."
+  "Reset GC settings to the normal 32MB threshold.
+Use this after M-x my/handle-excessive-gc to go back to defaults."
   (interactive)
   (setq gc-cons-threshold my/gc-cons-threshold-normal
         gc-cons-percentage my/gc-cons-percentage-normal)
   (message "GC settings reset to normal (threshold: %dMB)"
            (/ my/gc-cons-threshold-normal 1024 1024)))
-
-;; Monitor GC less frequently to reduce overhead - EXTENDED for performance
-;; Changed from 600/1200 to 3600 (1 hour) to minimize timer overhead
-(run-with-timer 3600 nil #'my/handle-excessive-gc)
 
 (provide 'modern-performance)
 ;;; modern-performance.el ends here

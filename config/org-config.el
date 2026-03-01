@@ -1,18 +1,122 @@
 ;;; config/org-config.el --- Org-mode configuration -*- lexical-binding: t; -*-
 
 ;;; Commentary:
-;;; Complete org-mode ecosystem with lazy loading
-;;; Includes org-roam, org-journal, and productivity packages
+;; Complete org-mode ecosystem loaded with `:defer 2` (2 seconds idle).
+;; Org is the most feature-rich module — it handles:
+;;
+;; Provides:
+;;   Org core         — outlining, TODO tracking, agenda, capture, export
+;;   Org-roam         — Zettelkasten-style knowledge graph (backlinks)
+;;   Org-roam-dailies — daily journal notes within the roam graph
+;;   Org-roam-ui      — visual knowledge graph in the browser
+;;   Org-journal      — standalone daily journaling
+;;   Org-modern       — modern visual styling (bullets, tags, tables)
+;;   Org-appear       — reveal emphasis markers when cursor is on them
+;;   Olivetti         — centered, distraction-free writing mode
+;;   Org-babel        — execute code blocks (Python, C, shell, etc.)
+;;   Org-super-agenda — group agenda items by category/priority/tag
+;;   Org-download     — drag-and-drop images into org files
+;;   Org-pomodoro     — 25min work / 5min break timer
+;;   Evil-org         — Vim keybindings for org-mode
+;;   Org-noter        — annotate PDFs/EPUBs synced with org notes
+;;   Consult-org-roam — ripgrep search across all roam notes
+;;   Denote           — simple flat-file note system (keyword+date filenames)
+;;   Org-transclusion — embed/transclude content from other org files
+;;
+;; Directory structure:
+;;   ~/Documents/org/          — org-agenda files, tasks, notes
+;;   ~/Documents/roam-notes/   — org-roam knowledge base (Zettelkasten)
+;;   ~/Documents/journal/      — org-journal daily entries
+;;   ~/Documents/denote/       — denote flat-file notes (simpler, keyword-based)
+;;
+;; All keybindings are defined in evil-config.el (SPC o / SPC n prefix).
 
 ;;; Code:
 
-;; Ensure org directory structure exists
+;; Silence byte-compiler warnings for deferred functions
+(declare-function org-roam-node-find "org-roam")
+(declare-function org-roam-node-file "org-roam")
+(declare-function org-roam-node-at-point "org-roam")
+(declare-function org-roam-node-id "org-roam")
+(declare-function org-roam-node-title "org-roam")
+(declare-function org-roam-node-insert "org-roam")
+(declare-function org-roam-buffer-toggle "org-roam")
+(declare-function org-roam-db-autosync-mode "org-roam")
+(declare-function org-roam-db-sync "org-roam")
+(declare-function org-html-export-to-html "ox-html")
+(declare-function evil-org-agenda-set-keys "evil-org-agenda")
+(declare-function evil-org-set-key-theme "evil-org")
+(declare-function org-back-to-heading "org")
+(declare-function org-end-of-subtree "org")
+(declare-function olivetti-mode "olivetti")
+(declare-function org-noter "org-noter")
+(declare-function org-noter-create-skeleton "org-noter")
+(declare-function consult-org-roam-file-find "consult-org-roam")
+(declare-function consult-org-roam-search "consult-org-roam")
+(declare-function consult-org-roam-backlinks "consult-org-roam")
+(declare-function consult-org-roam-forward-links "consult-org-roam")
+(declare-function consult-org-roam-mode "consult-org-roam")
+(declare-function denote "denote")
+(declare-function denote-open-or-create "denote")
+(declare-function denote-link "denote")
+(declare-function denote-keywords-add "denote")
+(declare-function denote-keywords-remove "denote")
+(declare-function denote-rename-file "denote")
+(declare-function denote-rename-file-using-front-matter "denote")
+(declare-function denote-backlinks "denote")
+(declare-function denote-find-backlink "denote")
+(declare-function denote-find-file "denote")
+(declare-function denote-sort-files "denote")
+(declare-function denote-org-dblock-update "denote")
+(declare-function list-denotes "denote-menu")
+(declare-function org-transclusion-mode "org-transclusion")
+(declare-function org-transclusion-add "org-transclusion")
+(declare-function org-transclusion-add-all "org-transclusion")
+(declare-function org-modern-mode "org-modern")
+(declare-function org-modern-agenda "org-modern")
+(declare-function org-bullets-mode "org-bullets")
+(declare-function org-appear-mode "org-appear")
+(declare-function org-roam-ui-mode "org-roam-ui")
+(declare-function pdf-tools-install "pdf-tools")
+(declare-function org-pomodoro "org-pomodoro")
+
+;; Silence byte-compiler warnings for babel variables
+(defvar org-babel-python-command)
+(defvar org-babel-C++-compiler)
+(defvar org-babel-C-compiler)
+(defvar denote-directory)
+(defvar org-noter-notes-window-location)
+(defvar org-noter-always-create-frame)
+(defvar org-noter-auto-save-last-location)
+(defvar org-noter-doc-split-fraction)
+
+;; ══════════════════════════════════════════════════════════════════
+;;  Directory Setup
+;; ══════════════════════════════════════════════════════════════════
+;; Create the org directory tree on first load if it doesn't exist.
 (defun my/ensure-org-directories ()
   "Create org directory structure if it doesn't exist."
   (let ((dirs '("~/Documents/org"
                 "~/Documents/org/learning"
                 "~/Documents/org/projects"
-                "~/Documents/org/planning")))
+                "~/Documents/org/planning"
+                "~/Documents/org/reviews"
+                ;; roam-notes and its subdirectories
+                "~/Documents/roam-notes"
+                "~/Documents/roam-notes/course"
+                "~/Documents/roam-notes/learning"
+                "~/Documents/roam-notes/tutorials"
+                "~/Documents/roam-notes/projects"
+                "~/Documents/roam-notes/weekly"
+                "~/Documents/roam-notes/notes"
+                "~/Documents/roam-notes/literature"
+                "~/Documents/roam-notes/fleeting"
+                "~/Documents/roam-notes/evergreen"
+                ;; denote flat-file notes
+                "~/Documents/denote"
+                "~/Documents/denote/attachments"
+                ;; writing output
+                "~/Documents/writing-output")))
     (dolist (dir dirs)
       (let ((expanded-dir (expand-file-name dir)))
         (unless (file-directory-p expanded-dir)
@@ -22,27 +126,35 @@
 ;; Create directories on load
 (my/ensure-org-directories)
 
-;; Core org-mode configuration (using stable org from GNU ELPA)
+;; ══════════════════════════════════════════════════════════════════
+;;  1. Org Core Configuration
+;; ══════════════════════════════════════════════════════════════════
+;; Uses the built-in org (not a separately installed version).
+;; `:defer 2` means org loads 2 seconds after startup, or immediately
+;; when a .org file is opened (whichever comes first).
 (use-package org
   :straight (:type built-in)
   :defer 2
   :mode ("\\.org\\'" . org-mode)
   :config
-  (setq org-directory "~/Documents/org"
-        org-agenda-files (list org-directory)
+  ;; Core paths and display settings
+  (setq org-directory "~/Documents/org"                  ; root org directory
+        org-agenda-files (list org-directory)             ; files scanned for agenda
         org-default-notes-file (concat org-directory "/notes.org")
-        org-log-done 'time
-        org-log-into-drawer t
-        org-startup-indented t
-        org-hide-emphasis-markers t
-        org-pretty-entities t
-        org-ellipsis " ▾")
+        org-log-done 'time                               ; timestamp when marking DONE
+        org-log-into-drawer t                            ; put state changes in :LOGBOOK:
+        org-startup-indented t                           ; indent headings visually
+        org-hide-emphasis-markers t                      ; hide *bold* markers (show bold)
+        org-pretty-entities t                            ; render \alpha as α, etc.
+        org-ellipsis " ▾")                               ; folded heading indicator
 
-  ;; TODO state keywords with logging
+  ;; TODO workflow: TODO → NEXT → WAITING/HOLD → DONE/CANCELLED
+  ;; Letters in parens are quick-select keys in C-c C-t.
+  ;; @ = add note on enter, ! = log timestamp, / = on exit.
   (setq org-todo-keywords
         '((sequence "TODO(t)" "NEXT(n)" "WAITING(w@/!)" "HOLD(h@/!)" "|" "DONE(d!)" "CANCELLED(c@/!)")))
 
-  ;; TODO state faces
+  ;; Color-code TODO states for visual scanning
   (setq org-todo-keyword-faces
         '(("TODO" . (:foreground "#ff6c6b" :weight bold))
           ("NEXT" . (:foreground "#da8548" :weight bold))
@@ -50,9 +162,14 @@
           ("HOLD" . (:foreground "#a9a1e1" :weight bold))
           ("DONE" . (:foreground "#98be65" :weight bold))
           ("CANCELLED" . (:foreground "#5B6268" :weight bold))))
-  
-  
-  ;; Enhanced org capture templates for writing and learning
+
+  ;; ── Capture Templates ──────────────────────────────────────────
+  ;; SPC o c activates org-capture.  Each template has a shortcut key:
+  ;;   t = task, n = note, m = meeting
+  ;;   l = learning (sub-menu: lc=course, le=extract, lt=tutorial, ln=note)
+  ;;   p = project, f = weekly flow
+  ;;   w = writing (sub-menu: wi=idea, wa=article, wj=journal, wr=research, wq=quote)
+  ;; Templates marked with `(file ...)` pull structure from template files.
   (setq org-capture-templates
         `(("t" "Task" entry
            (file+headline ,(concat org-directory "/tasks.org") "Inbox")
@@ -105,7 +222,7 @@
            "* DRAFT %?\n  %u\n\n** Outline\n   - \n\n** Introduction\n\n** Main Content\n\n** Conclusion\n\n** References\n")
 
           ("wj" "Journal Entry" entry
-           (file+datetree ,(concat org-directory "/journal.org"))
+           (file+olp+datetree ,(concat org-directory "/journal.org"))
            "* %?\n  %u\n\n** Reflection\n\n** Learnings\n")
 
           ("wr" "Research Note" entry
@@ -116,7 +233,8 @@
            (file+headline ,(concat org-directory "/quotes.org") "Quotes")
            "* %?\n  %u\n  Source: \n\n** Context\n\n** Reflection\n")))
   
-  ;; Export options for better document output
+  ;; ── Export Settings ──────────────────────────────────────────────
+  ;; Controls how org-export (C-c C-e) generates HTML, LaTeX, PDF.
   (setq org-export-with-toc 2
         org-export-with-section-numbers nil
         org-export-with-author nil
@@ -127,23 +245,22 @@
         org-export-with-smart-quotes t
         org-export-preserve-breaks nil)
   
-  ;; HTML export settings
+  ;; HTML5 export — clean output without default styles/scripts
   (setq org-html-doctype "html5"
         org-html-html5-fancy t
         org-html-validation-link nil
         org-html-head-include-default-style nil
         org-html-head-include-scripts nil)
   
-  ;; LaTeX export settings for better PDF output
+  ;; LaTeX/PDF export — runs pdflatex 3 times (for TOC and references)
   (setq org-latex-compiler "pdflatex"
         org-latex-pdf-process '("pdflatex -interaction nonstopmode -output-directory %o %f"
                                 "pdflatex -interaction nonstopmode -output-directory %o %f"
                                 "pdflatex -interaction nonstopmode -output-directory %o %f"))
   
-  ;; Writing-focused settings
+  ;; ── Writing & Editing Behavior ──────────────────────────────────
   (setq org-cycle-separator-lines 1
         org-blank-before-new-entry '((heading . nil) (plain-list-item . nil))
-        org-M-RET-may-split-line '((default . t))
         org-adapt-indentation nil
         org-special-ctrl-a/e t
         org-special-ctrl-k t
@@ -151,22 +268,29 @@
         org-mouse-1-follows-link t
         org-link-descriptive t)
   
-  ;; Better text editing
-  (setq org-catch-invisible-edits 'show-and-error
+  ;; Safety settings — prevent accidentally editing invisible text
+  (setq org-fold-catch-invisible-edits 'show-and-error
         org-ctrl-k-protect-subtree t
         org-yank-adjusted-subtrees t
         org-yank-folded-subtrees nil
         org-insert-heading-respect-content t
         org-M-RET-may-split-line '((headline . nil) (item . t) (table . nil)))
   
-  ;; Auto-save settings for writing
-  (setq org-archive-location "~/Documents/org/archive.org::"
-        org-refile-targets '((org-agenda-files :maxlevel . 3))
+  ;; ── Refile & Archive ────────────────────────────────────────────
+  ;; Refile moves headings between files.  Targets go 3 levels deep
+  ;; across all agenda files.  Archive sends completed items to
+  ;; ~/Documents/org/archive.org.
+  ;; Archive location set in org-archive use-package section below
+  (setq org-refile-targets '((org-agenda-files :maxlevel . 3))
         org-refile-use-outline-path 'file
         org-outline-path-complete-in-steps nil
         org-refile-allow-creating-parent-nodes 'confirm)
 
-  ;; Custom agenda commands for better productivity
+  ;; ── Custom Agenda Views ─────────────────────────────────────────
+  ;; Access with C-c a then the shortcut key:
+  ;;   d = daily agenda + unscheduled TODOs
+  ;;   w = weekly review (agenda + completed + remaining)
+  ;;   l = learning-tagged tasks only
   (setq org-agenda-custom-commands
         '(("d" "Daily Agenda and TODOs"
            ((agenda "" ((org-agenda-span 1)))
@@ -189,7 +313,13 @@
   ;; Keybindings now handled in modules/evil-config.el to avoid conflicts
   )
 
-;; Org modern for better visuals
+;; ══════════════════════════════════════════════════════════════════
+;;  2. Visual Enhancements
+;; ══════════════════════════════════════════════════════════════════
+
+;; org-modern — replaces ASCII markers with Unicode symbols:
+;; bullets become circles, tags get boxes, timestamps get icons.
+;; Disabled for: keywords, checkboxes, tables (keep them functional).
 (use-package org-modern
   :straight t
   :defer 3
@@ -200,7 +330,8 @@
         org-modern-checkbox nil
         org-modern-table nil))
 
-;; Org bullets for better headers
+;; org-bullets — replaces heading asterisks (***) with Unicode bullets.
+;; Works alongside org-modern (modern handles other elements).
 (use-package org-bullets
   :straight t
   :defer 3
@@ -208,12 +339,15 @@
   :config
   (setq org-bullets-bullet-list '("◉" "○" "●" "▶" "▷")))
 
-;; Visual Line Mode for better writing
-(use-package visual-line-mode
-  :straight (:type built-in)
-  :hook (org-mode . visual-line-mode))
+;; visual-line-mode — soft-wrap long lines at word boundaries instead
+;; of hard-wrapping.  Essential for prose writing in org.
+;; This is a built-in minor mode, configured via hook.
+(add-hook 'org-mode-hook #'visual-line-mode)
 
-;; Org appear for better emphasis editing
+;; org-appear — temporarily reveals hidden markup (bold markers,
+;; link URLs, LaTeX fragments) when the cursor is on them.
+;; Combined with org-hide-emphasis-markers, this gives you clean
+;; display with full editing access.
 (use-package org-appear
   :straight t
   :defer 3
@@ -225,7 +359,8 @@
         org-appear-autokeywords t
         org-appear-inside-latex t))
 
-;; Olivetti for distraction-free writing
+;; olivetti — centers the buffer text in an 80-column column with
+;; generous margins on both sides.  Toggle with my/org-writing-mode.
 (use-package olivetti
   :straight t
   :defer 5
@@ -235,7 +370,24 @@
         olivetti-minimum-body-width 72
         olivetti-recall-visual-line-mode-entry-state t))
 
-;; Org roam for knowledge management
+;; ══════════════════════════════════════════════════════════════════
+;;  3. Org-Roam (Zettelkasten Knowledge Graph)
+;; ══════════════════════════════════════════════════════════════════
+;; Org-roam implements a Zettelkasten-style note system with backlinks.
+;; Each note is an org file with a unique ID.  Notes link to each
+;; other, and org-roam tracks all backlinks in an SQLite database.
+;;
+;; Directory structure inside ~/Documents/roam-notes/:
+;;   course/     — course notes
+;;   learning/   — learning extracts
+;;   tutorials/  — tutorial walkthroughs
+;;   projects/   — project documentation
+;;   weekly/     — weekly planning notes
+;;   notes/      — general notes
+;;   daily/      — daily log entries (org-roam-dailies)
+;;
+;; PERFORMANCE: db-autosync is delayed 60 seconds to avoid
+;; freezing on startup (SQLite scan of all roam files).
 (use-package org-roam
   :straight t
   :defer 5
@@ -319,7 +471,9 @@
         (unless (file-directory-p dir-path)
           (make-directory dir-path t))))))
 
-;; Org-roam-dailies for daily note-taking
+;; org-roam-dailies — create/navigate daily log entries.
+;; Each day gets a single file (YYYY-MM-DD.org) with capture
+;; templates for general entries, journal, learning, and meetings.
 (use-package org-roam-dailies
   :straight nil
   :after org-roam
@@ -351,7 +505,8 @@
            :target (file+head "%<%Y-%m-%d>.org"
                               "#+title: %<%Y-%m-%d %A>\n#+filetags: :daily:meeting:\n\n")))))
 
-;; Org-Roam UI for visual knowledge graph
+;; org-roam-ui — opens a browser-based 3D graph visualization
+;; of all roam notes and their connections.  Syncs live with Emacs.
 (use-package org-roam-ui
   :straight t
   :after org-roam
@@ -364,7 +519,7 @@
 
 ;; Keybindings now handled in modules/evil-config.el to avoid conflicts
 
-;; Simplified org-roam utilities
+;; Filtered roam search — find notes by category (course/tutorial/learning)
 (defun my/org-roam-find-course ()
   "Find course notes."
   (interactive)
@@ -383,7 +538,11 @@
   (org-roam-node-find nil nil (lambda (node)
                                 (string-match "^learn-" (file-name-base (org-roam-node-file node))))))
 
-;; Org journal for daily notes
+;; ══════════════════════════════════════════════════════════════════
+;;  4. Org Journal (Standalone Daily Notes)
+;; ══════════════════════════════════════════════════════════════════
+;; Separate from org-roam-dailies — this is a simpler journal that
+;; stores entries in ~/Documents/journal/ with one file per day.
 (use-package org-journal
   :straight t
   :defer 10
@@ -397,7 +556,11 @@
   )
 
 
-;; Weekly and Monthly review functions for LYT workflow
+;; ══════════════════════════════════════════════════════════════════
+;;  5. Review & Writing Functions
+;; ══════════════════════════════════════════════════════════════════
+;; Weekly/monthly review templates inspired by the LYT (Linking Your
+;; Thinking) framework.  Creates review files in ~/Documents/org/reviews/.
 (defun my/org-roam-weekly-review ()
   "Create weekly review connecting to org-roam notes."
   (interactive)
@@ -431,7 +594,8 @@
 
 ;; Keybindings now handled in modules/evil-config.el to avoid conflicts
 
-;; Writing-focused utility functions
+;; my/org-writing-mode — toggle distraction-free writing (olivetti +
+;; text-scale).  my/org-word-count — count words in subtree/region.
 (defun my/org-writing-mode ()
   "Toggle writing-focused mode for org files."
   (interactive)
@@ -487,9 +651,13 @@
             (rename-file html-file (concat output-dir html-file) t)
             (message "Exported to %s%s" output-dir html-file)))))))
 
-;; --- Additional Org Productivity Plugins ---
+;; ══════════════════════════════════════════════════════════════════
+;;  6. Productivity Plugins
+;; ══════════════════════════════════════════════════════════════════
 
-;; Org Super Agenda for better agenda organization
+;; org-super-agenda — groups agenda items into sections (Today,
+;; Important, Projects, etc.) instead of showing a flat list.
+;; Groups are defined by priority, category, TODO state, or tags.
 (use-package org-super-agenda
   :straight t
   :defer 5
@@ -512,7 +680,8 @@
            :todo "WAITING")
           (:auto-category t))))
 
-;; Org Download for handling images and files
+;; org-download — drag-and-drop images into org buffers.
+;; Images are saved to ./images/ relative to the org file.
 (use-package org-download
   :straight t
   :defer 5
@@ -525,14 +694,15 @@
   ;; Drag and drop images into org-mode
   (add-hook 'dired-mode-hook 'org-download-enable))
 
-;; Org Cliplink for easy link insertion
+;; org-cliplink — paste a URL from clipboard and auto-fetch the
+;; page title to create an org link: [[url][Page Title]]
 (use-package org-cliplink
   :straight t
   :defer 5
   :after org
   :commands org-cliplink)
 
-;; Better org-mode tables
+;; org-table — built-in spreadsheet-like tables with auto-alignment
 (use-package org-table
   :straight (:type built-in)
   :defer t
@@ -541,23 +711,28 @@
   (setq org-table-automatic-realign t)
   (setq org-table-tab-recognizes-table.el t))
 
-;; Org Babel for code execution in source blocks
-(use-package org-babel
-  :straight (:type built-in)
-  :defer t
-  :after org
-  :config
+;; ══════════════════════════════════════════════════════════════════
+;;  7. Org Babel (Literate Programming / Code Execution)
+;; ══════════════════════════════════════════════════════════════════
+;; Org Babel configuration — execute code blocks directly inside org files with C-c C-c.
+;; Supports: Elisp, Python, Shell, C/C++, JS, SQL, LaTeX, Jupyter.
+;; org-confirm-babel-evaluate nil = don't ask before running code.
+;; Note: org-babel is a built-in feature of org-mode, not a separate package.
+(with-eval-after-load 'org
   ;; Enable code execution for specific languages
+  ;; Only include jupyter if emacs-jupyter is installed
   (org-babel-do-load-languages
    'org-babel-load-languages
-   '((emacs-lisp . t)
-     (python . t)
-     (shell . t)
-     (C . t)           ; C/C++ support
-     (js . t)
-     (sql . t)
-     (latex . t)
-     (org . t)))
+   (append '((emacs-lisp . t)
+             (python . t)
+             (shell . t)
+             (C . t)           ; C/C++ support
+             (js . t)
+             (sql . t)
+             (latex . t)
+             (org . t))
+           (when (executable-find "jupyter")
+             '((jupyter . t)))))  ; Jupyter kernel support (requires jupyter CLI)
 
   ;; Don't ask for confirmation before executing code blocks
   (setq org-confirm-babel-evaluate nil)
@@ -567,7 +742,7 @@
         org-src-tab-acts-natively t         ; Tab acts native in source blocks
         org-src-preserve-indentation t      ; Preserve indentation
         org-src-window-setup 'current-window ; Open source block in current window
-        org-edit-src-content-indentation 0) ; No extra indentation
+        org-src-content-indentation 0)      ; No extra indentation (updated for Org 9.8+)
 
   ;; Python-specific babel settings
   (setq org-babel-python-command "python3")
@@ -576,7 +751,8 @@
   (setq org-babel-C++-compiler "g++")
   (setq org-babel-C-compiler "gcc"))
 
-;; ob-async: Non-blocking code block execution
+;; ob-async — run code blocks asynchronously (non-blocking).
+;; Add `:async` header arg to a src block to run it in background.
 (use-package ob-async
   :straight t
   :defer t
@@ -588,7 +764,8 @@
   ;; e.g. #+begin_src python :async
   )
 
-;; Org Tempo for structure templates (< s TAB, etc.)
+;; org-tempo — type `< s TAB` to expand into a #+begin_src block.
+;; Custom shortcuts: `< py TAB` → python block, `< cpp TAB` → C++ block.
 (use-package org-tempo
   :straight (:type built-in)
   :defer t
@@ -603,7 +780,8 @@
   (add-to-list 'org-structure-template-alist '("el" . "src elisp"))
   (add-to-list 'org-structure-template-alist '("json" . "src json")))
 
-;; Org Archive for better archiving
+;; org-archive — archives completed items to archive/<filename>_archive
+;; within the same directory, keeping the project structure clean.
 (use-package org-archive
   :straight (:type built-in)
   :defer t
@@ -611,7 +789,13 @@
   :config
   (setq org-archive-location "archive/%s_archive::"))
 
-;; --- Evil-Org: Proper Evil keybindings in Org ---
+;; ══════════════════════════════════════════════════════════════════
+;;  8. Evil Integration & Habits
+;; ══════════════════════════════════════════════════════════════════
+
+;; evil-org — proper Vim keybindings in org-mode:
+;; navigation (gj/gk for visual lines), insert (o/O respect headings),
+;; text objects (ih = inner heading), calendar, TODO cycling.
 
 (use-package evil-org
   :straight t
@@ -623,7 +807,9 @@
   (evil-org-agenda-set-keys)
   (evil-org-set-key-theme '(navigation insert textobjects additional calendar todo heading)))
 
-;; --- Org Habit: Habit tracking with consistency graphs ---
+;; org-habit — track recurring habits with consistency graphs.
+;; Add SCHEDULED with a .+1d repeater to a TODO for daily habits.
+;; The graph shows completion history in the agenda view.
 
 (use-package org-habit
   :straight (:type built-in)
@@ -635,7 +821,9 @@
         org-habit-show-habits-only-for-today nil
         org-habit-show-all-today t))
 
-;; --- Org Pomodoro: Timer integration with Org clocking ---
+;; org-pomodoro — 25-minute focus timer integrated with org clocking.
+;; Start with M-x org-pomodoro on a clocked task.  After 25 min,
+;; takes a 5-min break (15-min after every 4 pomodoros).
 
 (use-package org-pomodoro
   :straight t
@@ -649,6 +837,255 @@
         org-pomodoro-long-break-frequency 4
         org-pomodoro-play-sounds t
         org-pomodoro-keep-killed-pomodoro-time t))
+
+;; ══════════════════════════════════════════════════════════════════
+;;  9. Org-noter (PDF / EPUB / Document Annotation)
+;; ══════════════════════════════════════════════════════════════════
+;; org-noter lets you open a document (PDF, EPUB, HTML) side-by-side
+;; with an org file.  As you move through the document, the org
+;; notes follow.  Pressing `i` inserts a new note pinned to the
+;; current page/position.
+;;
+;; Workflow:
+;;   1. Open a PDF with M-x pdf-view-mode (or just open the file)
+;;   2. M-x org-noter  — opens or creates a notes org file
+;;   3. Navigate the PDF; press `i` to annotate at current position
+;;   4. The org file stores headings with NOTER_PAGE properties
+;;
+;; The notes file is stored next to the PDF by default, or you can
+;; point it at a roam note with #+ROAM_REFS: or NOTER_DOCUMENT property.
+
+(use-package pdf-tools
+  :straight t
+  :defer t
+  :mode ("\\.pdf\\'" . pdf-view-mode)
+  :config
+  (pdf-tools-install :no-query)
+  ;; Night mode for comfortable reading
+  (setq pdf-view-midnight-colors '("#f8f8f2" . "#282a36"))
+  (setq pdf-view-use-unicode-ligatures nil)
+  ;; Better scrolling in pdf-view
+  (setq pdf-view-scroll-amount 5))
+
+(use-package org-noter
+  :straight t
+  :defer t
+  :after org
+  :commands (org-noter org-noter-create-skeleton)
+  :config
+  ;; Store notes alongside the document by default.
+  ;; Override per-document with: NOTER_DOCUMENT property in the org file.
+  (setq org-noter-notes-window-location 'vertical-split ; side-by-side layout
+        org-noter-always-create-frame nil               ; reuse current frame
+        org-noter-auto-save-last-location t             ; remember reading position
+        org-noter-doc-split-fraction '(0.55 0.45)       ; 55% doc, 45% notes
+        org-noter-notes-search-path (list               ; search for notes here
+                                     (expand-file-name "~/Documents/org")
+                                     (expand-file-name "~/Documents/roam-notes")))
+
+  ;; Integrate org-noter with org-roam: when a roam note has
+  ;; #+ROAM_REFS: pointing to a PDF, open it with org-noter.
+  (with-eval-after-load 'org-roam
+    (defun my/org-noter-from-roam ()
+      "Open org-noter for the current org-roam note's referenced document."
+      (interactive)
+      (let ((refs (org-entry-get (point) "ROAM_REFS")))
+        (if refs
+            (org-noter)
+          (message "No ROAM_REFS found. Add a #+roam_refs: path/to/doc.pdf property."))))))
+
+;; ══════════════════════════════════════════════════════════════════
+;;  10. Consult-org-roam (Ripgrep search across all roam notes)
+;; ══════════════════════════════════════════════════════════════════
+;; consult-org-roam adds consult-based commands that search the entire
+;; roam graph: full-text search, backlinks, forward-links, and node find.
+;;
+;; Key commands (bound in evil-config.el under SPC n):
+;;   SPC n /  — full-text ripgrep search across all roam notes
+;;   SPC n <  — list backlinks for current node
+;;   SPC n >  — list forward links for current node
+
+(use-package consult-org-roam
+  :straight t
+  :defer 6
+  :after org-roam
+  :config
+  (consult-org-roam-mode 1)
+  ;; Use ripgrep for searching (much faster than grep)
+  (setq consult-org-roam-grep-func #'consult-ripgrep)
+  ;; Show excerpts in search results
+  (setq consult-org-roam-buffer-after-buffers t))
+
+;; ══════════════════════════════════════════════════════════════════
+;;  11. Org-transclusion (Embed content from other org files)
+;; ══════════════════════════════════════════════════════════════════
+;; org-transclusion lets you embed (transclude) content from another
+;; org node or file directly in the current buffer.  The transcluded
+;; content is read-only by default; toggle with C-c C-t to edit the
+;; source.
+;;
+;; Usage: Insert a transclusion link:
+;;   #+transclude: [[file:other.org::*Heading]] :level 2
+;; Then run M-x org-transclusion-add (or enable org-transclusion-mode).
+
+(use-package org-transclusion
+  :straight t
+  :defer 7
+  :after org
+  :commands (org-transclusion-mode org-transclusion-add org-transclusion-add-all)
+  :config
+  (setq org-transclusion-exclude-elements '(property-drawer keyword)))
+
+;; ══════════════════════════════════════════════════════════════════
+;;  12. Denote (Simple flat-file note system)
+;; ══════════════════════════════════════════════════════════════════
+;; Denote provides a lightweight alternative to org-roam for quick
+;; notes that don't need a full knowledge graph.  Each note is a
+;; file named: DATE--TITLE__KEYWORD1_KEYWORD2.org
+;;
+;; Advantages over org-roam for quick notes:
+;;   • No SQLite database — plain files in a flat directory
+;;   • Filenames are self-describing and sortable by date
+;;   • Works with any file type (org, markdown, txt)
+;;   • Simpler to understand and maintain
+;;
+;; Use org-roam for: long-form notes with backlinks, Zettelkasten
+;; Use denote for: quick notes, fleeting thoughts, reference sheets
+;;
+;; Key commands (bound in evil-config.el under SPC N):
+;;   SPC N n  — create new denote note (prompts for title + keywords)
+;;   SPC N f  — find/open a denote note
+;;   SPC N l  — link to another denote note
+;;   SPC N k  — add keywords to current denote note
+;;   SPC N r  — rename denote note (updates filename + front-matter)
+;;   SPC N b  — show backlinks to current denote note
+
+(use-package denote
+  :straight t
+  :defer 6
+  :commands (denote denote-open-or-create denote-link
+             denote-keywords-add denote-rename-file
+             denote-backlinks denote-find-backlink)
+  :config
+  (setq denote-directory (expand-file-name "~/Documents/denote")
+        ;; Preferred file type for new denote notes
+        denote-file-type 'org
+        ;; Prompt for keywords when creating notes
+        denote-prompts '(title keywords)
+        ;; Known keywords for completion (add your own common tags)
+        denote-known-keywords '("emacs" "programming" "idea" "reading"
+                                "meeting" "reference" "learning" "project"
+                                "python" "research" "writing" "personal")
+        ;; Store attachments (images, PDFs) alongside notes
+        denote-save-buffers nil
+        ;; org front-matter template for new notes
+        denote-org-front-matter
+        "#+title:      %s\n#+date:       %s\n#+filetags:   %s\n#+identifier: %s\n\n")
+
+  ;; Auto-rename denote files when front-matter changes
+  (add-hook 'denote-after-new-note-hook #'denote-rename-file-using-front-matter)
+
+  ;; Fontify denote links in org buffers
+  (with-eval-after-load 'org
+    (add-hook 'org-mode-hook #'denote-org-dblock-update))
+
+  ;; Enable denote-backlinks in a side window
+  (setq denote-link-backlinks-display-buffer-action
+        '(display-buffer-in-side-window
+          (side . right)
+          (window-width . 0.35))))
+
+;; denote-menu — browse denote notes in a tabulated-list buffer
+;; (similar to org-roam-buffer but for denote)
+(use-package denote-menu
+  :straight t
+  :defer t
+  :after denote
+  :commands (list-denotes denote-menu-filter denote-menu-clear-filters))
+
+;; ══════════════════════════════════════════════════════════════════
+;;  13. Enhanced Org-roam Setup
+;; ══════════════════════════════════════════════════════════════════
+;; Additional org-roam improvements for Obsidian-like experience:
+;;   • org-roam-bibtex disabled (not installed) — see below
+;;   • Better backlink buffer settings
+;;   • Node slug helpers
+
+(with-eval-after-load 'org-roam
+  ;; ── Backlink buffer settings ──────────────────────────────────
+  ;; Show backlinks in a persistent side window (like Obsidian's panel)
+  (setq org-roam-buffer-window-parameters
+        '((no-delete-other-windows . t)))
+
+  ;; Display backlink buffer on the right side
+  (add-to-list 'display-buffer-alist
+               `("\\*org-roam\\*"
+                 (display-buffer-in-side-window)
+                 (side . right)
+                 (window-width . 0.35)
+                 (window-parameters . ((no-delete-other-windows . t)))))
+
+  ;; ── Extra capture templates ───────────────────────────────────
+  ;; Add a "literature note" template for book/article annotations
+  ;; that stores the source reference and key insights.
+  (let ((existing-templates org-roam-capture-templates))
+    (unless (assoc "b" existing-templates)
+      (setq org-roam-capture-templates
+            (append org-roam-capture-templates
+                    `(("b" "Book/Literature Note" plain
+                       "#+title:      ${title}\n#+date:       %<%Y-%m-%d>\n#+filetags:   :literature:\n#+roam_refs:  \n\n* Summary\n\n* Key Ideas\n  - \n\n* Quotes\n\n* My Thoughts\n\n* Related Notes\n"
+                       :target (file+head "literature/%<%Y%m%d%H%M%S>-${slug}.org" "")
+                       :unnarrowed t)
+
+                      ("f" "Fleeting Note" plain
+                       "#+title:      ${title}\n#+date:       %<%Y-%m-%d>\n#+filetags:   :fleeting:\n\n%?"
+                       :target (file+head "fleeting/%<%Y%m%d%H%M%S>-${slug}.org" "")
+                       :unnarrowed t)
+
+                      ("e" "Evergreen/Permanent Note" plain
+                       "#+title:      ${title}\n#+date:       %<%Y-%m-%d>\n#+filetags:   :evergreen:\n\n* Claim\n\n%?\n\n* Evidence\n\n* Connections\n"
+                       :target (file+head "evergreen/%<%Y%m%d%H%M%S>-${slug}.org" "")
+                       :unnarrowed t))))))
+
+  ;; ── Create additional roam subdirs ────────────────────────────
+  (let ((extra-subdirs '("literature" "fleeting" "evergreen")))
+    (dolist (subdir extra-subdirs)
+      (let ((dir-path (expand-file-name subdir org-roam-directory)))
+        (unless (file-directory-p dir-path)
+          (make-directory dir-path t))))))
+
+;; ── Convenience helpers ──────────────────────────────────────────
+
+(defun my/org-roam-open-backlinks ()
+  "Toggle the org-roam backlinks side window for the current node."
+  (interactive)
+  (if (get-buffer-window org-roam-buffer)
+      (delete-window (get-buffer-window org-roam-buffer))
+    (org-roam-buffer-toggle)))
+
+(defun my/org-roam-node-insert-immediate (arg &rest args)
+  "Create and insert a roam node immediately without showing capture buffer.
+With prefix ARG, behave like the normal `org-roam-node-insert'."
+  (interactive "P")
+  (if arg
+      (apply #'org-roam-node-insert args)
+    (let ((org-roam-capture-templates
+           '(("d" "default" plain "%?"
+              :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
+                                 "#+title: ${title}\n")
+              :immediate-finish t
+              :unnarrowed t))))
+      (apply #'org-roam-node-insert args))))
+
+(defun my/org-roam-copy-node-link ()
+  "Copy an org-roam link to the current node to the clipboard."
+  (interactive)
+  (when-let* ((node (org-roam-node-at-point))
+              (id (org-roam-node-id node))
+              (title (org-roam-node-title node))
+              (link (format "[[id:%s][%s]]" id title)))
+    (kill-new link)
+    (message "Copied: %s" link)))
 
 (provide 'org-config)
 ;;; org-config.el ends here

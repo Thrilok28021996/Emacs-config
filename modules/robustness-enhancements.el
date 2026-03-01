@@ -1,15 +1,34 @@
 ;;; modules/robustness-enhancements.el --- Essential robustness features -*- lexical-binding: t; -*-
 
 ;;; Commentary:
-;;; Basic error recovery and resource monitoring for a stable Emacs configuration.
-;;; Simplified for essential functionality only.
+;; Error handling and recovery system loaded at startup via
+;; `emacs-startup-hook`.  Catches and logs package load failures so
+;; a single broken package doesn't take down the entire config.
+;;
+;; Provides:
+;;   my/safe-require      — require with error logging (use instead of require)
+;;   my/safe-load         — load with error logging (use instead of load)
+;;   my/recover-from-errors — retry loading failed packages
+;;   my/show-error-summary  — display all recorded failures
+;;   my/doctor             — Doom-style health check (tools, fonts, LSP, etc.)
+;;
+;; Critical packages (vertico, evil, consult, corfu) get extra
+;; treatment — failures are shown as `:error` warnings in *Warnings*.
+;;
+;; Depends on: utilities.el (for buffer name constants)
 
 ;;; Code:
 
+;; Load utilities if available (may not exist on first clone)
 (when (file-exists-p (expand-file-name "utilities.el" (file-name-directory (or load-file-name buffer-file-name))))
-  (require 'utilities))  ; For buffer name constants
+  (require 'utilities))
 
-;; --- Enhanced Error Recovery ---
+;; ══════════════════════════════════════════════════════════════════
+;;  1. Error Tracking State
+;; ══════════════════════════════════════════════════════════════════
+;; All package load failures are recorded as plists with :package,
+;; :error, :timestamp, and :context.  The list is capped at 50
+;; entries to prevent unbounded growth.
 
 (defvar my/package-load-failures '()
   "List of packages that failed to load.")
@@ -20,8 +39,14 @@
 (defvar my/critical-errors '()
   "List of critical errors that require attention.")
 
+;; ══════════════════════════════════════════════════════════════════
+;;  2. Safe Loading Functions
+;; ══════════════════════════════════════════════════════════════════
+;; Drop-in replacements for `require` and `load` that catch errors
+;; and log them instead of aborting init.
+
 (defun my/handle-package-failure (package error)
-  "Handle package loading failures with comprehensive logging."
+  "Log a package failure and promote critical ones to *Warnings*."
   (let ((error-entry (list :package package 
                           :error (error-message-string error)
                           :timestamp (current-time)
@@ -42,7 +67,7 @@
     (message "⚠️ Package '%s' failed: %s" package (error-message-string error))))
 
 (defun my/safe-require (feature &optional filename noerror)
-  "Safely require a feature with error handling."
+  "Like `require` but catches errors and logs them via my/handle-package-failure."
   (condition-case err
       (require feature filename noerror)
     (error
@@ -50,21 +75,19 @@
      nil)))
 
 (defun my/safe-load (file &optional noerror nomessage)
-  "Safely load a file with error handling."
+  "Like `load` but catches errors and logs them via my/handle-package-failure."
   (condition-case err
       (load file noerror nomessage)
     (error
      (my/handle-package-failure (file-name-nondirectory file) err)
      nil)))
 
-
-
-;; --- Future Enhancement Areas ---
-;; Backup and recovery system can be added here
-;; Network resilience features can be added here
-
-
-;; --- Enhanced Initialization ---
+;; ══════════════════════════════════════════════════════════════════
+;;  3. Initialization & Hooks
+;; ══════════════════════════════════════════════════════════════════
+;; Runs on `emacs-startup-hook` (after init.el finishes).
+;; Ensures the backup directory exists and sets up a post-init
+;; hook that warns the user if any critical packages failed.
 
 (defun my/initialize-robustness-enhancements ()
   "Initialize basic robustness enhancements."
@@ -78,22 +101,27 @@
         ;; Resource monitoring and network status are handled by utilities.el
         ;; Basic initialization complete
         
-        ;; Set up error recovery hooks (not in batch mode)
+        ;; Check for critical errors immediately (after-init-hook has
+        ;; already fired by the time emacs-startup-hook runs)
         (unless noninteractive
-          (add-hook 'after-init-hook 
-                    (lambda ()
-                      (when my/critical-errors
-                        (display-warning 'init
-                                        (format "%d critical package(s) failed to load. Check *Warnings* buffer."
-                                               (length my/critical-errors))
-                                        :error)))))
-        
+          (when my/critical-errors
+            (display-warning 'init
+                            (format "%d critical package(s) failed to load. Check *Warnings* buffer."
+                                   (length my/critical-errors))
+                            :error)))
+
         (unless noninteractive
           (message "🛡️ Robustness enhancements initialized")))
     (error
      (message "⚠️ Robustness initialization failed: %s" (error-message-string err)))))
 
-;; --- Auto-recovery Functions ---
+;; ══════════════════════════════════════════════════════════════════
+;;  4. Recovery & Diagnostics
+;; ══════════════════════════════════════════════════════════════════
+;; my/recover-from-errors — retries requiring each failed package.
+;; Useful after installing a missing dependency.
+;; my/show-error-summary — displays a formatted report of all
+;; failures in a dedicated *Configuration Errors* buffer.
 
 (defun my/recover-from-errors ()
   "Attempt to recover from configuration errors."
@@ -138,7 +166,17 @@
     
     (display-buffer (current-buffer))))
 
-;; --- Config Doctor ---
+;; ══════════════════════════════════════════════════════════════════
+;;  5. Config Doctor (Doom-style Health Check)
+;; ══════════════════════════════════════════════════════════════════
+;; M-x my/doctor — checks the system for:
+;;   - External tools (git, rg, python3, g++, cmake, clang-format, black)
+;;   - LSP servers (pyright, clangd, vscode-html/css)
+;;   - Fonts (Fira Code, Symbols Nerd Font Mono)
+;;   - Tree-sitter grammars (c, cpp, python, json, css, html)
+;;   - Native compilation availability
+;;   - Package load failures from this session
+;; Results are shown in *Config Doctor* with OK/MISS/WARN/FAIL status.
 
 (defun my/doctor ()
   "Run a health check on the configuration, Doom-style.
@@ -245,9 +283,8 @@ native compilation, and package load failures."
     (with-current-buffer buf
       (goto-char (point-min)))))
 
-;; Initialize on load
+;; Run initialization after Emacs startup completes
 (add-hook 'emacs-startup-hook #'my/initialize-robustness-enhancements)
-
 
 (provide 'robustness-enhancements)
 ;;; robustness-enhancements.el ends here
