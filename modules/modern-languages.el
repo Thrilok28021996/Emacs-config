@@ -148,7 +148,13 @@
   (add-to-list 'eglot-server-programs
                '((python-mode python-ts-mode) . ("pyright-langserver" "--stdio")))
   (add-to-list 'eglot-server-programs
-               '((c-mode c-ts-mode c++-mode c++-ts-mode) . ("clangd")))
+               '((c-mode c-ts-mode c++-mode c++-ts-mode)
+                 . ("clangd"
+                    "--background-index"          ; pre-index entire project in background
+                    "--clang-tidy"                ; enable clang-tidy diagnostics
+                    "--completion-style=detailed" ; richer completion with full signatures
+                    "--header-insertion=never"    ; don't auto-add #include on completion
+                    "--all-scopes-completion")))
   (add-to-list 'eglot-server-programs
                '((css-mode css-ts-mode) . ("vscode-css-language-server" "--stdio")))
   (add-to-list 'eglot-server-programs
@@ -252,7 +258,19 @@
   (setq conda-env-home-directory conda-anaconda-home)
 
   (add-hook 'python-mode-hook #'my/auto-activate-conda-env)
-  (add-hook 'python-ts-mode-hook #'my/auto-activate-conda-env))
+  (add-hook 'python-ts-mode-hook #'my/auto-activate-conda-env)
+
+  (defun my/conda-activate-and-restart-lsp ()
+    "Activate a conda environment and restart the Eglot LSP server.
+Use this instead of SPC v a when Eglot is already running — activating
+conda alone does not update the running LSP server's Python path."
+    (interactive)
+    (call-interactively #'conda-env-activate)
+    (when (and (bound-and-true-p eglot--managed-mode)
+               (eglot-current-server))
+      (eglot-shutdown (eglot-current-server) t)
+      (run-with-timer 0.5 nil #'eglot))
+    (message "Conda env activated; LSP restarting with new Python.")))
 
 ;; Auto-activate: when opening a Python file, look for environment.yml
 ;; in parent directories and activate that conda environment.
@@ -349,6 +367,36 @@
   (define-key c++-mode-map (kbd "C-c C-c") 'my/cpp-compile)
   (define-key c++-mode-map (kbd "C-c o") 'my/switch-header-source)
   (define-key c-mode-map (kbd "C-c o") 'my/switch-header-source))
+
+;; ── C++ project setup helper ─────────────────────────────────────
+;; clangd requires compile_commands.json at the project root to provide
+;; accurate cross-file completion and diagnostics.  This helper creates
+;; a symlink from the build directory for CMake projects.
+(defun my/setup-cpp-project ()
+  "Set up compile_commands.json symlink for clangd in a CMake project.
+Runs cmake with -DCMAKE_EXPORT_COMPILE_COMMANDS=ON and symlinks the
+resulting file to the project root so clangd finds it automatically."
+  (interactive)
+  (let* ((root (or (locate-dominating-file default-directory "CMakeLists.txt")
+                   (read-directory-name "Project root: ")))
+         (build-dir (expand-file-name "build" root))
+         (db-src (expand-file-name "compile_commands.json" build-dir))
+         (db-dst (expand-file-name "compile_commands.json" root)))
+    (unless (file-directory-p build-dir)
+      (make-directory build-dir t))
+    (let ((cmake-cmd (format "cmake -B %s -DCMAKE_EXPORT_COMPILE_COMMANDS=ON %s"
+                             (shell-quote-argument build-dir)
+                             (shell-quote-argument root))))
+      (compile cmake-cmd))
+    (run-with-timer
+     5 nil
+     (lambda ()
+       (if (file-exists-p db-src)
+           (progn
+             (when (file-exists-p db-dst) (delete-file db-dst))
+             (make-symbolic-link db-src db-dst)
+             (message "compile_commands.json linked — restart clangd with SPC l R"))
+         (message "cmake not done yet; run SPC c r then M-x my/setup-cpp-project again"))))))
 
 ;; Tree-sitter mode keymaps are only defined when the modes load
 (defvar c++-ts-mode-map)
@@ -696,6 +744,8 @@
   :hook (dired-mode . diff-hl-dired-mode)      ; show changed-file indicators in dired
   :config
   (setq diff-hl-flydiff-delay 2)               ; wait 2s before rechecking (saves CPU)
+
+  (global-diff-hl-mode)                        ; show gutter indicators in all buffers
 
   ;; Refresh gutter indicators after magit operations (commit, checkout, etc.)
   (with-eval-after-load 'magit

@@ -102,8 +102,11 @@
   ;; Vim's clipboard=unnamedplus).  Without this, yanked text
   ;; stays in Emacs kill-ring and doesn't reach system clipboard.
   (setq select-enable-clipboard t        ; use system clipboard for kill/yank
-        select-enable-primary t          ; also use PRIMARY selection (X11 middle-click)
         save-interprogram-paste-before-kill t)  ; preserve clipboard when killing in Emacs
+  ;; select-enable-primary uses the X11 PRIMARY selection (middle-click paste).
+  ;; macOS has no PRIMARY selection — enabling it installs a useless kill-ring hook.
+  (unless (eq system-type 'darwin)
+    (setq select-enable-primary t))
 
   ;; Modes that should start in Emacs state (non-editing buffers).
   ;; These are read-only or interactive buffers where Vim keys would
@@ -321,6 +324,7 @@
     "p k" 'projectile-kill-buffers
     "p i" 'projectile-invalidate-cache
     "p g" 'consult-find
+    "p C" 'my/setup-cpp-project             ; generate compile_commands.json for clangd
 
     ;; ── s: Search ─────────────────────────────────────────────
     "s s" 'consult-line
@@ -375,6 +379,7 @@
     "v d" 'conda-env-deactivate
     "v l" 'conda-env-list
     "v c" 'conda-env-activate-for-buffer
+    "v r" 'my/conda-activate-and-restart-lsp   ; activate env + restart LSP server
 
     ;; ── P: Python REPL ────────────────────────────────────────
     "P e" 'python-shell-send-buffer

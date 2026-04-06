@@ -52,6 +52,72 @@ A comprehensive reference for this Emacs setup — packages, keymaps, and usage 
 
 ---
 
+## Prerequisites
+
+External tools required before certain features work. Install once via Homebrew / pip / npm.
+
+### Required for LSP (SPC l e)
+
+| Language | Tool | Install |
+|----------|------|---------|
+| Python | pyright | `pip install pyright` |
+| Python (alt) | pylsp | `pip install python-lsp-server` |
+| C / C++ | clangd | `brew install llvm` |
+| CSS | vscode-css-language-server | `npm install -g vscode-css-languageservice` |
+| HTML | vscode-html-language-server | `npm install -g vscode-html-languageservice` |
+
+### Required for C++ projects (compile_commands.json)
+
+```bash
+# CMake projects
+cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+ln -s build/compile_commands.json .
+
+# Non-CMake (any build system)
+brew install bear
+bear -- make          # or: bear -- your-build-command
+```
+
+### Required for formatting (SPC c f)
+
+| Language | Tool | Install |
+|----------|------|---------|
+| Python | black | `pip install black` |
+| Python imports | isort | `pip install isort` |
+| C / C++ | clang-format | `brew install clang-format` |
+| Web / JSON | prettier | `npm install -g prettier` |
+
+### Required for search & navigation
+
+| Feature | Tool | Install |
+|---------|------|---------|
+| `SPC s r`, `SPC n /` | ripgrep | `brew install ripgrep` |
+| `g d` fallback (dumb-jump) | ripgrep | `brew install ripgrep` |
+| `SPC n g` (org-roam graph) | graphviz | `brew install graphviz` |
+
+### Required for Jupyter (SPC J)
+
+```bash
+pip install jupyter
+# Start a kernel before using SPC J commands:
+# SPC J r → SPC J a → SPC J e
+```
+
+### Required for PDF annotation (SPC o n — org-noter)
+
+```elisp
+;; Add to init.el or run M-x:
+(straight-use-package 'pdf-tools)
+(pdf-tools-install)
+```
+
+### Required for EPUB reading (nov-mode)
+
+Open any `.epub` file — nov.el is already in the package list.
+Evil keybindings apply automatically (`n/p` chapters, `+/-` font size).
+
+---
+
 ## Architecture & Loading
 
 The config uses a **phased idle-timer loading** system for a ~0.3s startup time.
@@ -363,6 +429,7 @@ The config uses a **phased idle-timer loading** system for a ~0.3s startup time.
 | `SPC p k` | `projectile-kill-buffers` | Kill all project buffers |
 | `SPC p i` | `projectile-invalidate-cache` | Refresh project cache |
 | `SPC p g` | `consult-find` | Find file by name in project |
+| `SPC p C` | `my/setup-cpp-project` | Generate compile_commands.json for clangd |
 
 ---
 
@@ -651,6 +718,7 @@ The config uses a **phased idle-timer loading** system for a ~0.3s startup time.
 | `SPC v d` | `conda-env-deactivate` | Deactivate environment |
 | `SPC v l` | `conda-env-list` | List all environments |
 | `SPC v c` | `conda-env-activate-for-buffer` | Auto-activate for file |
+| `SPC v r` | `my/conda-activate-and-restart-lsp` | Activate env **and** restart LSP |
 
 ---
 

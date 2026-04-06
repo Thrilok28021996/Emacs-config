@@ -9,9 +9,9 @@
 ;; Only what's visible on screen loads synchronously; the rest loads
 ;; in the background once Emacs is idle.  This gives a ~0.3s startup.
 ;;
-;;   Phase 1 (eager)  — utilities, performance, core-ui, theme, evil
+;;   Phase 1 (eager)  — utilities, performance, core-ui, theme, evil, dashboard
 ;;                      These must load before the first frame is shown.
-;;   Phase 2 (0.1s)   — dashboard (so it appears almost instantly)
+;;   Phase 2 (eager)  — dashboard (loaded synchronously for instant startup screen)
 ;;   Phase 3 (0.5s)   — completion (vertico/consult/corfu for M-x)
 ;;   Phase 4 (1s)     — languages, ui polish, syntax colors
 ;;   Phase 5 (2s)     — robustness, org/markdown configs
@@ -211,11 +211,11 @@ timers never fire in non-interactive sessions."
 (when (my/module-enabled-p 'dashboard)
   (my/safe-require-module 'startup-dashboard "Startup dashboard"))
 
-;; ── Phase 2: Idle 0.5s — completion (needed for M-x) ─────────────
+;; ── Phase 3: Idle 0.5s — completion (needed for M-x) ────────────
 (when (my/module-enabled-p 'completion)
   (my/deferred-require 0.5 'modern-completion "Completion system"))
 
-;; ── Phase 4: Idle 1s — languages, UI polish, colors ─────────────
+;; ── Phase 4: Idle 1s — languages, UI polish, colors ──────────────
 (when (my/module-enabled-p 'languages)
   (my/deferred-require 1 'modern-languages "Language support"))
 (when (my/module-enabled-p 'ui)
@@ -223,7 +223,7 @@ timers never fire in non-interactive sessions."
 (when (my/module-enabled-p 'colors)
   (my/deferred-require 1 'enhanced-colors "Syntax highlighting"))
 
-;; ── Phase 5: Idle 2s — non-critical ─────────────────────────────
+;; ── Phase 5: Idle 2s — non-critical ──────────────────────────────
 (when (my/module-enabled-p 'robustness)
   (my/deferred-require 2 'robustness-enhancements "Robustness"))
 
@@ -269,7 +269,10 @@ timers never fire in non-interactive sessions."
   :defer 1
   :diminish undo-tree-mode
   :config
-  (global-undo-tree-mode)
+  ;; Do NOT call (global-undo-tree-mode) here.
+  ;; evil-undo-system is set to 'undo-redo (native Emacs 28+), so undo-tree
+  ;; must NOT intercept u/C-r.  We load undo-tree for its tree visualizer
+  ;; only — invoke it on demand with C-x u.
   (setq undo-tree-auto-save-history t          ; persist undo history to disk
         undo-tree-history-directory-alist       ; store all history files in one place
         `(("." . ,(expand-file-name "undo-tree" user-emacs-directory)))))
@@ -292,10 +295,17 @@ timers never fire in non-interactive sessions."
 ;; They load after 2s idle since org-mode, markdown, and DAP debugging
 ;; are never needed immediately at startup.  The second arg `t` to
 ;; `load` suppresses "file not found" errors so missing files are fine.
+(defun my/load-config-file (path)
+  "Load PATH with full error isolation — catches both missing files and runtime errors."
+  (condition-case err
+      (load path t)   ; t = noerror for missing file
+    (error
+     (message "❌ Failed to load %s: %s" path (error-message-string err)))))
+
 (let ((load-configs (lambda ()
-                      (load (expand-file-name "config/org-config.el" user-emacs-directory) t)
-                      (load (expand-file-name "config/markdown.el" user-emacs-directory) t)
-                      (load (expand-file-name "modules/debug-support.el" user-emacs-directory) t))))
+                      (my/load-config-file (expand-file-name "config/org-config.el" user-emacs-directory))
+                      (my/load-config-file (expand-file-name "config/markdown.el" user-emacs-directory))
+                      (my/load-config-file (expand-file-name "modules/debug-support.el" user-emacs-directory)))))
   (if noninteractive
       (funcall load-configs)
     (run-with-idle-timer 2 nil load-configs)))
