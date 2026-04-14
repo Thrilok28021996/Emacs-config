@@ -1,23 +1,43 @@
-# Compiled
+# Compiled elisp
 *.elc
+*.eln
 
-# Packaging
+# Package directories
+elpa/
+straight/
 .cask/
 .eask/
 .eldev/
 .keg/
+tree-sitter/
+eln-cache/
 
-# Built distribution
-dist/
-
-# Backup files
-*~
-
-# Undo-tree save-files
-*.~undo-tree.DS_Store
-straight/
-robustness-backups/
+# Runtime state
+auto-save-list/
+backups/
+transient/
 history
-autosaves/
-.claude/
 recentf
+saveplace
+tramp
+custom.el
+.lsp-session-v1
+org-roam.db
+projectile-bookmarks.eld
+
+# Backup / lock files
+*~
+\#*\#
+.#*
+
+# macOS
+.DS_Store
+
+# Claude
+.claude/
+
+# Old / removed
+robustness-backups/
+autosaves/
+snippets/
+dist/

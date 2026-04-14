@@ -1,347 +1,642 @@
-;;; init.el --- Modern Emacs Configuration -*- lexical-binding: t; -*-
+;;; init.el --- Emacs 30.2 Configuration -*- lexical-binding: t; -*-
 
-;;; Commentary:
-;; Entry point for the entire configuration.  Bootstraps straight.el,
-;; defines the module system, and orchestrates phased loading.
-;;
-;; Architecture: Instead of loading everything eagerly (which would
-;; take 3-5s), we split the config into 5 phases using idle timers.
-;; Only what's visible on screen loads synchronously; the rest loads
-;; in the background once Emacs is idle.  This gives a ~0.3s startup.
-;;
-;;   Phase 1 (eager)  — utilities, performance, core-ui, theme, evil, dashboard
-;;                      These must load before the first frame is shown.
-;;   Phase 2 (eager)  — dashboard (loaded synchronously for instant startup screen)
-;;   Phase 3 (0.5s)   — completion (vertico/consult/corfu for M-x)
-;;   Phase 4 (1s)     — languages, ui polish, syntax colors
-;;   Phase 5 (2s)     — robustness, org/markdown configs
-;;
-;; The module system (my/modules) lets you toggle features by adding
-;; or removing entries, without touching the rest of this file.
-;;
-;; Stack: straight.el, use-package, Evil, Vertico, Eglot, Tree-sitter
+;;; ─────────────────────────────────────────────
+;;; 0. FRAME — start fullscreen
+;;; ─────────────────────────────────────────────
 
-;;; Code:
+(add-to-list 'default-frame-alist '(fullscreen . fullboth))
 
-;; Silence byte-compiler warnings for deferred variables/functions
-(defvar exec-path-from-shell-variables)
-(declare-function exec-path-from-shell-initialize "exec-path-from-shell")
+;;; ─────────────────────────────────────────────
+;;; 1. PACKAGE BOOTSTRAP
+;;; ─────────────────────────────────────────────
 
-;; Silence byte-compiler warnings for straight.el variables
-(defvar straight-vc-git-default-clone-depth)
-(defvar straight-check-for-modifications)
-(defvar straight-vc-git-force-protocol)
-(defvar straight-use-package-by-default)
-(declare-function straight-use-package "straight")
+(require 'package)
+(setq package-archives
+      '(("melpa"        . "https://melpa.org/packages/")
+        ("melpa-stable" . "https://stable.melpa.org/packages/")
+        ("gnu"          . "https://elpa.gnu.org/packages/")
+        ("nongnu"       . "https://elpa.nongnu.org/nongnu/")))
 
-;; ══════════════════════════════════════════════════════════════════
-;;  Bootstrap
-;; ══════════════════════════════════════════════════════════════════
+(package-initialize)
 
-;; Record the exact moment init.el starts — used at the bottom of
-;; this file to report total startup time in the echo area.
-(defconst emacs-start-time (current-time)
-  "Timestamp recorded at the very start of init.el.")
+(unless package-archive-contents
+  (package-refresh-contents))
 
-;; Suppress ALL screen updates during init.  This prevents the
-;; partially-configured frame from flickering while packages load.
-;; Restored in the `emacs-startup-hook` at the bottom of this file.
-(setq inhibit-redisplay t)
+(unless (package-installed-p 'use-package)
+  (package-install 'use-package))
+(require 'use-package)
+(setq use-package-always-ensure t
+      use-package-verbose nil)
 
-(defun my/handle-startup-error (error-data)
-  "Log ERROR-DATA to *Startup Errors* and display the buffer."
-  (message "Startup error: %s" error-data)
-  (with-current-buffer (get-buffer-create "*Startup Errors*")
-    (goto-char (point-max))
-    (insert (format "[%s] %s\n" (current-time-string) error-data))
-    (display-buffer (current-buffer))))
+;;; ─────────────────────────────────────────────
+;;; 2. PATH INHERITANCE (macOS — must run early)
+;;; ─────────────────────────────────────────────
 
-;; ── straight.el ──────────────────────────────────────────────────
-;; Functional package manager that clones git repos and builds
-;; packages locally.  Advantages over package.el: reproducible
-;; builds, easy fork-and-patch, no reliance on MELPA tarballs.
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-      (bootstrap-version 7))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
-
-(setq straight-vc-git-default-clone-depth 1   ; shallow clones save disk & time
-      straight-check-for-modifications nil     ; skip file-watch overhead (rebuild with M-x straight-rebuild-all)
-      straight-vc-git-force-protocol 'https    ; works behind corporate firewalls (unlike SSH)
-      straight-use-package-by-default t        ; every use-package form auto-installs via straight
-      load-prefer-newer t)                     ; prefer .el over stale .elc byte-compiled files
-
-;; ── use-package ──────────────────────────────────────────────────
-(straight-use-package 'use-package)
-
-;; ── Org mode — load early to prevent version mismatch ───────────
-;; The dashboard (Phase 1) loads Org for agenda items, which would
-;; trigger the built-in Org version. Loading the newer Org here
-;; ensures the correct version is used throughout.
-(straight-use-package 'org)
-
-;; ── Essentials ───────────────────────────────────────────────────
-(set-language-environment "UTF-8")             ; default encoding for all buffers
-;; Redirect M-x customize writes to a separate file so they don't
-;; pollute init.el.  The file is never loaded — we manage all
-;; settings explicitly in this config.
-(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-
-;; ══════════════════════════════════════════════════════════════════
-;;  Module System
-;; ══════════════════════════════════════════════════════════════════
-;; Central registry of enabled modules and their feature flags.
-;; To disable a module, comment out or remove its entry.
-;; To disable a language, remove its +flag (e.g. remove +python).
-;; The phased loading section below checks this list before loading.
-
-(defvar my/modules
-  '((performance)                                ; GC tuning, process optimizations
-    (ui)                                         ; icons, modeline, ligatures, fonts
-    (evil)                                       ; Vim emulation + SPC leader keys
-    (completion)                                 ; vertico, consult, corfu, embark
-    (languages +python +cpp +html +css +lsp +tree-sitter)
-    (colors)                                     ; rainbow-delimiters, color-identifiers
-    (dashboard)                                  ; startup screen with recent files
-    (utilities)                                  ; shared constants, helper functions
-    (robustness))                                ; error recovery, health checks
-  "List of enabled modules with feature flags.
-Each entry is (MODULE-NAME +FLAG1 +FLAG2 ...).")
-
-(defun my/module-enabled-p (module)
-  "Return non-nil if MODULE is enabled in `my/modules'."
-  (assq module my/modules))
-
-(defun my/module-flag-p (module flag)
-  "Return non-nil if MODULE has FLAG enabled.
-FLAG should be a symbol like +python."
-  (when-let ((entry (assq module my/modules)))
-    (memq flag (cdr entry))))
-
-(defun my/lang-enabled-p (lang)
-  "Return non-nil if language LANG is enabled.
-LANG should be a symbol like python, cpp, html, css."
-  (my/module-flag-p 'languages
-                    (intern (concat "+" (symbol-name lang)))))
-
-;; ══════════════════════════════════════════════════════════════════
-;;  Platform — macOS PATH
-;; ══════════════════════════════════════════════════════════════════
-;; On macOS, GUI Emacs doesn't inherit the shell PATH.
-;; Defer the shell spawn to 0.5s idle so it doesn't block startup;
-;; PATH is only needed when compiling, running shells, or using Eglot.
-
-(when (eq system-type 'darwin)
-  (when (memq window-system '(mac ns x pgtk))
-    (straight-use-package 'exec-path-from-shell)
-    (setq exec-path-from-shell-variables '("PATH" "GOPATH" "PYTHONPATH" "CONDA_PREFIX"))
-    (if noninteractive
-        (exec-path-from-shell-initialize)
-      (run-with-idle-timer 0.5 nil #'exec-path-from-shell-initialize))))
-
-;; ══════════════════════════════════════════════════════════════════
-;;  Module Loader
-;; ══════════════════════════════════════════════════════════════════
-;; Two functions provide safe, logged module loading:
-;;   my/safe-require-module — loads immediately, catches errors
-;;   my/deferred-require   — wraps the above in an idle timer
-;; Errors are caught per-module so one broken module won't prevent
-;; the rest of Emacs from starting.
-
-(add-to-list 'load-path (expand-file-name "modules" user-emacs-directory))
-
-(defun my/safe-require-module (module description)
-  "Require MODULE; log DESCRIPTION on success or the error on failure."
-  (condition-case err
-      (progn
-        (require module)
-        (message "✅ %s" description)
-        t)
-    (error
-     (message "❌ Failed to load %s: %s" module (error-message-string err))
-     nil)))
-
-(defun my/deferred-require (delay module description)
-  "Load MODULE after DELAY seconds of idle time.
-In batch mode (`emacs --batch`), load immediately because idle
-timers never fire in non-interactive sessions."
-  (if noninteractive
-      (my/safe-require-module module description)
-    (run-with-idle-timer delay nil
-      (lambda ()
-        (my/safe-require-module module description)))))
-
-;; ══════════════════════════════════════════════════════════════════
-;;  Phased Module Loading
-;; ══════════════════════════════════════════════════════════════════
-
-;; ── Phase 1: Eager (blocks startup) ─────────────────────────────
-;; Only the absolute essentials — everything the user sees immediately.
-(my/safe-require-module 'utilities "Utilities")
-(when (my/module-enabled-p 'performance)
-  (my/safe-require-module 'modern-performance "Performance optimizations"))
-(my/safe-require-module 'core-ui "UI settings")
-
-;; Load theme in Phase 1 so the first visible frame has colors.
-;; If this were deferred (like in Phase 4), the user would see a
-;; white/default Emacs for ~1 second before doom-one applies.
-(use-package doom-themes
-  :straight t
+(use-package exec-path-from-shell
+  :if (memq window-system '(mac ns x))
   :config
-  (setq doom-themes-enable-bold t              ; allow bold faces
-        doom-themes-enable-italic t            ; allow italic faces
-        doom-themes-padded-modeline t)         ; add padding around modeline text
-  (load-theme 'doom-one t)                     ; dark theme — toggled via SPC t T
-  (doom-themes-visual-bell-config)             ; flash modeline instead of audible bell
-  (doom-themes-org-config))                    ; better org-mode fontification
+  (dolist (var '("PATH" "MANPATH" "PYTHONPATH" "CONDA_PREFIX"
+                 "CONDA_DEFAULT_ENV" "GOPATH" "CARGO_HOME"))
+    (add-to-list 'exec-path-from-shell-variables var))
+  (exec-path-from-shell-initialize))
 
-(when (my/module-enabled-p 'evil)
-  (my/safe-require-module 'evil-config "Evil mode"))
+;;; ─────────────────────────────────────────────
+;;; 3. BASIC UI
+;;; ─────────────────────────────────────────────
 
-;; Dashboard must load in Phase 1 (not deferred) so it displays
-;; immediately instead of showing *scratch* first.
-(when (my/module-enabled-p 'dashboard)
-  (my/safe-require-module 'startup-dashboard "Startup dashboard"))
+(setq inhibit-startup-message t
+      inhibit-startup-echo-area-message t)
 
-;; ── Phase 3: Idle 0.5s — completion (needed for M-x) ────────────
-(when (my/module-enabled-p 'completion)
-  (my/deferred-require 0.5 'modern-completion "Completion system"))
+(menu-bar-mode   -1)
+(tool-bar-mode   -1)
+(scroll-bar-mode -1)
 
-;; ── Phase 4: Idle 1s — languages, UI polish, colors ──────────────
-(when (my/module-enabled-p 'languages)
-  (my/deferred-require 1 'modern-languages "Language support"))
-(when (my/module-enabled-p 'ui)
-  (my/deferred-require 1 'modern-ui "Modern UI"))
-(when (my/module-enabled-p 'colors)
-  (my/deferred-require 1 'enhanced-colors "Syntax highlighting"))
+;; Relative line numbers
+(global-display-line-numbers-mode 1)
+(setq display-line-numbers-type 'relative)
 
-;; ── Phase 5: Idle 2s — non-critical ──────────────────────────────
-(when (my/module-enabled-p 'robustness)
-  (my/deferred-require 2 'robustness-enhancements "Robustness"))
+;; Font
+(defun my/set-font ()
+  (cond
+   ((find-font (font-spec :name "Victor Mono"))
+    (set-face-attribute 'default nil :font "Victor Mono-18"))
+   ((find-font (font-spec :name "Menlo"))
+    (set-face-attribute 'default nil :font "Menlo-12"))))
 
-;; ══════════════════════════════════════════════════════════════════
-;;  Standalone Packages (not tied to a module)
-;; ══════════════════════════════════════════════════════════════════
-;; Packages that are broadly useful and don't belong to any specific
-;; module.  Each is deferred to avoid slowing startup.
+(if (daemonp)
+    (add-hook 'after-make-frame-functions
+              (lambda (f) (with-selected-frame f (my/set-font))))
+  (my/set-font))
 
-;; which-key — shows available keybindings in a popup after pressing
-;; a prefix key (e.g. press SPC and wait 0.3s to see all SPC bindings).
-;; Essential for discovering the leader key layout without memorization.
+;;; ─────────────────────────────────────────────
+;;; 4. EVIL MODE + GENERAL (leader key)
+;;; ─────────────────────────────────────────────
+
+(use-package undo-fu)
+
+(use-package evil
+  :init
+  (setq evil-want-integration t
+        evil-want-keybinding nil
+        evil-want-C-u-scroll t
+        evil-undo-system 'undo-fu
+        evil-search-module 'evil-search)
+  :config
+  (evil-mode 1))
+
+(use-package evil-collection
+  :after evil
+  :config
+  (evil-collection-init))
+
+(use-package evil-commentary
+  :after evil
+  :config (evil-commentary-mode 1))
+
+(use-package evil-surround
+  :after evil
+  :config (global-evil-surround-mode 1))
+
+(use-package evil-matchit
+  :after evil
+  :config (global-evil-matchit-mode 1))
+
+(use-package general
+  :after evil
+  :config
+  (general-evil-setup t)
+
+  (general-create-definer my/leader-def
+    :states '(normal visual motion emacs)
+    :keymaps 'override
+    :prefix "SPC"
+    :global-prefix "C-SPC")
+
+  (my/leader-def
+    ;; ── Top-level ────────────────────────────
+    "SPC" '(execute-extended-command             :wk "M-x")
+    "TAB" '(evil-switch-to-windows-last-buffer   :wk "last buffer")
+    ";"   '(evil-commentary-line                 :wk "comment line")
+
+    ;; ── Files ────────────────────────────────
+    "f f" '(find-file           :wk "find file")
+    "f r" '(consult-recent-file :wk "recent files")
+
+    ;; ── Buffers ──────────────────────────────
+    "b b" '(consult-buffer      :wk "switch buffer")
+    "b k" '(kill-current-buffer :wk "kill buffer")
+
+    ;; ── Windows ──────────────────────────────
+    "w h" '(evil-window-left        :wk "left")
+    "w j" '(evil-window-down        :wk "down")
+    "w k" '(evil-window-up          :wk "up")
+    "w l" '(evil-window-right       :wk "right")
+    "w s" '(split-window-below      :wk "split horiz")
+    "w v" '(split-window-right      :wk "split vert")
+    "w d" '(delete-window           :wk "close")
+    "w o" '(delete-other-windows    :wk "only")
+    "w =" '(balance-windows         :wk "balance")
+    "w f" '(toggle-frame-fullscreen :wk "fullscreen")
+
+    ;; ── Search ───────────────────────────────
+    "s s" '(consult-line    :wk "search buffer")
+    "s r" '(consult-ripgrep :wk "search project")
+    "s i" '(consult-imenu   :wk "jump to symbol")
+
+    ;; ── Code ─────────────────────────────────
+    "c f" '(apheleia-format-buffer          :wk "format buffer")
+    "c p" '(my/python-run-current-file      :wk "run python")
+    "c c" '(my/cpp-compile-run-current-file :wk "compile & run C++")
+
+    ;; ── LSP ──────────────────────────────────
+    "l r" '(lsp-rename              :wk "rename")
+    "l d" '(lsp-find-references     :wk "references")
+    "l a" '(lsp-execute-code-action :wk "code action")
+    "l i" '(lsp-find-implementation :wk "implementation")
+
+    ;; ── Errors ───────────────────────────────
+    "e l" '(flycheck-list-errors :wk "list errors")
+
+    ;; ── Git ──────────────────────────────────
+    "g g" '(magit-status       :wk "magit")
+    "g c" '(magit-commit       :wk "commit")
+    "g p" '(magit-push         :wk "push")
+    "g l" '(magit-log-current  :wk "log")
+    "g d" '(magit-diff-dwim    :wk "diff")
+    "g f" '(magit-fetch        :wk "fetch")
+    "g b" '(magit-branch       :wk "branch")
+    "g s" '(magit-stage        :wk "stage")
+    "g u" '(magit-unstage      :wk "unstage")
+    "g a" '(magit-blame        :wk "blame")
+    "g r" '(magit-rebase       :wk "rebase")
+    "g m" '(magit-merge        :wk "merge")
+    "g t" '(magit-stash        :wk "stash")
+    "g i" '(magit-pull         :wk "pull")
+
+    ;; ── Project ──────────────────────────────
+    "p p" '(projectile-switch-project :wk "switch project")
+    "p f" '(projectile-find-file      :wk "find file")
+
+    ;; ── Org / Notes ──────────────────────────
+    "o a" '(org-agenda              :wk "agenda")
+    "o c" '(org-capture             :wk "capture")
+    "o r" '(org-roam-node-find      :wk "roam find")
+    "o i" '(org-roam-node-insert    :wk "roam insert")
+    "o s" '(consult-org-roam-search :wk "roam search")
+    "o d" '(deft                    :wk "deft")
+    "o u" '(org-roam-ui-open        :wk "roam graph")
+
+    ;; ── Conda ────────────────────────────────
+    "m a" '(conda-env-activate   :wk "activate env")
+    "m d" '(conda-env-deactivate :wk "deactivate env")
+
+    ;; ── Jump ─────────────────────────────────
+    "j j" '(avy-goto-char-2 :wk "jump to char")
+
+    ;; ── Help ─────────────────────────────────
+    "h k" '(helpful-key      :wk "key")
+    "h f" '(helpful-callable :wk "function")
+    "h v" '(helpful-variable :wk "variable")
+    "h ." '(helpful-at-point :wk "at point")
+
+    ;; ── Quit ─────────────────────────────────
+    "q q" '(save-buffers-kill-terminal :wk "quit")
+    "q r" '(restart-emacs              :wk "restart"))
+
+  ;; ── Unbound navigation: ]h/[h hunks, ]e/[e errors ──
+  (general-define-key
+    :states '(normal visual)
+    "]h" '(diff-hl-next-hunk     :wk "next hunk")
+    "[h" '(diff-hl-previous-hunk :wk "prev hunk")
+    "]e" '(flycheck-next-error   :wk "next error")
+    "[e" '(flycheck-previous-error :wk "prev error")))
+
+;;; ─────────────────────────────────────────────
+;;; 5. VIM MOVEMENT EXTRAS
+;;; ─────────────────────────────────────────────
+
+(with-eval-after-load 'evil
+  ;; j/k by visual line (important for wrapped org/markdown)
+  (evil-define-key 'normal 'global
+    (kbd "j") 'evil-next-visual-line
+    (kbd "k") 'evil-previous-visual-line
+    (kbd "gj") 'evil-next-line
+    (kbd "gk") 'evil-previous-line
+    (kbd "Q") 'evil-execute-last-recorded-macro
+    (kbd "U") 'evil-redo
+    (kbd "Y") (kbd "y$")
+    (kbd "g h") 'evil-beginning-of-line
+    (kbd "g l") 'evil-end-of-line
+    ;; Center after search jump
+    (kbd "n")  (lambda () (interactive) (evil-ex-search-next)     (evil-scroll-line-to-center nil))
+    (kbd "N")  (lambda () (interactive) (evil-ex-search-previous) (evil-scroll-line-to-center nil))
+    (kbd "*")  (lambda () (interactive) (evil-ex-search-word-forward)  (evil-scroll-line-to-center nil))
+    (kbd "#")  (lambda () (interactive) (evil-ex-search-word-backward) (evil-scroll-line-to-center nil)))
+
+  ;; Keep selection after indent
+  (evil-define-key 'visual 'global
+    (kbd ">") (lambda () (interactive) (evil-shift-right (region-beginning) (region-end)) (evil-visual-restore))
+    (kbd "<") (lambda () (interactive) (evil-shift-left  (region-beginning) (region-end)) (evil-visual-restore))))
+
 (use-package which-key
-  :straight t
-  :defer 0.5
-  :diminish which-key-mode
   :config
   (which-key-mode)
-  (setq which-key-idle-delay 0.3              ; show popup 0.3s after prefix key
-        which-key-popup-type 'side-window     ; display at bottom, not in minibuffer
-        which-key-side-window-location 'bottom
-        which-key-side-window-max-height 0.25 ; use at most 25% of frame height
-        which-key-separator " → "))           ; visual separator between key and command
+  (setq which-key-idle-delay 0.3))
 
-;; helpful — enhanced *Help* buffers with source code, references,
-;; and better formatting.  Remaps built-in describe-* commands so
-;; C-h f, C-h v, C-h k all use the improved versions.
+;;; ─────────────────────────────────────────────
+;;; 6. COMPLETION (vertico / orderless / consult / marginalia)
+;;; ─────────────────────────────────────────────
+
+(use-package vertico
+  :init (vertico-mode 1)
+  :custom
+  (vertico-cycle t)
+  (vertico-count 15))
+
+(use-package orderless
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
+
+(use-package marginalia
+  :init (marginalia-mode 1))
+
+(use-package consult
+  :bind (("C-s" . consult-line))
+  :custom
+  (consult-preview-key "M-.")
+  :config
+  (setq xref-show-xrefs-function       #'consult-xref
+        xref-show-definitions-function #'consult-xref))
+
+;;; ─────────────────────────────────────────────
+;;; 7. THEME & MODELINE
+;;; ─────────────────────────────────────────────
+
+(use-package doom-themes
+  :config
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic t)
+  (load-theme 'doom-one t)
+  (doom-themes-visual-bell-config)
+  (doom-themes-org-config))
+
+(use-package doom-modeline
+  :hook (after-init . doom-modeline-mode)
+  :custom
+  (doom-modeline-height 28)
+  (doom-modeline-icon t)
+  (doom-modeline-major-mode-icon t))
+
+(use-package nerd-icons)
+
+;;; ─────────────────────────────────────────────
+;;; 8. EDITING ESSENTIALS
+;;; ─────────────────────────────────────────────
+
+(use-package smartparens
+  :hook (prog-mode . smartparens-mode)
+  :config
+  (require 'smartparens-config))
+
+(use-package rainbow-delimiters
+  :hook (prog-mode . rainbow-delimiters-mode))
+
+(use-package company
+  :hook (prog-mode . company-mode)
+  :custom
+  (company-idle-delay 0.2)
+  (company-minimum-prefix-length 2)
+  (company-tooltip-align-annotations t))
+
+(use-package flycheck
+  :hook (prog-mode . flycheck-mode))
+
+(use-package yasnippet
+  :config (yas-global-mode 1))
+(use-package yasnippet-snippets :after yasnippet)
+
+(use-package ws-butler
+  :hook (prog-mode . ws-butler-mode))
+
+(use-package highlight-indent-guides
+  :hook (prog-mode . highlight-indent-guides-mode)
+  :custom
+  (highlight-indent-guides-method 'character)
+  (highlight-indent-guides-character ?\│)
+  (highlight-indent-guides-responsive 'top))
+
+;;; ─────────────────────────────────────────────
+;;; 9. LSP
+;;; ─────────────────────────────────────────────
+
+(use-package lsp-mode
+  :commands (lsp lsp-deferred)
+  :hook ((c++-mode . lsp-deferred)
+         (c-mode   . lsp-deferred)
+         (lsp-mode . lsp-enable-which-key-integration))
+  :custom
+  (lsp-idle-delay 0.5)
+  (lsp-enable-symbol-highlighting t)
+  (lsp-signature-auto-activate t)
+  (lsp-prefer-flymake nil)
+  (lsp-keymap-prefix "C-c l")
+  :config
+  ;; Evil gd/gr/K → LSP (per-buffer, avoids keymap priority issues)
+  (add-hook 'lsp-mode-hook
+            (lambda ()
+              (evil-local-set-key 'normal (kbd "gd") #'lsp-find-definition)
+              (evil-local-set-key 'normal (kbd "gD") #'lsp-find-declaration)
+              (evil-local-set-key 'normal (kbd "gr") #'lsp-find-references)
+              (evil-local-set-key 'normal (kbd "gi") #'lsp-find-implementation)
+              (evil-local-set-key 'normal (kbd "K")  #'lsp-describe-thing-at-point))))
+
+(use-package lsp-pyright
+  :hook (python-mode . (lambda ()
+                         (require 'lsp-pyright)
+                         (lsp-deferred))))
+
+(use-package lsp-ui
+  :after lsp-mode
+  :commands lsp-ui-mode
+  :custom
+  (lsp-ui-doc-enable t)
+  (lsp-ui-doc-position 'at-point)
+  (lsp-ui-sideline-enable t)
+  (lsp-ui-peek-enable t))
+
+;;; ─────────────────────────────────────────────
+;;; 10. TREE-SITTER (built-in treesit, Emacs 30)
+;;; ─────────────────────────────────────────────
+
+(use-package treesit-auto
+  :config
+  (setq treesit-auto-install 'prompt)
+  (treesit-auto-add-to-auto-mode-alist 'all)
+  (global-treesit-auto-mode))
+
+;;; ─────────────────────────────────────────────
+;;; 11. IDE TOOLS
+;;; ─────────────────────────────────────────────
+
+(use-package dap-mode
+  :after lsp-mode
+  :config
+  (dap-auto-configure-mode 1))
+
+(use-package avy
+  :commands (avy-goto-char-2 avy-goto-char avy-goto-line))
+
+(use-package rg
+  :commands (rg rg-project rg-dwim))
+
+(use-package projectile
+  :config
+  (projectile-mode +1)
+  (setq projectile-project-search-path '("~/projects/" "~/code/")
+        projectile-completion-system 'default))
+
+(use-package magit
+  :commands (magit-status magit-commit magit-push magit-pull magit-fetch
+             magit-branch magit-log-current magit-diff-dwim magit-stage
+             magit-unstage magit-blame magit-rebase magit-merge magit-stash)
+  :config
+  (setq magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1
+        magit-save-repository-buffers 'dontask
+        magit-diff-refine-hunk 'all))
+
+(use-package diff-hl
+  :hook ((after-init . global-diff-hl-mode)
+         (magit-post-refresh . diff-hl-magit-post-refresh))
+  :config
+  (diff-hl-flydiff-mode 1))
+
+(use-package restart-emacs
+  :commands restart-emacs)
+
 (use-package helpful
-  :straight t
-  :defer 2
+  :commands (helpful-callable helpful-variable helpful-key helpful-at-point)
   :bind
   ([remap describe-function] . helpful-callable)
   ([remap describe-variable] . helpful-variable)
-  ([remap describe-key] . helpful-key)
-  ([remap describe-command] . helpful-command))
+  ([remap describe-key]      . helpful-key))
 
-;; undo-tree — visualize undo history as a tree (C-x u).
-;; Emacs's default undo is linear; undo-tree preserves ALL branches
-;; so you never lose work when you undo past a branch point.
-;; History is persisted to disk so undo survives across sessions.
-(use-package undo-tree
-  :straight t
-  :defer 1
-  :diminish undo-tree-mode
+;;; ─────────────────────────────────────────────
+;;; 12. ORG MODE
+;;; ─────────────────────────────────────────────
+
+(use-package org
+  :ensure nil
+  :hook (org-mode . visual-line-mode)
+  :custom
+  (org-log-done 'time)
+  (org-startup-indented t)
+  (org-hide-emphasis-markers t)
+  (org-agenda-files '("~/org/"))
   :config
-  ;; Do NOT call (global-undo-tree-mode) here.
-  ;; evil-undo-system is set to 'undo-redo (native Emacs 28+), so undo-tree
-  ;; must NOT intercept u/C-r.  We load undo-tree for its tree visualizer
-  ;; only — invoke it on demand with C-x u.
-  (setq undo-tree-auto-save-history t          ; persist undo history to disk
-        undo-tree-history-directory-alist       ; store all history files in one place
-        `(("." . ,(expand-file-name "undo-tree" user-emacs-directory)))))
+  (require 'org-agenda)
+  (require 'org-capture)
+  (require 'org-habit)
 
-;; diminish — hide minor-mode lighters from the modeline to reduce
-;; clutter (e.g. "yas" "SP" "undo-tree" no longer shown).
-(use-package diminish
-  :straight t
-  :defer 1)
+  (setq org-capture-templates
+        '(("t" "Todo"    entry (file+headline "~/org/inbox.org" "Tasks")
+           "* TODO %?\n  %U\n  %a")
+          ("n" "Note"    entry (file+headline "~/org/notes.org" "Notes")
+           "* %?\n  %U")
+          ("j" "Journal" entry (file+datetree "~/org/journal.org")
+           "* %?\n  Entered on %U"))))
 
-;; restart-emacs — provides `restart-emacs` command used by upgrade
-;; and rollback flows (SPC q r, post-upgrade prompt).
-(use-package restart-emacs
-  :straight t
-  :defer t
-  :commands restart-emacs)
+(use-package org-super-agenda
+  :after org
+  :config (org-super-agenda-mode))
 
-;; ── Deferred config files (org, markdown, debug) ─────────────────
-;; These are standalone config files that don't fit the module system.
-;; They load after 2s idle since org-mode, markdown, and DAP debugging
-;; are never needed immediately at startup.  The second arg `t` to
-;; `load` suppresses "file not found" errors so missing files are fine.
-(defun my/load-config-file (path)
-  "Load PATH with full error isolation — catches both missing files and runtime errors."
-  (condition-case err
-      (load path t)   ; t = noerror for missing file
-    (error
-     (message "❌ Failed to load %s: %s" path (error-message-string err)))))
+(use-package org-roam
+  :after org
+  :custom
+  (org-roam-directory (expand-file-name "~/org-roam/"))
+  (org-roam-completion-everywhere t)
+  :config
+  (org-roam-setup))
 
-(let ((load-configs (lambda ()
-                      (my/load-config-file (expand-file-name "config/org-config.el" user-emacs-directory))
-                      (my/load-config-file (expand-file-name "config/markdown.el" user-emacs-directory))
-                      (my/load-config-file (expand-file-name "modules/debug-support.el" user-emacs-directory)))))
-  (if noninteractive
-      (funcall load-configs)
-    (run-with-idle-timer 2 nil load-configs)))
+(use-package consult-org-roam
+  :after org-roam
+  :config (consult-org-roam-mode 1)
+  :custom
+  (consult-org-roam-grep-func #'consult-ripgrep))
 
-;; ══════════════════════════════════════════════════════════════════
-;;  Profiling (opt-in: EMACS_BENCHMARK=1 emacs)
-;; ══════════════════════════════════════════════════════════════════
-;; Run `EMACS_BENCHMARK=1 emacs` to see a table of require/load
-;; times in the *benchmark-init results* buffer.  Deactivated after
-;; init to avoid overhead during normal editing.
+(use-package org-roam-ui
+  :after org-roam
+  :custom
+  (org-roam-ui-sync-theme t)
+  (org-roam-ui-follow t)
+  (org-roam-ui-update-on-save t)
+  (org-roam-ui-open-on-start nil))
 
-;; eval prevents the byte-compiler from expanding use-package at compile time,
-;; which would cause "Cannot load benchmark-init" when not yet installed.
-(when (getenv "EMACS_BENCHMARK")
-  (eval
-   '(use-package benchmark-init
-      :straight t
-      :demand t
-      :config
-      (add-hook 'after-init-hook #'benchmark-init/deactivate))))
+(use-package org-modern
+  :hook ((org-mode . org-modern-mode)
+         (org-agenda-finalize . org-modern-agenda)))
 
-;; ══════════════════════════════════════════════════════════════════
-;;  Startup Complete — restore redisplay, report timing
-;; ══════════════════════════════════════════════════════════════════
-;; This hook fires after init.el finishes AND after all startup files
-;; have been processed.  We re-enable redisplay (suppressed at the top
-;; of this file) and report how long the synchronous portion took.
-;; Note: deferred modules (Phases 2-5) continue loading in the
-;; background and are NOT included in this timing.
+(use-package org-pomodoro
+  :after org
+  :custom (org-pomodoro-length 25))
 
-(add-hook 'emacs-startup-hook
-          (lambda ()
-            (setq inhibit-redisplay nil)
-            (redisplay)
-            (message "Emacs ready in %.2fs"
-                     (float-time (time-since emacs-start-time)))))
+;;; ─────────────────────────────────────────────
+;;; 13. MARKDOWN
+;;; ─────────────────────────────────────────────
 
-(provide 'init)
+(use-package markdown-mode
+  :mode ("\\.md\\'" "\\.markdown\\'")
+  :custom (markdown-command "pandoc"))
+
+(use-package pandoc-mode
+  :hook (markdown-mode . pandoc-mode))
+
+(use-package deft
+  :commands deft
+  :custom
+  (deft-directory (expand-file-name "~/org-roam/"))
+  (deft-extensions '("org" "md" "txt"))
+  (deft-recursive t)
+  (deft-use-filename-as-title nil)
+  (deft-use-filter-string-for-filename t)
+  (deft-strip-summary-regexp
+   (concat "\\("
+           "[\n\t]"
+           "\\|^#\\+[[:alpha:]_]+:.*$"
+           "\\|^:PROPERTIES:.*"
+           "\\|^:END:.*"
+           "\\|^\\* "
+           "\\)"))
+  :config
+  (defun my/deft-new-note-via-roam ()
+    "Create a new org-roam node from Deft's filter string."
+    (interactive)
+    (let ((title (or (and (> (length deft-filter-regexp) 0)
+                          (car deft-filter-regexp))
+                     (read-string "Note title: "))))
+      (deft-filter-clear)
+      (quit-window)
+      (org-roam-capture- :node (org-roam-node-create :title title)
+                         :props '(:immediate-finish nil))))
+  (define-key deft-mode-map (kbd "C-c C-n") #'my/deft-new-note-via-roam))
+
+;;; ─────────────────────────────────────────────
+;;; 14. WRITING MODE
+;;; ─────────────────────────────────────────────
+
+(use-package olivetti
+  :hook (org-mode . olivetti-mode)
+  :custom (olivetti-body-width 90))
+
+;;; ─────────────────────────────────────────────
+;;; 15. PYTHON / CONDA
+;;; ─────────────────────────────────────────────
+
+(use-package conda
+  :custom
+  (conda-anaconda-home        (expand-file-name "~/miniconda3/"))
+  (conda-env-home-directory   (expand-file-name "~/miniconda3/"))
+  (conda-env-subdirectory     "envs")
+  :config
+  (conda-env-autoactivate-mode 1))
+
+;;; ─────────────────────────────────────────────
+;;; 16. COMPILE / RUN HELPERS
+;;; ─────────────────────────────────────────────
+
+(defun my/python-run-current-file ()
+  "Run the current Python file."
+  (interactive)
+  (when (buffer-file-name)
+    (let ((python-exe (or (executable-find "python3")
+                          (executable-find "python")
+                          "python3")))
+      (compile (format "%s %s"
+                       python-exe
+                       (shell-quote-argument buffer-file-name))))))
+
+(defun my/cpp-compile-run-current-file ()
+  "Compile and run the current C++ file."
+  (interactive)
+  (when (buffer-file-name)
+    (let* ((src (buffer-file-name))
+           (exe (concat (file-name-sans-extension src) ".out")))
+      (compile (format "g++ -std=c++17 -Wall %s -o %s && ./%s"
+                       (shell-quote-argument src)
+                       (shell-quote-argument exe)
+                       (shell-quote-argument exe))))))
+
+;;; ─────────────────────────────────────────────
+;;; 17. FORMATTERS (apheleia)
+;;; ─────────────────────────────────────────────
+
+(use-package apheleia
+  :config
+  (apheleia-global-mode 1)
+  (setf (alist-get 'python-mode     apheleia-mode-alist) 'ruff)
+  (setf (alist-get 'python-ts-mode  apheleia-mode-alist) 'ruff)
+  (setf (alist-get 'c-mode          apheleia-mode-alist) 'clang-format)
+  (setf (alist-get 'c++-mode        apheleia-mode-alist) 'clang-format)
+  (setf (alist-get 'c++-ts-mode     apheleia-mode-alist) 'clang-format)
+  (setf (alist-get 'js-mode         apheleia-mode-alist) 'prettier)
+  (setf (alist-get 'js-ts-mode      apheleia-mode-alist) 'prettier)
+  (setf (alist-get 'typescript-mode apheleia-mode-alist) 'prettier)
+  (setf (alist-get 'tsx-ts-mode     apheleia-mode-alist) 'prettier)
+  (setf (alist-get 'css-mode        apheleia-mode-alist) 'prettier)
+  (setf (alist-get 'html-mode       apheleia-mode-alist) 'prettier)
+  (setf (alist-get 'json-mode       apheleia-mode-alist) 'prettier)
+  (setf (alist-get 'markdown-mode   apheleia-mode-alist) 'prettier)
+  (setf (alist-get 'sh-mode         apheleia-mode-alist) 'shfmt)
+  (setf (alist-get 'rust-mode       apheleia-mode-alist) 'rustfmt)
+  (setf (alist-get 'go-mode         apheleia-mode-alist) 'gofmt)
+  (setf (alist-get 'emacs-lisp-mode apheleia-mode-alist) nil))
+
+;;; ─────────────────────────────────────────────
+;;; 18. PERSISTENCE
+;;; ─────────────────────────────────────────────
+
+(setq auto-save-default t
+      auto-save-timeout 20
+      auto-save-interval 200)
+
+(setq save-place-file (expand-file-name "saveplace" user-emacs-directory))
+(save-place-mode 1)
+
+(recentf-mode 1)
+(setq recentf-max-menu-items 50
+      recentf-max-saved-items 100)
+
+(savehist-mode 1)
+
+;;; ─────────────────────────────────────────────
+;;; 19. DEFAULTS
+;;; ─────────────────────────────────────────────
+
+(setq-default indent-tabs-mode nil
+              tab-width 4)
+
+(setq use-short-answers t
+      scroll-conservatively 101
+      scroll-margin 3)
+
+(setq backup-directory-alist
+      `(("." . ,(expand-file-name "backups/" user-emacs-directory)))
+      backup-by-copying t
+      version-control t
+      delete-old-versions t
+      kept-new-versions 6
+      kept-old-versions 2)
+
+(column-number-mode 1)
+(show-paren-mode 1)
+(delete-selection-mode 1)
+
+;;; ─────────────────────────────────────────────
+;;; 20. CUSTOM FILE (keep init.el clean)
+;;; ─────────────────────────────────────────────
+
+(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(when (file-exists-p custom-file)
+  (load custom-file))
+
 ;;; init.el ends here

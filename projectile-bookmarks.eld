@@ -1,1 +1,1 @@
-("~/Desktop/broko-micro-services-fastapi/" "/Volumes/personal/programmingFolders/LLM-AI/")
+("~/Desktop/broko-micro-services-fastapi/" "/Volumes/personal/programmingFolders/RAG/")

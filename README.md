@@ -1,378 +1,327 @@
-# Emacs IDE Configuration
+# Emacs 30.2 Configuration
 
-**Version:** 1.2 Complete (Modernized)
-**Status:** ✅ 100% Production Ready - Zero Deprecations
-**Author:** Optimized for Python/C++ Development & Note-Taking
-**Last Updated:** 2025-12-28
+Vim-centric Emacs config with Evil mode, LSP, and org-roam. Single-file setup (`init.el`).
 
----
+## Prerequisites
 
-## 🚀 Quick Start
+### Required
 
-```bash
-# 1. Install debuggers
-pip install debugpy               # Python
-brew install llvm                 # C++ (if needed)
+| Tool | Install | Purpose |
+|------|---------|---------|
+| Emacs 30.2+ | `brew install emacs-plus@30` | Editor |
+| ripgrep | `brew install ripgrep` | Project-wide search (`SPC s r`) |
+| Node.js | `brew install node` | Required by pyright, prettier |
+| pyright | `npm install -g pyright` | Python LSP server |
 
-# 2. Start Emacs
+### Per-language (install as needed)
+
+| Tool | Install | Purpose |
+|------|---------|---------|
+| ruff | `brew install ruff` | Python formatter/linter |
+| clangd | `brew install llvm` | C/C++ LSP server |
+| clang-format | Included with llvm | C/C++ formatter |
+| prettier | `npm install -g prettier` | JS/TS/HTML/CSS/JSON/Markdown formatter |
+| shfmt | `brew install shfmt` | Shell script formatter |
+| pandoc | `brew install pandoc` | Markdown preview |
+| graphviz | `brew install graphviz` | org-roam graph (`dot` command) |
+| miniconda | [miniconda3](https://docs.conda.io/) | Python env management |
+
+### Fonts
+
+- **Victor Mono** (primary, size 18) — `brew install --cask font-victor-mono`
+- **Menlo** (fallback, size 12) — ships with macOS
+
+### Directories (create before first launch)
+
+```sh
+mkdir -p ~/org ~/org-roam ~/projects ~/code
+touch ~/org/inbox.org ~/org/notes.org ~/org/journal.org
+```
+
+## Installation
+
+```sh
+git clone <this-repo> ~/.emacs.d
 emacs
-
-# 3. Try debugging
-# Open test.py, press SPC d b (breakpoint), SPC d d (debug)
 ```
 
----
+First launch installs all packages automatically. Takes 2-3 minutes.
 
-## 📚 Documentation Index
+## Structure
 
-### 🎯 Getting Started (Read These First):
+Single file: `init.el` with 20 numbered sections.
 
-1. **[COMPLETE-IDE-SUMMARY.md](./COMPLETE-IDE-SUMMARY.md)** ⭐ START HERE
-   - What you have vs other IDEs
-   - Feature comparison
-   - What we skipped and why
-   - Complete overview
+| Section | What |
+|---------|------|
+| 0 | Frame (fullscreen) |
+| 1 | Package bootstrap (MELPA, use-package) |
+| 2 | PATH inheritance (macOS shell env) |
+| 3 | Basic UI (no menu/toolbar, relative line numbers) |
+| 4 | Evil mode + leader keybindings |
+| 5 | Vim movement extras |
+| 6 | Completion (vertico, orderless, consult, marginalia) |
+| 7 | Theme (doom-one) + modeline |
+| 8 | Editing (smartparens, rainbow-delimiters, company, flycheck, yasnippet) |
+| 9 | LSP (lsp-mode, lsp-pyright, lsp-ui) |
+| 10 | Tree-sitter (built-in treesit via treesit-auto) |
+| 11 | IDE tools (dap, avy, rg, projectile, magit, diff-hl, helpful) |
+| 12 | Org mode (org-roam, org-roam-ui, org-modern, org-super-agenda) |
+| 13 | Markdown (markdown-mode, pandoc, deft) |
+| 14 | Writing mode (olivetti — centered text) |
+| 15 | Python / Conda |
+| 16 | Compile & run helpers |
+| 17 | Formatters (apheleia — async format on save) |
+| 18 | Persistence (save-place, recentf, savehist) |
+| 19 | Defaults (indent, scroll, backups) |
+| 20 | Custom file redirect |
 
-2. **[KEYBINDINGS-CHEATSHEET.md](./KEYBINDINGS-CHEATSHEET.md)** ⭐ ESSENTIAL
-   - All keybindings organized by category
-   - Quick reference
-   - Learning path
+## Keybindings
 
-3. **[DEBUGGER-SETUP.md](./DEBUGGER-SETUP.md)** ⭐ IMPORTANT
-   - Complete debugging guide
-   - Installation instructions
-   - Examples and workflows
-   - Troubleshooting
+Leader key: `SPC` (normal/visual mode). Press `SPC` and wait for which-key popup.
 
----
+### Leader Keybindings (`SPC + ...`)
 
-### 🔧 Setup & Configuration:
+#### Top-level
 
-4. **[CONDA-SETUP.md](./CONDA-SETUP.md)**
-   - Conda environment auto-activation
-   - environment.yml examples
-   - Troubleshooting
+| Key | Action |
+|-----|--------|
+| `SPC SPC` | M-x (command palette) |
+| `SPC TAB` | switch to last buffer |
+| `SPC ;` | comment line |
 
-5. **[FREEZE-FIX.md](./FREEZE-FIX.md)**
-   - How we fixed Emacs freezing
-   - Performance optimizations
-   - What was disabled and why
+#### Files (`SPC f`)
 
-6. **[TREE-SITTER-FIX.md](./TREE-SITTER-FIX.md)**
-   - Tree-sitter grammar installation
-   - Version compatibility fixes
-   - Verification steps
+| Key | Action |
+|-----|--------|
+| `SPC f f` | find file |
+| `SPC f r` | recent files |
 
----
+#### Buffers (`SPC b`)
 
-### 📖 Detailed Guides:
+| Key | Action |
+|-----|--------|
+| `SPC b b` | switch buffer |
+| `SPC b k` | kill buffer |
 
-7. **[OPTIMIZATION-GUIDE.md](./OPTIMIZATION-GUIDE.md)**
-   - Daemon setup (instant startup)
-   - Daily workflow examples
-   - Python/C++ optimization details
-   - Org-mode learning workflow
+#### Windows (`SPC w`)
 
-8. **[IMPROVEMENTS-SUMMARY.md](./IMPROVEMENTS-SUMMARY.md)**
-   - All improvements made
-   - New packages installed
-   - Configuration changes
-   - Testing results
+| Key | Action |
+|-----|--------|
+| `SPC w h/j/k/l` | navigate windows |
+| `SPC w s` | split horizontal |
+| `SPC w v` | split vertical |
+| `SPC w d` | close window |
+| `SPC w o` | close other windows |
+| `SPC w =` | balance windows |
+| `SPC w f` | toggle fullscreen |
 
-9. **[IDE-MISSING-FEATURES.md](./IDE-MISSING-FEATURES.md)**
-   - Complete analysis of IDE features
-   - What was missing vs what you have
-   - Why we skipped file tree and vterm
-   - Feature priority ranking
+#### Search (`SPC s`)
 
----
+| Key | Action |
+|-----|--------|
+| `SPC s s` | search current buffer |
+| `SPC s r` | ripgrep across project |
+| `SPC s i` | jump to symbol (imenu) |
 
-### ✅ Quick Reference:
+#### Code (`SPC c`)
 
-10. **[DEBUGGER-CHECKLIST.md](./DEBUGGER-CHECKLIST.md)**
-    - Installation checklist
-    - Quick setup steps
-    - Verification tests
+| Key | Action |
+|-----|--------|
+| `SPC c f` | format buffer |
+| `SPC c p` | run current Python file |
+| `SPC c c` | compile & run current C++ file |
 
-11. **[TERMINAL-MODE-GUIDE.md](./TERMINAL-MODE-GUIDE.md)** ⭐ NEW
-    - Using `emacs -nw` (terminal mode)
-    - What works vs what doesn't
-    - Terminal optimization tips
-    - No issues - fully supported!
+#### LSP (`SPC l`)
 
-12. **[ADDITIONAL-IDE-FEATURES.md](./ADDITIONAL-IDE-FEATURES.md)**
-    - What else could enhance your IDE
-    - Org-mode advanced features
-    - Python productivity tools
-    - C++ workflow improvements
-    - Priority recommendations
+| Key | Action |
+|-----|--------|
+| `SPC l r` | rename symbol |
+| `SPC l d` | find references |
+| `SPC l a` | code action |
+| `SPC l i` | find implementation |
 
-13. **[NEW-FEATURES-ADDED.md](./NEW-FEATURES-ADDED.md)**
-    - All new features added (2025-12-27)
-    - Org-roam-dailies, Org-roam-UI, Projectile
-    - Python REPL integration
-    - C++ header/source toggle
-    - Complete keybinding reference
+#### Errors (`SPC e`)
 
-14. **[DEPRECATION-FIX-REPORT.md](./DEPRECATION-FIX-REPORT.md)** ⭐ LATEST
-    - Migrated from evil-leader to general.el
-    - Fixed all deprecated code (2025-12-28)
-    - Zero deprecation warnings
-    - Modern keybinding system
-    - **Your IDE is now 100% modern and future-proof!**
+| Key | Action |
+|-----|--------|
+| `SPC e l` | list all errors |
 
----
+#### Git (`SPC g`)
 
-## 🎯 Essential Keybindings
+| Key | Action |
+|-----|--------|
+| `SPC g g` | magit status |
+| `SPC g c` | commit |
+| `SPC g p` | push |
+| `SPC g i` | pull |
+| `SPC g f` | fetch |
+| `SPC g b` | branch |
+| `SPC g l` | log |
+| `SPC g d` | diff |
+| `SPC g s` | stage |
+| `SPC g u` | unstage |
+| `SPC g a` | blame |
+| `SPC g r` | rebase |
+| `SPC g m` | merge |
+| `SPC g t` | stash |
 
-### Files & Buffers:
-```
-SPC f f    # Find file
-SPC f r    # Recent files
-SPC b b    # Switch buffer
-SPC p f    # Project files
-```
+#### Project (`SPC p`)
 
-### Code & LSP:
-```
-SPC l e    # Start LSP
-g d        # Go to definition
-g r        # Find references
-K          # Documentation
-SPC c a    # Code actions
-SPC c f    # Format buffer
-```
+| Key | Action |
+|-----|--------|
+| `SPC p p` | switch project |
+| `SPC p f` | find file in project |
 
-### Debugging:
-```
-SPC d b    # Toggle breakpoint
-SPC d d    # Debug current file
-SPC d D    # Debug with template selection
-SPC d n    # Step over
-SPC d s    # Step into
-SPC d c    # Continue
-SPC d q    # Quit debug
-```
+#### Org / Notes (`SPC o`)
 
-### Diff & Comparison (NEW - moved to capital D):
-```
-SPC D d    # Diff files
-SPC D b    # Diff buffer with file
-SPC D e    # Ediff
-SPC D f    # Ediff files
-SPC D w    # Compare windows
-```
+| Key | Action |
+|-----|--------|
+| `SPC o a` | org agenda |
+| `SPC o c` | org capture |
+| `SPC o r` | find org-roam note |
+| `SPC o i` | insert org-roam link |
+| `SPC o s` | search org-roam notes |
+| `SPC o d` | deft (quick note search) |
+| `SPC o u` | org-roam graph (browser) |
 
-### Compilation:
-```
-SPC c c    # Compile
-SPC c r    # Recompile
-SPC c n    # Next error
-SPC c p    # Previous error
-```
+#### Conda (`SPC m`)
 
-### Git (Magit):
-```
-SPC g s    # Git status
-SPC g b    # Git blame
-SPC g l    # Git log
-SPC g c    # Git commit
-```
+| Key | Action |
+|-----|--------|
+| `SPC m a` | activate conda env |
+| `SPC m d` | deactivate conda env |
 
-### Search & Navigation:
-```
-SPC /      # Search in buffer
-SPC s s    # Search in buffer (consult)
-SPC s r    # Search in project (ripgrep)
-SPC j i    # Jump to imenu
-```
+#### Jump (`SPC j`)
 
-### Org-mode & Notes:
-```
-SPC o c    # Org capture
-SPC o o    # Org agenda
-SPC n d    # Today's daily note (NEW!)
-SPC n D    # Go to specific date (NEW!)
-SPC n u    # Open knowledge graph UI (NEW!)
-C-c C-c    # Execute code block (in org)
-```
+| Key | Action |
+|-----|--------|
+| `SPC j j` | jump to char (avy) |
 
-### Python REPL (NEW!):
-```
-SPC P e    # Execute buffer in REPL
-SPC P r    # Execute region
-SPC P d    # Execute function
-SPC P s    # Start Python REPL
-```
+#### Help (`SPC h`)
 
-### Project Management (NEW!):
-```
-SPC p p    # Switch project
-SPC p f    # Find file in project
-SPC p c    # Compile project
-SPC p t    # Test project
-```
+| Key | Action |
+|-----|--------|
+| `SPC h k` | describe key |
+| `SPC h f` | describe function |
+| `SPC h v` | describe variable |
+| `SPC h .` | help at point |
 
-### C++ Development (NEW!):
-```
-C-c o      # Toggle header/source
-C-c C-c    # Quick compile
-```
+#### Quit (`SPC q`)
 
----
+| Key | Action |
+|-----|--------|
+| `SPC q q` | quit emacs |
+| `SPC q r` | restart emacs |
 
-## 📦 What's Included
+### LSP Navigation (no leader, normal mode)
 
-### Core Features:
-- ✅ Tree-sitter syntax highlighting
-- ✅ Eglot LSP (Python/C++)
-- ✅ Corfu completion
-- ✅ Conda auto-activation
-- ✅ DAP debugging
-- ✅ Python pytest integration
-- ✅ Python REPL integration (NEW!)
-- ✅ C++ quick compile (C-c C-c)
-- ✅ C++ header/source toggle (NEW!)
-- ✅ Magit git integration
-- ✅ Org-mode with executable code blocks
-- ✅ Org-roam dailies (NEW!)
-- ✅ Org-roam UI graph visualization (NEW!)
-- ✅ Flymake error checking
-- ✅ Apheleia formatting (Black/clang-format)
-- ✅ Evil Vim bindings
-- ✅ Modern completion (Vertico/Consult)
+| Key | Action |
+|-----|--------|
+| `gd` | go to definition |
+| `gD` | go to declaration |
+| `gr` | find references |
+| `gi` | find implementation |
+| `K` | hover documentation |
+| `C-o` | jump back |
+| `C-i` | jump forward |
 
-### Development Tools:
-- ✅ Projectile project management (NEW!)
-- ✅ Project management (project.el)
-- ✅ Terminal (eshell, shell)
-- ✅ Multiple cursors
-- ✅ Snippets (YASnippet)
-- ✅ Window management (winner-mode)
-- ✅ Which-key hints
+### Vim Extras (no leader, normal mode)
 
----
+| Key | Action |
+|-----|--------|
+| `j/k` | move by visual line |
+| `gj/gk` | move by actual line |
+| `gh` | beginning of line |
+| `gl` | end of line |
+| `Q` | replay last macro |
+| `U` | redo |
+| `Y` | yank to end of line |
+| `n/N` | search next/prev (centered) |
+| `*/\#` | search word forward/backward (centered) |
+| `C-u/C-d` | scroll half page up/down |
+| `]h/[h` | next/prev git hunk |
+| `]e/[e` | next/prev error |
+| `C-s` | search buffer (consult-line) |
 
-## 🎓 Learning Path
+### Visual Mode
 
-### Day 1: Basic Navigation
-1. Read [KEYBINDINGS-CHEATSHEET.md](./KEYBINDINGS-CHEATSHEET.md)
-2. Practice file opening: `SPC f f`, `SPC b b`
-3. Learn window splits: `SPC w s`, `SPC w v`
+| Key | Action |
+|-----|--------|
+| `>/<` | indent/dedent (keeps selection) |
 
-### Day 2: Coding
-1. Install debugpy: `pip install debugpy`
-2. Try LSP: `SPC l e` in a Python file
-3. Use code actions: `SPC c a`
-4. Format code: `SPC c f`
+### Evil Operators
 
-### Day 3: Debugging
-1. Read [DEBUGGER-SETUP.md](./DEBUGGER-SETUP.md)
-2. Set breakpoint: `SPC d b`
-3. Debug file: `SPC d d`
-4. Step through: `SPC d n`
+| Key | Action |
+|-----|--------|
+| `gcc` | comment line |
+| `gc{motion}` | comment region |
+| `ys{motion}{char}` | add surround |
+| `cs{old}{new}` | change surround |
+| `ds{char}` | delete surround |
+| `%` | jump to matching delimiter |
 
-### Day 4: Advanced
-1. Learn Magit: `SPC g s`
-2. Try Org-mode code blocks
-3. Set up daily workflow
-4. Customize as needed
+### Magit (inside magit status buffer)
 
----
+| Key | Action |
+|-----|--------|
+| `s` | stage hunk/file |
+| `S` | stage all |
+| `u` | unstage hunk/file |
+| `c c` | create commit |
+| `C-c C-c` | confirm commit message |
+| `C-c C-k` | cancel commit |
+| `P p` | push |
+| `F p` | pull |
+| `b c` | create branch |
+| `TAB` | expand/collapse diff |
+| `g` | refresh |
+| `q` | quit |
+| `$` | show git command log |
+| `?` | show all options |
 
-## 🔍 Troubleshooting
+## Formatters (auto-format on save)
 
-### Emacs Freezing?
-- Read [FREEZE-FIX.md](./FREEZE-FIX.md)
-- LSP disabled by default (manual: `SPC l e`)
-- Org-roam sync delayed 60 seconds
+| Language | Formatter |
+|----------|-----------|
+| Python | ruff |
+| C/C++ | clang-format |
+| JS/TS/HTML/CSS/JSON/Markdown | prettier |
+| Shell | shfmt |
+| Rust | rustfmt |
+| Go | gofmt |
 
-### Tree-sitter Not Working?
-- Read [TREE-SITTER-FIX.md](./TREE-SITTER-FIX.md)
-- Grammars auto-install on startup
-- Python: v0.20.4, C++: v0.20.3
+## Org Capture Templates
 
-### Conda Not Activating?
-- Read [CONDA-SETUP.md](./CONDA-SETUP.md)
-- Needs environment.yml in project root
-- Manual: `M-x conda-env-activate`
+| Key | Template |
+|-----|----------|
+| `t` | Todo → `~/org/inbox.org` |
+| `n` | Note → `~/org/notes.org` |
+| `j` | Journal → `~/org/journal.org` (datetree) |
 
-### Debugger Not Starting?
-- Read [DEBUGGER-SETUP.md](./DEBUGGER-SETUP.md)
-- Python: `pip install debugpy`
-- C++: `brew install llvm` (if lldb-vscode missing)
+Trigger with `SPC o c`, select template letter.
 
----
+## Debugging (DAP)
 
-## 📂 Project Structure
+DAP mode loads after lsp-mode. Use `M-x dap-debug` to start a debug session.
 
-```
-~/.emacs.d/
-├── init.el                      # Main config (loads everything)
-├── modules/                     # Feature modules
-│   ├── evil-config.el           # Vim bindings + keybindings
-│   ├── modern-languages.el      # Python/C++ config + tree-sitter
-│   ├── modern-completion.el     # Vertico/Consult/Corfu
-│   ├── modern-ui.el             # Theme and UI
-│   ├── debug-support.el         # DAP debugging (NEW!)
-│   └── ... (other modules)
-├── config/                      # Specific configs
-│   ├── org-config.el            # Org-mode setup
-│   └── markdown.el              # Markdown config
-├── templates/                   # Org-mode templates
-│   ├── notes/                   # Note templates
-│   ├── TEMPLATES-GUIDE.md       # Template documentation
-│   └── TAGS-REFERENCE.org       # Tag library
-└── Documentation (.md files)    # All guides (this README)
+## Theme
+
+**doom-one** (dark). Change in section 7:
+
+```elisp
+(load-theme 'doom-one t)  ; replace with doom-dracula, doom-gruvbox, etc.
 ```
 
----
+Available themes: `M-x load-theme TAB` to browse.
 
-## 🆚 vs Other IDEs
+## Troubleshooting
 
-| Feature | VS Code | PyCharm | Your Emacs |
-|---------|---------|---------|------------|
-| Startup Time | 3-5s | 10-15s | <2s ✅ |
-| Memory Usage | 500MB | 1GB | 200MB ✅ |
-| Debugging | ✅ | ✅ | ✅ |
-| Git Integration | Good | Good | Better (Magit) ✅ |
-| Extensibility | Extensions | Plugins | Elisp ✅ |
-| Keyboard First | No | No | Yes ✅ |
-| Executable Notes | ❌ | ❌ | ✅ Org-babel |
-| Cost | Free | $200/yr | Free ✅ |
+**LSP not starting**: Run `M-x lsp` manually. Check `*lsp-log*` buffer for errors.
 
----
+**gd shows "Visit tags table"**: LSP isn't connected. Verify with `M-x lsp-describe-session`.
 
-## 🎉 You're Ready!
+**Packages not installing**: Run `M-x package-refresh-contents`, then restart.
 
-Your Emacs is:
-- ✅ 100% complete IDE
-- ✅ Optimized for Python/C++
-- ✅ Production ready
-- ✅ Faster than alternatives
-- ✅ More powerful than VS Code
-- ✅ Free and open source
+**Icons broken**: Run `M-x nerd-icons-install-fonts`.
 
-**Start coding!** 🚀
-
----
-
-## 📧 Quick Help
-
-**Need help?**
-1. Check documentation above
-2. Use `SPC SPC` for M-x command palette
-3. Use `which-key` (shows keys after `SPC`)
-4. `C-h k` - describe key
-5. `C-h f` - describe function
-
-**Common issues?**
-- Check relevant .md file from index above
-- All troubleshooting is documented
-
----
-
-*Version: 1.2 Modernized*
-*Status: 100% Complete - Zero Deprecations*
-*Last Updated: 2025-12-28*
-*Latest: Migrated to general.el, Fixed all deprecated code, Modern keybinding system*
+**Tree-sitter grammars missing**: Run `M-x treesit-auto-install-all`.
