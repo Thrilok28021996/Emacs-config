@@ -1,7 +1,11 @@
 ;;; init.el --- Emacs 30.2 Configuration -*- lexical-binding: t; -*-
+;;
+;; Built-ins: use-package, eglot, flymake, project, electric-pair,
+;;            treesit, which-key, pixel-scroll-precision, repeat,
+;;            savehist, recentf, save-place, winner, sqlite.
 
 ;;; ─────────────────────────────────────────────
-;;; 0. FRAME — start fullscreen
+;;; 0. FRAME
 ;;; ─────────────────────────────────────────────
 
 (add-to-list 'default-frame-alist '(fullscreen . fullboth))
@@ -12,28 +16,23 @@
 
 (require 'package)
 (setq package-archives
-      '(("melpa"        . "https://melpa.org/packages/")
-        ("melpa-stable" . "https://stable.melpa.org/packages/")
-        ("gnu"          . "https://elpa.gnu.org/packages/")
-        ("nongnu"       . "https://elpa.nongnu.org/nongnu/")))
-
+      '(("melpa" . "https://melpa.org/packages/")
+        ("gnu"   . "https://elpa.gnu.org/packages/")
+        ("nongnu". "https://elpa.nongnu.org/nongnu/")))
 (package-initialize)
+(unless package-archive-contents (package-refresh-contents))
 
-(unless package-archive-contents
-  (package-refresh-contents))
-
-(unless (package-installed-p 'use-package)
-  (package-install 'use-package))
 (require 'use-package)
 (setq use-package-always-ensure t
       use-package-verbose nil)
 
 ;;; ─────────────────────────────────────────────
-;;; 2. PATH INHERITANCE (macOS — must run early)
+;;; 2. PATH (macOS)
 ;;; ─────────────────────────────────────────────
 
 (use-package exec-path-from-shell
   :if (memq window-system '(mac ns x))
+  :defer 1
   :config
   (dolist (var '("PATH" "MANPATH" "PYTHONPATH" "CONDA_PREFIX"
                  "CONDA_DEFAULT_ENV" "GOPATH" "CARGO_HOME"))
@@ -41,21 +40,18 @@
   (exec-path-from-shell-initialize))
 
 ;;; ─────────────────────────────────────────────
-;;; 3. BASIC UI
+;;; 3. UI
 ;;; ─────────────────────────────────────────────
 
 (setq inhibit-startup-message t
       inhibit-startup-echo-area-message t)
 
-(menu-bar-mode   -1)
-(tool-bar-mode   -1)
-(scroll-bar-mode -1)
-
-;; Relative line numbers
-(global-display-line-numbers-mode 1)
 (setq display-line-numbers-type 'relative)
+(add-hook 'prog-mode-hook #'display-line-numbers-mode)
+(add-hook 'text-mode-hook #'display-line-numbers-mode)
 
-;; Font
+(pixel-scroll-precision-mode 1)   ; built-in Emacs 29+
+
 (defun my/set-font ()
   (cond
    ((find-font (font-spec :name "Victor Mono"))
@@ -69,7 +65,7 @@
   (my/set-font))
 
 ;;; ─────────────────────────────────────────────
-;;; 4. EVIL MODE + GENERAL (leader key)
+;;; 4. EVIL + LEADER
 ;;; ─────────────────────────────────────────────
 
 (use-package undo-fu)
@@ -78,28 +74,50 @@
   :init
   (setq evil-want-integration t
         evil-want-keybinding nil
-        evil-want-C-u-scroll t
-        evil-undo-system 'undo-fu
-        evil-search-module 'evil-search)
+        evil-want-C-u-scroll  t
+        evil-undo-system      'undo-fu
+        evil-search-module    'evil-search)
   :config
-  (evil-mode 1))
+  (evil-mode 1)
+
+  (evil-define-key 'normal 'global
+    (kbd "j")   #'evil-next-visual-line
+    (kbd "k")   #'evil-previous-visual-line
+    (kbd "gj")  #'evil-next-line
+    (kbd "gk")  #'evil-previous-line
+    (kbd "Q")   #'evil-execute-last-recorded-macro
+    (kbd "U")   #'evil-redo
+    (kbd "Y")   (kbd "y$")
+    (kbd "g h") #'evil-beginning-of-line
+    (kbd "g l") #'evil-end-of-line
+    ;; search + center
+    (kbd "n")   (lambda () (interactive) (evil-ex-search-next)            (evil-scroll-line-to-center nil))
+    (kbd "N")   (lambda () (interactive) (evil-ex-search-previous)        (evil-scroll-line-to-center nil))
+    (kbd "*")   (lambda () (interactive) (evil-ex-search-word-forward)    (evil-scroll-line-to-center nil))
+    (kbd "#")   (lambda () (interactive) (evil-ex-search-word-backward)   (evil-scroll-line-to-center nil))
+    ;; xref/eldoc — work globally (elisp, eglot, etags)
+    (kbd "gd") #'xref-find-definitions
+    (kbd "gD") #'xref-find-definitions-other-window
+    (kbd "gr") #'xref-find-references
+    (kbd "K")  #'eldoc-doc-buffer)
+
+  (evil-define-key 'visual 'global
+    (kbd ">") (lambda () (interactive) (evil-shift-right (region-beginning) (region-end)) (evil-visual-restore))
+    (kbd "<") (lambda () (interactive) (evil-shift-left  (region-beginning) (region-end)) (evil-visual-restore))))
 
 (use-package evil-collection
   :after evil
+  :custom
+  (evil-collection-mode-list '(magit dired org helpful xref))
   :config
-  (evil-collection-init))
+  (evil-collection-init)
+  (with-eval-after-load 'dired
+    (evil-define-key 'normal dired-mode-map
+      (kbd "R") #'dired-do-rename)))
 
-(use-package evil-commentary
-  :after evil
-  :config (evil-commentary-mode 1))
-
-(use-package evil-surround
-  :after evil
-  :config (global-evil-surround-mode 1))
-
-(use-package evil-matchit
-  :after evil
-  :config (global-evil-matchit-mode 1))
+(use-package evil-commentary :after evil :config (evil-commentary-mode 1))
+(use-package evil-surround   :after evil :config (global-evil-surround-mode 1))
+(use-package evil-matchit    :after evil :config (global-evil-matchit-mode 1))
 
 (use-package general
   :after evil
@@ -113,138 +131,125 @@
     :global-prefix "C-SPC")
 
   (my/leader-def
-    ;; ── Top-level ────────────────────────────
-    "SPC" '(execute-extended-command             :wk "M-x")
-    "TAB" '(evil-switch-to-windows-last-buffer   :wk "last buffer")
-    ";"   '(evil-commentary-line                 :wk "comment line")
+    "SPC" '(execute-extended-command           :wk "M-x")
+    "TAB" '(evil-switch-to-windows-last-buffer :wk "last buffer")
+    ";"   '(evil-commentary-line               :wk "comment line")
 
-    ;; ── Files ────────────────────────────────
     "f f" '(find-file           :wk "find file")
     "f r" '(consult-recent-file :wk "recent files")
 
-    ;; ── Buffers ──────────────────────────────
     "b b" '(consult-buffer      :wk "switch buffer")
     "b k" '(kill-current-buffer :wk "kill buffer")
 
-    ;; ── Windows ──────────────────────────────
-    "w h" '(evil-window-left        :wk "left")
-    "w j" '(evil-window-down        :wk "down")
-    "w k" '(evil-window-up          :wk "up")
-    "w l" '(evil-window-right       :wk "right")
-    "w s" '(split-window-below      :wk "split horiz")
-    "w v" '(split-window-right      :wk "split vert")
+    "w h" '(evil-window-left        :wk "←")
+    "w j" '(evil-window-down        :wk "↓")
+    "w k" '(evil-window-up          :wk "↑")
+    "w l" '(evil-window-right       :wk "→")
+    "w s" '(split-window-below      :wk "split h")
+    "w v" '(split-window-right      :wk "split v")
     "w d" '(delete-window           :wk "close")
     "w o" '(delete-other-windows    :wk "only")
     "w =" '(balance-windows         :wk "balance")
+    "w u" '(winner-undo             :wk "undo layout")
     "w f" '(toggle-frame-fullscreen :wk "fullscreen")
 
-    ;; ── Search ───────────────────────────────
     "s s" '(consult-line    :wk "search buffer")
     "s r" '(consult-ripgrep :wk "search project")
     "s i" '(consult-imenu   :wk "jump to symbol")
 
-    ;; ── Code ─────────────────────────────────
-    "c f" '(apheleia-format-buffer          :wk "format buffer")
+    "c f" '(apheleia-format-buffer          :wk "format")
     "c p" '(my/python-run-current-file      :wk "run python")
-    "c c" '(my/cpp-compile-run-current-file :wk "compile & run C++")
+    "c c" '(my/cpp-compile-run-current-file :wk "compile c++")
 
-    ;; ── LSP ──────────────────────────────────
-    "l r" '(lsp-rename              :wk "rename")
-    "l d" '(lsp-find-references     :wk "references")
-    "l a" '(lsp-execute-code-action :wk "code action")
-    "l i" '(lsp-find-implementation :wk "implementation")
+    "l r" '(eglot-rename              :wk "rename")
+    "l a" '(eglot-code-actions        :wk "code action")
+    "l i" '(eglot-find-implementation :wk "implementation")
+    "l d" '(xref-find-references      :wk "references")
+    "l f" '(eglot-format-buffer       :wk "format")
 
-    ;; ── Errors ───────────────────────────────
-    "e l" '(flycheck-list-errors :wk "list errors")
+    "e l" '(consult-flymake         :wk "list errors")
+    "e n" '(flymake-goto-next-error :wk "next error")
+    "e p" '(flymake-goto-prev-error :wk "prev error")
 
-    ;; ── Git ──────────────────────────────────
-    "g g" '(magit-status       :wk "magit")
-    "g c" '(magit-commit       :wk "commit")
-    "g p" '(magit-push         :wk "push")
-    "g l" '(magit-log-current  :wk "log")
-    "g d" '(magit-diff-dwim    :wk "diff")
-    "g f" '(magit-fetch        :wk "fetch")
-    "g b" '(magit-branch       :wk "branch")
-    "g s" '(magit-stage        :wk "stage")
-    "g u" '(magit-unstage      :wk "unstage")
-    "g a" '(magit-blame        :wk "blame")
-    "g r" '(magit-rebase       :wk "rebase")
-    "g m" '(magit-merge        :wk "merge")
-    "g t" '(magit-stash        :wk "stash")
-    "g i" '(magit-pull         :wk "pull")
+    "g g" '(magit-status      :wk "magit")
+    "g c" '(magit-commit      :wk "commit")
+    "g p" '(magit-push        :wk "push")
+    "g i" '(magit-pull        :wk "pull")
+    "g f" '(magit-fetch       :wk "fetch")
+    "g l" '(magit-log-current :wk "log")
+    "g d" '(magit-diff-dwim   :wk "diff")
+    "g b" '(magit-branch      :wk "branch")
+    "g a" '(magit-blame       :wk "blame")
+    "g t" '(magit-stash       :wk "stash")
 
-    ;; ── Project ──────────────────────────────
-    "p p" '(projectile-switch-project :wk "switch project")
-    "p f" '(projectile-find-file      :wk "find file")
+    "p p" '(project-switch-project   :wk "switch")
+    "p f" '(project-find-file        :wk "find file")
+    "p b" '(project-switch-to-buffer :wk "buffer")
+    "p k" '(project-kill-buffers     :wk "kill")
+    "p s" '(project-eshell           :wk "eshell")
+    "p c" '(project-compile          :wk "compile")
 
-    ;; ── Org / Notes ──────────────────────────
-    "o a" '(org-agenda              :wk "agenda")
-    "o c" '(org-capture             :wk "capture")
-    "o r" '(org-roam-node-find      :wk "roam find")
-    "o i" '(org-roam-node-insert    :wk "roam insert")
+    "o a" '(org-agenda           :wk "agenda")
+    "o c" '(org-capture          :wk "capture")
+    "o r" '(org-roam-node-find   :wk "roam find")
+    "o i" '(org-roam-node-insert :wk "roam insert")
     "o s" '(consult-org-roam-search :wk "roam search")
-    "o d" '(deft                    :wk "deft")
-    "o u" '(org-roam-ui-open        :wk "roam graph")
+    "o d" '(deft                 :wk "deft")
+    "o u" '(org-roam-ui-open     :wk "roam graph")
+    "o l" '(org-cliplink         :wk "paste url")
+    "o t" '(org-transclusion-mode :wk "transclusion")
+    "o y" '(org-download-yank    :wk "paste image")
 
-    ;; ── Conda ────────────────────────────────
+    "n i" '((lambda () (interactive) (org-capture nil "i")) :wk "inbox")
+    "n j" '((lambda () (interactive) (org-capture nil "j")) :wk "journal")
+    "n v" '((lambda () (interactive) (org-capture nil "v")) :wk "review")
+    "n r" '((lambda () (interactive) (org-capture nil "r")) :wk "reading")
+    "n w" '((lambda () (interactive) (org-capture nil "w")) :wk "work task")
+    "n W" '((lambda () (interactive) (org-capture nil "W")) :wk "work project")
+    "n t" '((lambda () (interactive) (org-capture nil "t")) :wk "personal task")
+    "n p" '((lambda () (interactive) (org-capture nil "p")) :wk "personal project")
+    "n k" '(my/roam-capture-concept  :wk "concept node")
+    "n q" '(my/roam-capture-question :wk "question node")
+    "n a" '(my/learn-review          :wk "review agenda")
+    "n d" '(my/learn-reviewed        :wk "mark reviewed")
+    "n s" '(my/learn-search          :wk "search")
+
+    "a c" '(gptel         :wk "ai chat")
+    "a s" '(gptel-send    :wk "send")
+    "a r" '(gptel-rewrite :wk "rewrite")
+    "a m" '(gptel-menu    :wk "menu")
+
     "m a" '(conda-env-activate   :wk "activate env")
     "m d" '(conda-env-deactivate :wk "deactivate env")
 
-    ;; ── Jump ─────────────────────────────────
-    "j j" '(avy-goto-char-2 :wk "jump to char")
+    "j j" '(avy-goto-char-2 :wk "jump")
 
-    ;; ── Help ─────────────────────────────────
     "h k" '(helpful-key      :wk "key")
     "h f" '(helpful-callable :wk "function")
     "h v" '(helpful-variable :wk "variable")
     "h ." '(helpful-at-point :wk "at point")
 
-    ;; ── Quit ─────────────────────────────────
     "q q" '(save-buffers-kill-terminal :wk "quit")
     "q r" '(restart-emacs              :wk "restart"))
 
-  ;; ── Unbound navigation: ]h/[h hunks, ]e/[e errors ──
   (general-define-key
     :states '(normal visual)
-    "]h" '(diff-hl-next-hunk     :wk "next hunk")
-    "[h" '(diff-hl-previous-hunk :wk "prev hunk")
-    "]e" '(flycheck-next-error   :wk "next error")
-    "[e" '(flycheck-previous-error :wk "prev error")))
+    "]h" '(diff-hl-next-hunk      :wk "next hunk")
+    "[h" '(diff-hl-previous-hunk  :wk "prev hunk")
+    "]e" '(flymake-goto-next-error :wk "next error")
+    "[e" '(flymake-goto-prev-error :wk "prev error")))
 
-;;; ─────────────────────────────────────────────
-;;; 5. VIM MOVEMENT EXTRAS
-;;; ─────────────────────────────────────────────
-
-(with-eval-after-load 'evil
-  ;; j/k by visual line (important for wrapped org/markdown)
-  (evil-define-key 'normal 'global
-    (kbd "j") 'evil-next-visual-line
-    (kbd "k") 'evil-previous-visual-line
-    (kbd "gj") 'evil-next-line
-    (kbd "gk") 'evil-previous-line
-    (kbd "Q") 'evil-execute-last-recorded-macro
-    (kbd "U") 'evil-redo
-    (kbd "Y") (kbd "y$")
-    (kbd "g h") 'evil-beginning-of-line
-    (kbd "g l") 'evil-end-of-line
-    ;; Center after search jump
-    (kbd "n")  (lambda () (interactive) (evil-ex-search-next)     (evil-scroll-line-to-center nil))
-    (kbd "N")  (lambda () (interactive) (evil-ex-search-previous) (evil-scroll-line-to-center nil))
-    (kbd "*")  (lambda () (interactive) (evil-ex-search-word-forward)  (evil-scroll-line-to-center nil))
-    (kbd "#")  (lambda () (interactive) (evil-ex-search-word-backward) (evil-scroll-line-to-center nil)))
-
-  ;; Keep selection after indent
-  (evil-define-key 'visual 'global
-    (kbd ">") (lambda () (interactive) (evil-shift-right (region-beginning) (region-end)) (evil-visual-restore))
-    (kbd "<") (lambda () (interactive) (evil-shift-left  (region-beginning) (region-end)) (evil-visual-restore))))
-
+;; which-key — built-in since Emacs 30
 (use-package which-key
-  :config
-  (which-key-mode)
-  (setq which-key-idle-delay 0.3))
+  :ensure nil
+  :custom (which-key-idle-delay 0.3)
+  :config (which-key-mode 1))
+
+;; repeat-mode — built-in, repeat window/error navigation without prefix
+(repeat-mode 1)
 
 ;;; ─────────────────────────────────────────────
-;;; 6. COMPLETION (vertico / orderless / consult / marginalia)
+;;; 5. COMPLETION (vertico + corfu)
 ;;; ─────────────────────────────────────────────
 
 (use-package vertico
@@ -258,19 +263,40 @@
   (completion-styles '(orderless basic))
   (completion-category-overrides '((file (styles basic partial-completion)))))
 
-(use-package marginalia
-  :init (marginalia-mode 1))
+(use-package marginalia :init (marginalia-mode 1))
 
 (use-package consult
-  :bind (("C-s" . consult-line))
-  :custom
-  (consult-preview-key "M-.")
+  :bind ("C-s" . consult-line)
+  :custom (consult-preview-key "M-.")
   :config
   (setq xref-show-xrefs-function       #'consult-xref
         xref-show-definitions-function #'consult-xref))
 
+(use-package corfu
+  :init (global-corfu-mode)
+  :custom
+  (corfu-cycle t)
+  (corfu-auto t)
+  (corfu-auto-delay 0.15)
+  (corfu-auto-prefix 2)
+  (corfu-quit-no-match 'separator)
+  (corfu-preview-current nil)
+  :config
+  (corfu-popupinfo-mode 1)
+  (setq corfu-popupinfo-delay '(0.5 . 0.2)))
+
+(use-package cape
+  :init
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-keyword)
+  :config
+  (add-hook 'emacs-lisp-mode-hook
+            (lambda ()
+              (add-to-list 'completion-at-point-functions #'cape-elisp-symbol))))
+
 ;;; ─────────────────────────────────────────────
-;;; 7. THEME & MODELINE
+;;; 6. THEME & MODELINE
 ;;; ─────────────────────────────────────────────
 
 (use-package doom-themes
@@ -288,131 +314,118 @@
   (doom-modeline-icon t)
   (doom-modeline-major-mode-icon t))
 
-(use-package nerd-icons)
+(use-package nerd-icons :defer t)
 
 ;;; ─────────────────────────────────────────────
-;;; 8. EDITING ESSENTIALS
+;;; 7. EDITING
 ;;; ─────────────────────────────────────────────
 
-(use-package smartparens
-  :hook (prog-mode . smartparens-mode)
-  :config
-  (require 'smartparens-config))
+(electric-pair-mode 1)
+(setq electric-pair-inhibit-predicate #'electric-pair-conservative-inhibit)
 
-(use-package rainbow-delimiters
-  :hook (prog-mode . rainbow-delimiters-mode))
+(add-hook 'prog-mode-hook #'subword-mode)
 
-(use-package company
-  :hook (prog-mode . company-mode)
-  :custom
-  (company-idle-delay 0.2)
-  (company-minimum-prefix-length 2)
-  (company-tooltip-align-annotations t))
-
-(use-package flycheck
-  :hook (prog-mode . flycheck-mode))
+(use-package rainbow-delimiters :hook (prog-mode . rainbow-delimiters-mode))
 
 (use-package yasnippet
-  :config (yas-global-mode 1))
+  :hook (prog-mode . yas-minor-mode)
+  :config (yas-reload-all))
 (use-package yasnippet-snippets :after yasnippet)
 
-(use-package ws-butler
-  :hook (prog-mode . ws-butler-mode))
+(use-package ws-butler :hook (prog-mode . ws-butler-mode))
 
 (use-package highlight-indent-guides
   :hook (prog-mode . highlight-indent-guides-mode)
   :custom
   (highlight-indent-guides-method 'character)
-  (highlight-indent-guides-character ?\│)
+  (highlight-indent-guides-character ?|)
   (highlight-indent-guides-responsive 'top))
 
 ;;; ─────────────────────────────────────────────
-;;; 9. LSP
+;;; 8. LSP — eglot (built-in)
 ;;; ─────────────────────────────────────────────
 
-(use-package lsp-mode
-  :commands (lsp lsp-deferred)
-  :hook ((c++-mode . lsp-deferred)
-         (c-mode   . lsp-deferred)
-         (lsp-mode . lsp-enable-which-key-integration))
+(use-package eglot
+  :ensure nil
+  :hook ((python-mode    . eglot-ensure)
+         (python-ts-mode . eglot-ensure)
+         (c-mode         . eglot-ensure)
+         (c++-mode       . eglot-ensure)
+         (c-ts-mode      . eglot-ensure)
+         (c++-ts-mode    . eglot-ensure))
   :custom
-  (lsp-idle-delay 0.5)
-  (lsp-enable-symbol-highlighting t)
-  (lsp-signature-auto-activate t)
-  (lsp-prefer-flymake nil)
-  (lsp-keymap-prefix "C-c l")
+  (eglot-events-buffer-size 0)
+  (eglot-autoshutdown t)
+  (eglot-sync-connect 0)
+  (eglot-extend-to-xref t)
   :config
-  ;; Evil gd/gr/K → LSP (per-buffer, avoids keymap priority issues)
-  (add-hook 'lsp-mode-hook
+  (add-hook 'eglot-managed-mode-hook
             (lambda ()
-              (evil-local-set-key 'normal (kbd "gd") #'lsp-find-definition)
-              (evil-local-set-key 'normal (kbd "gD") #'lsp-find-declaration)
-              (evil-local-set-key 'normal (kbd "gr") #'lsp-find-references)
-              (evil-local-set-key 'normal (kbd "gi") #'lsp-find-implementation)
-              (evil-local-set-key 'normal (kbd "K")  #'lsp-describe-thing-at-point))))
-
-(use-package lsp-pyright
-  :hook (python-mode . (lambda ()
-                         (require 'lsp-pyright)
-                         (lsp-deferred))))
-
-(use-package lsp-ui
-  :after lsp-mode
-  :commands lsp-ui-mode
-  :custom
-  (lsp-ui-doc-enable t)
-  (lsp-ui-doc-position 'at-point)
-  (lsp-ui-sideline-enable t)
-  (lsp-ui-peek-enable t))
+              (evil-local-set-key 'normal (kbd "gi") #'eglot-find-implementation))))
 
 ;;; ─────────────────────────────────────────────
-;;; 10. TREE-SITTER (built-in treesit, Emacs 30)
+;;; 9. FLYMAKE (built-in)
+;;; ─────────────────────────────────────────────
+
+(use-package flymake
+  :ensure nil
+  :hook (prog-mode . flymake-mode)
+  :custom (flymake-fringe-indicator-position 'right-fringe)
+  :config
+  ;; byte-compile checker fires on save — too noisy for init.el editing
+  (add-hook 'emacs-lisp-mode-hook
+            (lambda ()
+              (remove-hook 'flymake-diagnostic-functions
+                           #'elisp-flymake-byte-compile t))))
+
+;;; ─────────────────────────────────────────────
+;;; 10. TREE-SITTER (built-in Emacs 29+)
 ;;; ─────────────────────────────────────────────
 
 (use-package treesit-auto
+  :custom (treesit-auto-install 'prompt)
   :config
-  (setq treesit-auto-install 'prompt)
   (treesit-auto-add-to-auto-mode-alist 'all)
   (global-treesit-auto-mode))
 
 ;;; ─────────────────────────────────────────────
-;;; 11. IDE TOOLS
+;;; 11. PROJECT.EL (built-in)
 ;;; ─────────────────────────────────────────────
 
-(use-package dap-mode
-  :after lsp-mode
-  :config
-  (dap-auto-configure-mode 1))
+(use-package project
+  :ensure nil
+  :custom
+  (project-switch-commands
+   '((project-find-file    "Find file"      ?f)
+     (project-find-regexp  "Find regexp"    ?g)
+     (consult-ripgrep      "Ripgrep"        ?s)
+     (project-dired        "Dired"          ?d)
+     (project-eshell       "Eshell"         ?e)
+     (magit-project-status "Magit"          ?m))))
 
-(use-package avy
-  :commands (avy-goto-char-2 avy-goto-char avy-goto-line))
+;;; ─────────────────────────────────────────────
+;;; 12. IDE TOOLS
+;;; ─────────────────────────────────────────────
 
-(use-package rg
-  :commands (rg rg-project rg-dwim))
-
-(use-package projectile
-  :config
-  (projectile-mode +1)
-  (setq projectile-project-search-path '("~/projects/" "~/code/")
-        projectile-completion-system 'default))
+(use-package avy :commands (avy-goto-char-2 avy-goto-char avy-goto-line))
+(use-package rg  :commands (rg rg-project rg-dwim))
 
 (use-package magit
   :commands (magit-status magit-commit magit-push magit-pull magit-fetch
              magit-branch magit-log-current magit-diff-dwim magit-stage
-             magit-unstage magit-blame magit-rebase magit-merge magit-stash)
-  :config
-  (setq magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1
-        magit-save-repository-buffers 'dontask
-        magit-diff-refine-hunk 'all))
+             magit-unstage magit-blame magit-rebase magit-merge magit-stash
+             magit-project-status)
+  :custom
+  (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
+  (magit-save-repository-buffers 'dontask)
+  (magit-diff-refine-hunk 'all))
 
 (use-package diff-hl
-  :hook ((after-init . global-diff-hl-mode)
+  :hook ((after-init         . global-diff-hl-mode)
          (magit-post-refresh . diff-hl-magit-post-refresh))
-  :config
-  (diff-hl-flydiff-mode 1))
+  :config (diff-hl-flydiff-mode 1))
 
-(use-package restart-emacs
-  :commands restart-emacs)
+(use-package restart-emacs :commands restart-emacs)
 
 (use-package helpful
   :commands (helpful-callable helpful-variable helpful-key helpful-at-point)
@@ -422,29 +435,89 @@
   ([remap describe-key]      . helpful-key))
 
 ;;; ─────────────────────────────────────────────
-;;; 12. ORG MODE
+;;; 13. ORG MODE
 ;;; ─────────────────────────────────────────────
+
+(defvar my/garden-dir   (expand-file-name "~/Documents/garden/"))
+(defvar my/work-dir     (expand-file-name "~/Documents/garden/work/"))
+(defvar my/personal-dir (expand-file-name "~/Documents/garden/personal/"))
+(defvar my/work-projects-dir     (expand-file-name "~/Documents/garden/work/projects/"))
+(defvar my/personal-projects-dir (expand-file-name "~/Documents/garden/personal/projects/"))
 
 (use-package org
   :ensure nil
   :hook (org-mode . visual-line-mode)
   :custom
-  (org-log-done 'time)
-  (org-startup-indented t)
+  (org-directory            "~/Documents/garden/")
+  (org-log-done             'time)
+  (org-startup-indented     t)
   (org-hide-emphasis-markers t)
-  (org-agenda-files '("~/org/"))
+  (org-return-follows-link  t)
+  (org-agenda-files         (append
+                             (list (concat my/garden-dir   "inbox.org")
+                                   (concat my/garden-dir   "journal.org")
+                                   (concat my/garden-dir   "reading.org")
+                                   (concat my/garden-dir   "reviews.org")
+                                   (concat my/work-dir     "tasks.org")
+                                   (concat my/work-dir     "projects.org")
+                                   (concat my/personal-dir "tasks.org")
+                                   (concat my/personal-dir "projects.org"))
+                             (directory-files my/work-projects-dir t "\\.org$")
+                             (directory-files my/personal-projects-dir t "\\.org$")))
+  (org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
+  (org-confirm-babel-evaluate nil)
+  (org-src-preserve-indentation t)
   :config
   (require 'org-agenda)
   (require 'org-capture)
   (require 'org-habit)
+  (require 'org-id)
+
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((python . t) (shell . t) (emacs-lisp . t)))
+
+  (setq org-refile-targets         '((org-agenda-files :maxlevel . 3))
+        org-refile-use-outline-path 'file
+        org-outline-path-complete-in-steps nil)
+
+  (setq org-todo-keywords
+        '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
+          (sequence "NEW(N)" "LEARNING(l)" "REVIEW(r)" "APPLY(a)" "|" "MASTERED(m)" "DROPPED(x)")))
+
+  (setq org-todo-keyword-faces
+        '(("NEW"      . (:foreground "#ff6c6b" :weight bold))
+          ("LEARNING" . (:foreground "#ecbe7b" :weight bold))
+          ("REVIEW"   . (:foreground "#51afef" :weight bold))
+          ("APPLY"    . (:foreground "#c678dd" :weight bold))
+          ("MASTERED" . (:foreground "#98be65" :weight bold))
+          ("DROPPED"  . (:foreground "#5B6268" :weight bold))))
 
   (setq org-capture-templates
-        '(("t" "Todo"    entry (file+headline "~/org/inbox.org" "Tasks")
+        `(;; Shared
+          ("i" "Inbox"   entry (file+headline ,(concat my/garden-dir "inbox.org") "Tasks")
            "* TODO %?\n  %U\n  %a")
-          ("n" "Note"    entry (file+headline "~/org/notes.org" "Notes")
-           "* %?\n  %U")
-          ("j" "Journal" entry (file+datetree "~/org/journal.org")
-           "* %?\n  Entered on %U"))))
+          ("j" "Journal" entry (file+datetree ,(concat my/garden-dir "journal.org"))
+           "* %U\n** Worked On\n%?\n** Notes\n\n** Reading Insight\n\n** Momentum: /10\n"
+           :empty-lines 1)
+          ("v" "Review"  entry (file+headline ,(concat my/garden-dir "reviews.org") "NEW Items")
+           "* REVIEW %^{What to review}\nSCHEDULED: %^t\n:PROPERTIES:\n:REVIEW_COUNT: 0\n:CREATED: %U\n:END:\n%?"
+           :empty-lines 1)
+          ("r" "Reading" entry (file+headline ,(concat my/garden-dir "reading.org") "Reading")
+           "* %^{Book/Resource}\n:PROPERTIES:\n:START_FROM: %^{Start from page}\n:CREATED: %U\n:END:\n** Insights\n%?"
+           :empty-lines 1)
+          ;; Work
+          ("w" "Work Task"    entry (file+headline ,(concat my/work-dir "tasks.org") "Tasks")
+           "* TODO %?\n  %U\n  %a" :empty-lines 1)
+          ("W" "Work Project" entry (file+headline ,(concat my/work-dir "projects.org") "Projects")
+           "* NEW %^{Project} %^g\n:PROPERTIES:\n:CREATED: %U\n:END:\n\n** Goal\n%?\n\n** Tasks\n- [ ] \n\n** Outcome\n"
+           :empty-lines 1)
+          ;; Personal
+          ("t" "Personal Task"    entry (file+headline ,(concat my/personal-dir "tasks.org") "Tasks")
+           "* TODO %?\n  %U\n  %a" :empty-lines 1)
+          ("p" "Personal Project" entry (file+headline ,(concat my/personal-dir "projects.org") "Projects")
+           "* NEW %^{Project} %^g\n:PROPERTIES:\n:CREATED: %U\n:END:\n\n** Goal\n%?\n\n** Tasks\n- [ ] \n\n** Outcome\n"
+           :empty-lines 1))))
 
 (use-package org-super-agenda
   :after org
@@ -453,63 +526,115 @@
 (use-package org-roam
   :after org
   :custom
-  (org-roam-directory (expand-file-name "~/org-roam/"))
+  (org-roam-directory          (expand-file-name "~/Documents/garden/"))
   (org-roam-completion-everywhere t)
+  (org-roam-database-connector 'sqlite-builtin)   ; Emacs 30 native sqlite
+  (org-roam-capture-templates
+   '(("d" "default" plain "%?"
+      :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
+                         "#+TITLE: ${title}\n#+CREATED: %U\n")
+      :unnarrowed t)
+     ("c" "concept" plain
+      "#+FILETAGS: :concept:\n\n* What\n%?\n\n* Why\n\n* When\n\n* Code\n#+begin_src python\n\n#+end_src\n\n* Links\n"
+      :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
+                         "#+TITLE: ${title}\n#+CREATED: %U\n")
+      :unnarrowed t)
+     ("q" "question" plain
+      "#+FILETAGS: :question:\n\n* Question\n%?\n\n* Answer\n\n* Related Concepts\n"
+      :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
+                         "#+TITLE: ${title}\n#+CREATED: %U\n")
+      :unnarrowed t)))
   :config
-  (org-roam-setup))
+  (org-roam-db-autosync-mode)
+
+  (defun my/roam-capture-concept ()
+    (interactive)
+    (org-roam-capture- :node (org-roam-node-create
+                              :title (read-string "Concept: "))
+                       :templates (list (nth 1 org-roam-capture-templates))))
+
+  (defun my/roam-capture-question ()
+    (interactive)
+    (org-roam-capture- :node (org-roam-node-create
+                              :title (read-string "Question topic: "))
+                       :templates (list (nth 2 org-roam-capture-templates)))))
 
 (use-package consult-org-roam
   :after org-roam
-  :config (consult-org-roam-mode 1)
-  :custom
-  (consult-org-roam-grep-func #'consult-ripgrep))
+  :custom (consult-org-roam-grep-func #'consult-ripgrep)
+  :config (consult-org-roam-mode 1))
 
 (use-package org-roam-ui
   :after org-roam
+  :defer t
   :custom
-  (org-roam-ui-sync-theme t)
-  (org-roam-ui-follow t)
+  (org-roam-ui-sync-theme    t)
+  (org-roam-ui-follow        t)
   (org-roam-ui-update-on-save t)
   (org-roam-ui-open-on-start nil))
 
 (use-package org-modern
-  :hook ((org-mode . org-modern-mode)
-         (org-agenda-finalize . org-modern-agenda)))
+  :hook ((org-mode            . org-modern-mode)
+         (org-agenda-finalize . org-modern-agenda))
+  :custom
+  (org-modern-star '("◉" "○" "◈" "◇" "✦"))
+  (org-modern-hide-stars nil))
 
 (use-package org-pomodoro
   :after org
   :custom (org-pomodoro-length 25))
 
+(use-package org-appear
+  :hook (org-mode . org-appear-mode)
+  :custom
+  (org-appear-autolinks      t)
+  (org-appear-autosubmarkers t))
+
+(use-package org-download
+  :hook ((org-mode   . org-download-enable)
+         (dired-mode . org-download-enable))
+  :custom
+  (org-download-method    'directory)
+  (org-download-image-dir (expand-file-name "~/Documents/garden/images/"))
+  (org-download-heading-lvl nil)
+  (org-download-timestamp "%Y%m%d-%H%M%S_"))
+
+(use-package org-transclusion
+  :after org
+  :bind (:map org-mode-map
+         ("C-c t a" . org-transclusion-add)
+         ("C-c t t" . org-transclusion-mode)))
+
+(use-package org-cliplink
+  :after org
+  :bind (:map org-mode-map ("C-c l" . org-cliplink)))
+
 ;;; ─────────────────────────────────────────────
-;;; 13. MARKDOWN
+;;; 14. MARKDOWN
 ;;; ─────────────────────────────────────────────
 
 (use-package markdown-mode
   :mode ("\\.md\\'" "\\.markdown\\'")
   :custom (markdown-command "pandoc"))
 
-(use-package pandoc-mode
-  :hook (markdown-mode . pandoc-mode))
+(use-package pandoc-mode :hook (markdown-mode . pandoc-mode))
 
 (use-package deft
   :commands deft
   :custom
-  (deft-directory (expand-file-name "~/org-roam/"))
-  (deft-extensions '("org" "md" "txt"))
-  (deft-recursive t)
+  (deft-directory   (expand-file-name "~/Documents/garden/"))
+  (deft-extensions  '("org" "md" "txt"))
+  (deft-recursive   t)
   (deft-use-filename-as-title nil)
   (deft-use-filter-string-for-filename t)
   (deft-strip-summary-regexp
-   (concat "\\("
-           "[\n\t]"
+   (concat "\\(" "[\n\t]"
            "\\|^#\\+[[:alpha:]_]+:.*$"
            "\\|^:PROPERTIES:.*"
            "\\|^:END:.*"
-           "\\|^\\* "
-           "\\)"))
+           "\\|^\\* " "\\)"))
   :config
   (defun my/deft-new-note-via-roam ()
-    "Create a new org-roam node from Deft's filter string."
     (interactive)
     (let ((title (or (and (> (length deft-filter-regexp) 0)
                           (car deft-filter-regexp))
@@ -521,7 +646,7 @@
   (define-key deft-mode-map (kbd "C-c C-n") #'my/deft-new-note-via-roam))
 
 ;;; ─────────────────────────────────────────────
-;;; 14. WRITING MODE
+;;; 15. WRITING
 ;;; ─────────────────────────────────────────────
 
 (use-package olivetti
@@ -529,34 +654,28 @@
   :custom (olivetti-body-width 90))
 
 ;;; ─────────────────────────────────────────────
-;;; 15. PYTHON / CONDA
+;;; 16. PYTHON / CONDA
 ;;; ─────────────────────────────────────────────
 
 (use-package conda
   :custom
-  (conda-anaconda-home        (expand-file-name "~/miniconda3/"))
-  (conda-env-home-directory   (expand-file-name "~/miniconda3/"))
-  (conda-env-subdirectory     "envs")
-  :config
-  (conda-env-autoactivate-mode 1))
+  (conda-anaconda-home      (expand-file-name "~/miniconda3/"))
+  (conda-env-home-directory (expand-file-name "~/miniconda3/"))
+  (conda-env-subdirectory   "envs")
+  :config (conda-env-autoactivate-mode 1))
 
 ;;; ─────────────────────────────────────────────
-;;; 16. COMPILE / RUN HELPERS
+;;; 17. COMPILE / RUN
 ;;; ─────────────────────────────────────────────
 
 (defun my/python-run-current-file ()
-  "Run the current Python file."
   (interactive)
   (when (buffer-file-name)
-    (let ((python-exe (or (executable-find "python3")
-                          (executable-find "python")
-                          "python3")))
-      (compile (format "%s %s"
-                       python-exe
-                       (shell-quote-argument buffer-file-name))))))
+    (compile (format "%s %s"
+                     (or (executable-find "python3") "python3")
+                     (shell-quote-argument buffer-file-name)))))
 
 (defun my/cpp-compile-run-current-file ()
-  "Compile and run the current C++ file."
   (interactive)
   (when (buffer-file-name)
     (let* ((src (buffer-file-name))
@@ -567,7 +686,7 @@
                        (shell-quote-argument exe))))))
 
 ;;; ─────────────────────────────────────────────
-;;; 17. FORMATTERS (apheleia)
+;;; 18. FORMATTERS
 ;;; ─────────────────────────────────────────────
 
 (use-package apheleia
@@ -577,6 +696,7 @@
   (setf (alist-get 'python-ts-mode  apheleia-mode-alist) 'ruff)
   (setf (alist-get 'c-mode          apheleia-mode-alist) 'clang-format)
   (setf (alist-get 'c++-mode        apheleia-mode-alist) 'clang-format)
+  (setf (alist-get 'c-ts-mode       apheleia-mode-alist) 'clang-format)
   (setf (alist-get 'c++-ts-mode     apheleia-mode-alist) 'clang-format)
   (setf (alist-get 'js-mode         apheleia-mode-alist) 'prettier)
   (setf (alist-get 'js-ts-mode      apheleia-mode-alist) 'prettier)
@@ -592,51 +712,92 @@
   (setf (alist-get 'emacs-lisp-mode apheleia-mode-alist) nil))
 
 ;;; ─────────────────────────────────────────────
-;;; 18. PERSISTENCE
+;;; 19. PERSISTENCE & DEFAULTS (built-ins)
 ;;; ─────────────────────────────────────────────
 
-(setq auto-save-default t
-      auto-save-timeout 20
+(setq auto-save-default  t
+      auto-save-timeout  20
       auto-save-interval 200)
 
-(setq save-place-file (expand-file-name "saveplace" user-emacs-directory))
 (save-place-mode 1)
+(setq save-place-file (expand-file-name "saveplace" user-emacs-directory))
 
-(recentf-mode 1)
-(setq recentf-max-menu-items 50
-      recentf-max-saved-items 100)
+(use-package recentf
+  :ensure nil
+  :init (recentf-mode 1)
+  :custom
+  (recentf-max-menu-items 50)
+  (recentf-max-saved-items 100)
+  (recentf-exclude '("/elpa/" "/backups/" "/\\.git/" "/tmp/"
+                     "saveplace" "recentf" "history" "custom\\.el")))
 
 (savehist-mode 1)
-
-;;; ─────────────────────────────────────────────
-;;; 19. DEFAULTS
-;;; ─────────────────────────────────────────────
+(winner-mode 1)
 
 (setq-default indent-tabs-mode nil
               tab-width 4)
 
-(setq use-short-answers t
+(setq use-short-answers     t
       scroll-conservatively 101
-      scroll-margin 3)
+      scroll-margin         3)
 
-(setq backup-directory-alist
-      `(("." . ,(expand-file-name "backups/" user-emacs-directory)))
-      backup-by-copying t
-      version-control t
-      delete-old-versions t
-      kept-new-versions 6
-      kept-old-versions 2)
+(setq backup-directory-alist `(("." . ,(expand-file-name "backups/" user-emacs-directory)))
+      backup-by-copying    t
+      version-control      t
+      delete-old-versions  t
+      kept-new-versions    6
+      kept-old-versions    2)
 
-(column-number-mode 1)
 (show-paren-mode 1)
 (delete-selection-mode 1)
+(global-auto-revert-mode 1)
+(setq global-auto-revert-non-file-buffers t)
 
 ;;; ─────────────────────────────────────────────
-;;; 20. CUSTOM FILE (keep init.el clean)
+;;; 20. WORKFLOW FUNCTIONS
+;;; ─────────────────────────────────────────────
+
+(defun my/learn-review ()
+  (interactive)
+  (let ((org-agenda-files (list (concat my/garden-dir "reviews.org"))))
+    (org-agenda nil "a")))
+
+(defun my/learn-reviewed ()
+  (interactive)
+  (let* ((count (string-to-number (or (org-entry-get nil "REVIEW_COUNT") "0")))
+         (next  (1+ count))
+         (days  (or (nth count '(1 3 7 14 30 60)) 90)))
+    (org-entry-put nil "REVIEW_COUNT" (number-to-string next))
+    (org-schedule nil (format "+%dd" days))
+    (when (>= next 6) (org-todo "MASTERED"))
+    (message "Review %d done. Next in %d days." next days)))
+
+(defun my/learn-search ()
+  (interactive)
+  (consult-ripgrep my/garden-dir nil))
+
+;;; ─────────────────────────────────────────────
+;;; 21. AI ASSISTANT (gptel + LM Studio)
+;;; ─────────────────────────────────────────────
+
+(use-package gptel
+  :ensure nil
+  :vc (:url "https://github.com/karthink/gptel" :rev :newest)
+  :config
+  (setq gptel-backend
+        (gptel-make-openai "lmstudio"
+          :host     "localhost:1234"
+          :protocol "http"
+          :models   '(gemma-4-e4b)
+          :stream   t)
+        gptel-model        'gemma-4-e4b
+        gptel-default-mode 'org-mode))
+
+;;; ─────────────────────────────────────────────
+;;; 22. CUSTOM FILE
 ;;; ─────────────────────────────────────────────
 
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-(when (file-exists-p custom-file)
-  (load custom-file))
+(when (file-exists-p custom-file) (load custom-file))
 
 ;;; init.el ends here

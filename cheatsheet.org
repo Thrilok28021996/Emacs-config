@@ -1,0 +1,313 @@
+#+TITLE: Emacs Cheatsheet
+#+AUTHOR: Thrilok
+#+STARTUP: overview
+
+* File Operations
+** Open / Find Files
+| Key         | Action                              |
+|-------------+-------------------------------------|
+| SPC f f     | find file (browse filesystem)       |
+| SPC f r     | recent files                        |
+| SPC p f     | find file inside current project    |
+| C-x C-f     | find file (classic emacs)           |
+| SPC b b     | switch to open buffer               |
+
+** Save / Write
+| Key         | Action                              |
+|-------------+-------------------------------------|
+| :w (normal) | save file (evil)                    |
+| C-x C-s     | save file (classic)                 |
+| :wa         | save all open buffers               |
+| C-x C-w     | save as (write to new path)         |
+| :wq         | save and close buffer               |
+
+** Read / View
+| Key         | Action                              |
+|-------------+-------------------------------------|
+| SPC f f     | open any file to read               |
+| SPC s s     | search inside current buffer        |
+| SPC s r     | search across all project files     |
+| SPC s i     | jump to section/symbol in file      |
+| C-s         | isearch in buffer                   |
+
+** Edit Files
+| Key         | Action                              |
+|-------------+-------------------------------------|
+| i           | enter insert mode (start editing)   |
+| ESC         | back to normal mode (stop editing)  |
+| u           | undo                                |
+| U / C-r     | redo                                |
+| dd          | delete line                         |
+| yy          | copy line                           |
+| p           | paste                               |
+| ciw         | change inner word                   |
+| V           | select whole line (visual)          |
+| v           | character visual select             |
+| C-v         | block visual select                 |
+
+** Close / Kill
+| Key         | Action                              |
+|-------------+-------------------------------------|
+| SPC b k     | kill (close) current buffer         |
+| :q          | close window                        |
+| :q!         | close without saving                |
+| SPC w d     | close current window split          |
+| SPC p k     | kill all buffers in project         |
+
+** Dired (file manager)
+| Key         | Action                              |
+|-------------+-------------------------------------|
+| SPC p p → d | open project in dired               |
+| RET         | open file or enter directory        |
+| ^           | go up one directory                 |
+| d           | mark for deletion                   |
+| x           | execute deletions                   |
+| R           | rename file                         |
+| C           | copy file                           |
+| +           | create directory                    |
+| q           | quit dired                          |
+
+* Navigation
+** Basic Movement
+| Key   | Action                  |
+|-------+-------------------------|
+| h j k l | left / down / up / right (evil) |
+| w / b   | next / prev word        |
+| 0 / $   | line start / end        |
+| g h / g l | visual line start / end |
+| gg / G  | file start / end        |
+| C-d / C-u | half page down / up   |
+| { / }   | prev / next paragraph   |
+
+** Jump
+| Key       | Action                      |
+|-----------+-----------------------------|
+| SPC j j   | avy jump to char (2 chars)  |
+| gd        | go to definition            |
+| gD        | definition in other window  |
+| gr        | find references             |
+| C-o / C-i | jump back / forward         |
+
+** Search
+| Key       | Action                  |
+|-----------+-------------------------|
+| /         | search in buffer        |
+| n / N     | next / prev match       |
+| *         | search word under cursor|
+| SPC s s   | consult search buffer   |
+| SPC s r   | ripgrep project         |
+| SPC s i   | jump to symbol (imenu)  |
+
+* Files & Buffers
+| Key       | Action              |
+|-----------+---------------------|
+| SPC f f   | find file           |
+| SPC f r   | recent files        |
+| SPC b b   | switch buffer       |
+| SPC b k   | kill buffer         |
+| SPC TAB   | last buffer         |
+
+* Windows
+| Key       | Action              |
+|-----------+---------------------|
+| SPC w v   | split vertical      |
+| SPC w s   | split horizontal    |
+| SPC w h/j/k/l | move between windows |
+| SPC w d   | close window        |
+| SPC w o   | keep only this window |
+| SPC w =   | balance windows     |
+| SPC w u   | undo layout (winner)|
+| SPC w f   | fullscreen toggle   |
+
+* Editing
+| Key       | Action                    |
+|-----------+---------------------------|
+| i / a     | insert / append           |
+| o / O     | new line below / above    |
+| d / c / y | delete / change / yank    |
+| p / P     | paste after / before      |
+| u / U     | undo / redo               |
+| gc        | comment line (evil-commentary) |
+| ys / cs / ds | surround add/change/delete |
+| >  / <    | indent / dedent (visual)  |
+| Q         | replay last macro         |
+| Y         | yank to end of line       |
+
+* Code (LSP via eglot)
+| Key       | Action              |
+|-----------+---------------------|
+| SPC l r   | rename symbol       |
+| SPC l a   | code actions        |
+| SPC l i   | find implementation |
+| SPC l d   | find references     |
+| SPC l f   | format buffer       |
+| SPC c f   | format (apheleia)   |
+| SPC c p   | run python file     |
+| SPC c c   | compile C++         |
+| K         | show docs (eldoc)   |
+| gi        | go to implementation|
+
+* Errors (flymake)
+| Key       | Action              |
+|-----------+---------------------|
+| SPC e l   | list all errors     |
+| SPC e n   | next error          |
+| SPC e p   | prev error          |
+| ] e / [ e | next / prev error   |
+
+* Git (magit)
+| Key       | Action              |
+|-----------+---------------------|
+| SPC g g   | magit status        |
+| SPC g c   | commit              |
+| SPC g p   | push                |
+| SPC g i   | pull                |
+| SPC g l   | log                 |
+| SPC g d   | diff                |
+| SPC g b   | branch              |
+| SPC g a   | blame               |
+| SPC g t   | stash               |
+| ] h / [ h | next / prev hunk    |
+
+* Projects (project.el)
+| Key       | Action              |
+|-----------+---------------------|
+| SPC p p   | switch project      |
+| SPC p f   | find file in project|
+| SPC p b   | project buffer      |
+| SPC p k   | kill project buffers|
+| SPC p s   | project eshell      |
+| SPC p c   | compile project     |
+
+* Org Mode
+** Capture
+| Key       | Action              |
+|-----------+---------------------|
+| SPC o c   | org capture menu    |
+| SPC n i   | inbox (shared)      |
+| SPC n j   | journal entry       |
+| SPC n v   | review item (SRS)   |
+| SPC n r   | reading note        |
+| SPC n w   | work task           |
+| SPC n W   | work project        |
+| SPC n t   | personal task       |
+| SPC n p   | personal project    |
+
+** Navigation & Editing in org buffers
+| Key           | Action                      |
+|---------------+-----------------------------|
+| TAB           | cycle heading visibility    |
+| S-TAB         | cycle all headings          |
+| M-RET         | new heading at same level   |
+| M-h/l         | promote / demote heading    |
+| M-j/k         | move subtree up / down      |
+| C-c C-t       | cycle TODO state            |
+| C-c C-s       | schedule                    |
+| C-c C-d       | deadline                    |
+| C-c C-l       | insert link                 |
+| C-c C-o       | open link                   |
+| C-c C-e       | export                      |
+
+** Agenda
+| Key       | Action              |
+|-----------+---------------------|
+| SPC o a   | open agenda         |
+| SPC n a   | review agenda (SRS) |
+| SPC n d   | mark item reviewed  |
+
+In agenda buffer:
+| Key | Action                    |
+|-----+---------------------------|
+| t   | cycle TODO                |
+| s   | schedule                  |
+| d   | set deadline              |
+| r   | refile                    |
+| q   | quit                      |
+
+** org-roam (Zettelkasten)
+| Key       | Action                  |
+|-----------+-------------------------|
+| SPC o r   | find / open roam node   |
+| SPC o i   | insert roam link        |
+| SPC o s   | search roam nodes       |
+| SPC o u   | open roam graph (UI)    |
+| SPC n k   | new concept node        |
+| SPC n q   | new question node       |
+
+Concept node structure:
+- * What — definition
+- * Why — reason it matters
+- * When — when to use it
+- * Code — example
+- * Links — related nodes
+
+Question node structure:
+- * Question
+- * Answer
+- * Related Concepts
+
+** Spaced Repetition (SRS)
+1. Capture item with =SPC n v= (Review template)
+2. Item gets REVIEW state + scheduled date
+3. On review day: open agenda =SPC n a=
+4. After recall: =SPC n d= (marks reviewed, schedules next)
+
+Intervals: 1 → 3 → 7 → 14 → 30 → 60 days → MASTERED
+
+* AI Assistant (gptel + LM Studio)
+| Key       | Action              |
+|-----------+---------------------|
+| SPC a c   | open AI chat        |
+| SPC a s   | send to AI          |
+| SPC a r   | AI rewrite          |
+| SPC a m   | AI menu             |
+
+Start a chat: =SPC a c= opens gptel buffer. Write your prompt, =SPC a s= sends.
+Works in any buffer — select text, =SPC a r= to rewrite it.
+
+* Completion
+- =corfu= — inline completion popup (auto after 2 chars)
+- =TAB= — accept completion
+- =M-n / M-p= — next / prev candidate
+- =vertico= — minibuffer completion (file find, M-x, etc.)
+- =orderless= — fuzzy matching: type any words in any order
+
+* Misc
+| Key       | Action              |
+|-----------+---------------------|
+| SPC SPC   | M-x (command palette)|
+| SPC h k   | describe key        |
+| SPC h f   | describe function   |
+| SPC h v   | describe variable   |
+| SPC h .   | describe at point   |
+| SPC q q   | quit emacs          |
+| SPC q r   | restart emacs       |
+| SPC o d   | deft (quick search) |
+| SPC o l   | paste URL as link   |
+| SPC o y   | paste image         |
+| SPC o t   | transclusion toggle |
+
+* Workflow — Daily Use
+1. Start day: =SPC o a= → check agenda (scheduled tasks, reviews due)
+2. Capture anything: =SPC o c= → pick template
+3. Work task comes up: =SPC n w= → captured to work/tasks.org
+4. Learn something: =SPC n k= → concept node in roam
+5. Question arises: =SPC n q= → question node
+6. End of day: =SPC n j= → journal entry (worked on, notes, reading)
+7. Weekly: fill out reviews.org weekly section
+
+* File Locations
+| File                                  | Purpose                  |
+|---------------------------------------+--------------------------|
+| garden/inbox.org                      | shared capture dump      |
+| garden/journal.org                    | daily log                |
+| garden/reading.org                    | books + reading notes    |
+| garden/reviews.org                    | SRS + weekly reviews     |
+| garden/work/tasks.org                 | work next actions        |
+| garden/work/projects.org              | work project index       |
+| garden/work/projects/*.org            | individual work projects |
+| garden/personal/tasks.org             | personal next actions    |
+| garden/personal/projects.org          | personal project index   |
+| garden/personal/projects/*.org        | individual projects      |
+| ~/.emacs.d/init.el                    | emacs config             |
+| ~/.emacs.d/cheatsheet.org             | this file                |
