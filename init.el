@@ -5,12 +5,6 @@
 ;;            savehist, recentf, save-place, winner, sqlite.
 
 ;;; ─────────────────────────────────────────────
-;;; 0. FRAME
-;;; ─────────────────────────────────────────────
-
-(add-to-list 'default-frame-alist '(fullscreen . fullboth))
-
-;;; ─────────────────────────────────────────────
 ;;; 1. PACKAGE BOOTSTRAP
 ;;; ─────────────────────────────────────────────
 
@@ -46,11 +40,17 @@
 (setq inhibit-startup-message t
       inhibit-startup-echo-area-message t)
 
-(setq display-line-numbers-type 'relative)
+(setq display-line-numbers-type t)
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
 (add-hook 'text-mode-hook #'display-line-numbers-mode)
 
 (pixel-scroll-precision-mode 1)   ; built-in Emacs 29+
+
+;; which-key — built-in since Emacs 30
+(use-package which-key
+  :ensure nil
+  :custom (which-key-idle-delay 0.3)
+  :config (which-key-mode 1))
 
 (defun my/set-font ()
   (cond
@@ -65,188 +65,122 @@
   (my/set-font))
 
 ;;; ─────────────────────────────────────────────
-;;; 4. EVIL + LEADER
+;;; 4. KEYBINDINGS
 ;;; ─────────────────────────────────────────────
 
-(use-package undo-fu)
+;; Redo — Emacs 28+ builtin undo-redo
+(global-set-key (kbd "C-?") #'undo-redo)
 
-(use-package evil
-  :init
-  (setq evil-want-integration t
-        evil-want-keybinding nil
-        evil-want-C-u-scroll  t
-        evil-undo-system      'undo-fu
-        evil-search-module    'evil-search)
-  :config
-  (evil-mode 1)
+;; other-window shortcut
+(global-set-key (kbd "M-o") #'other-window)
 
-  (evil-define-key 'normal 'global
-    (kbd "j")   #'evil-next-visual-line
-    (kbd "k")   #'evil-previous-visual-line
-    (kbd "gj")  #'evil-next-line
-    (kbd "gk")  #'evil-previous-line
-    (kbd "Q")   #'evil-execute-last-recorded-macro
-    (kbd "U")   #'evil-redo
-    (kbd "Y")   (kbd "y$")
-    (kbd "g h") #'evil-beginning-of-line
-    (kbd "g l") #'evil-end-of-line
-    ;; search + center
-    (kbd "n")   (lambda () (interactive) (evil-ex-search-next)            (evil-scroll-line-to-center nil))
-    (kbd "N")   (lambda () (interactive) (evil-ex-search-previous)        (evil-scroll-line-to-center nil))
-    (kbd "*")   (lambda () (interactive) (evil-ex-search-word-forward)    (evil-scroll-line-to-center nil))
-    (kbd "#")   (lambda () (interactive) (evil-ex-search-word-backward)   (evil-scroll-line-to-center nil))
-    ;; xref/eldoc — work globally (elisp, eglot, etags)
-    (kbd "gd") #'xref-find-definitions
-    (kbd "gD") #'xref-find-definitions-other-window
-    (kbd "gr") #'xref-find-references
-    (kbd "K")  #'eldoc-doc-buffer)
+;; ── Buffers (b) ──────────────────────────────
+(global-set-key (kbd "C-c b b")   #'consult-buffer)
+(global-set-key (kbd "C-c b k")   #'kill-current-buffer)
+(global-set-key (kbd "C-c b TAB") #'mode-line-other-buffer)
 
-  (evil-define-key 'visual 'global
-    (kbd ">") (lambda () (interactive) (evil-shift-right (region-beginning) (region-end)) (evil-visual-restore))
-    (kbd "<") (lambda () (interactive) (evil-shift-left  (region-beginning) (region-end)) (evil-visual-restore))))
+;; ── Code (c): LSP + format + compile ─────────
+(global-set-key (kbd "C-c c r") #'eglot-rename)
+(global-set-key (kbd "C-c c a") #'eglot-code-actions)
+(global-set-key (kbd "C-c c i") #'eglot-find-implementation)
+(global-set-key (kbd "C-c c d") #'xref-find-references)
+(global-set-key (kbd "C-c c f") #'apheleia-format-buffer)
+(global-set-key (kbd "C-c c p") #'my/python-run-current-file)
+(global-set-key (kbd "C-c c c") #'my/cpp-compile-run-current-file)
 
-(use-package evil-collection
-  :after evil
-  :custom
-  (evil-collection-mode-list '(magit dired org helpful xref))
-  :config
-  (evil-collection-init)
-  (with-eval-after-load 'dired
-    (evil-define-key 'normal dired-mode-map
-      (kbd "R") #'dired-do-rename)))
+;; ── Errors (e): flymake ───────────────────────
+(global-set-key (kbd "C-c e l") #'consult-flymake)
+(global-set-key (kbd "C-c e n") #'flymake-goto-next-error)
+(global-set-key (kbd "C-c e p") #'flymake-goto-prev-error)
 
-(use-package evil-commentary :after evil :config (evil-commentary-mode 1))
-(use-package evil-surround   :after evil :config (global-evil-surround-mode 1))
-(use-package evil-matchit    :after evil :config (global-evil-matchit-mode 1))
+;; ── Files (f) ─────────────────────────────────
+(global-set-key (kbd "C-c f f") #'find-file)
+(global-set-key (kbd "C-c f r") #'consult-recent-file)
 
-(use-package general
-  :after evil
-  :config
-  (general-evil-setup t)
+;; ── Git (g): magit + hunks ────────────────────
+(global-set-key (kbd "C-c g g") #'magit-status)
+(global-set-key (kbd "C-c g c") #'magit-commit)
+(global-set-key (kbd "C-c g p") #'magit-push)
+(global-set-key (kbd "C-c g u") #'magit-pull)
+(global-set-key (kbd "C-c g f") #'magit-fetch)
+(global-set-key (kbd "C-c g l") #'magit-log-current)
+(global-set-key (kbd "C-c g d") #'magit-diff-dwim)
+(global-set-key (kbd "C-c g b") #'magit-branch)
+(global-set-key (kbd "C-c g a") #'magit-blame)
+(global-set-key (kbd "C-c g s") #'magit-stash)
+(global-set-key (kbd "C-c g n") #'diff-hl-next-hunk)
+(global-set-key (kbd "C-c g N") #'diff-hl-previous-hunk)
 
-  (general-create-definer my/leader-def
-    :states '(normal visual motion emacs)
-    :keymaps 'override
-    :prefix "SPC"
-    :global-prefix "C-SPC")
+;; ── Jump (j) ──────────────────────────────────
+(global-set-key (kbd "C-c j") #'avy-goto-char-2)
 
-  (my/leader-def
-    "SPC" '(execute-extended-command           :wk "M-x")
-    "TAB" '(evil-switch-to-windows-last-buffer :wk "last buffer")
-    ";"   '(evil-commentary-line               :wk "comment line")
+;; ── Notes (n): capture shortcuts ──────────────
+(global-set-key (kbd "C-c n i") (lambda () (interactive) (org-capture nil "i")))
+(global-set-key (kbd "C-c n j") (lambda () (interactive) (org-capture nil "j")))
+(global-set-key (kbd "C-c n v") (lambda () (interactive) (org-capture nil "v")))
+(global-set-key (kbd "C-c n r") (lambda () (interactive) (org-capture nil "r")))
+(global-set-key (kbd "C-c n w") (lambda () (interactive) (org-capture nil "w")))
+(global-set-key (kbd "C-c n W") (lambda () (interactive) (org-capture nil "W")))
+(global-set-key (kbd "C-c n t") (lambda () (interactive) (org-capture nil "t")))
+(global-set-key (kbd "C-c n p") (lambda () (interactive) (org-capture nil "p")))
+(global-set-key (kbd "C-c n k") #'my/roam-capture-concept)
+(global-set-key (kbd "C-c n q") #'my/roam-capture-question)
+(global-set-key (kbd "C-c n P") #'my/roam-capture-person)
+(global-set-key (kbd "C-c n x") #'my/roam-log-interaction)
+(global-set-key (kbd "C-c n a") #'my/learn-review)
+(global-set-key (kbd "C-c n d") #'my/learn-reviewed)
+(global-set-key (kbd "C-c n s") #'my/learn-search)
 
-    "f f" '(find-file           :wk "find file")
-    "f r" '(consult-recent-file :wk "recent files")
+;; ── Org (o) ───────────────────────────────────
+(global-set-key (kbd "C-c o a") #'org-agenda)
+(global-set-key (kbd "C-c o c") #'org-capture)
+(global-set-key (kbd "C-c o r") #'org-roam-node-find)
+(global-set-key (kbd "C-c o i") #'org-roam-node-insert)
+(global-set-key (kbd "C-c o s") #'consult-org-roam-search)
+(global-set-key (kbd "C-c o u") #'org-roam-ui-open)
+(global-set-key (kbd "C-c o d") #'deft)
+(global-set-key (kbd "C-c o l") #'org-cliplink)
+(global-set-key (kbd "C-c o t") #'org-transclusion-mode)
+(global-set-key (kbd "C-c o y") #'org-download-yank)
 
-    "b b" '(consult-buffer      :wk "switch buffer")
-    "b k" '(kill-current-buffer :wk "kill buffer")
+;; ── Projects (p) ──────────────────────────────
+(global-set-key (kbd "C-c p p") #'project-switch-project)
+(global-set-key (kbd "C-c p f") #'project-find-file)
+(global-set-key (kbd "C-c p b") #'project-switch-to-buffer)
+(global-set-key (kbd "C-c p k") #'project-kill-buffers)
+(global-set-key (kbd "C-c p s") #'project-eshell)
+(global-set-key (kbd "C-c p c") #'project-compile)
 
-    "w h" '(evil-window-left        :wk "←")
-    "w j" '(evil-window-down        :wk "↓")
-    "w k" '(evil-window-up          :wk "↑")
-    "w l" '(evil-window-right       :wk "→")
-    "w s" '(split-window-below      :wk "split h")
-    "w v" '(split-window-right      :wk "split v")
-    "w d" '(delete-window           :wk "close")
-    "w o" '(delete-other-windows    :wk "only")
-    "w =" '(balance-windows         :wk "balance")
-    "w u" '(winner-undo             :wk "undo layout")
-    "w f" '(toggle-frame-fullscreen :wk "fullscreen")
+;; ── Search (s) ────────────────────────────────
+(global-set-key (kbd "C-c s s") #'consult-line)
+(global-set-key (kbd "C-c s r") #'consult-ripgrep)
+(global-set-key (kbd "C-c s i") #'consult-imenu)
 
-    "s s" '(consult-line    :wk "search buffer")
-    "s r" '(consult-ripgrep :wk "search project")
-    "s i" '(consult-imenu   :wk "jump to symbol")
+;; ── Virtual env (v): conda ────────────────────
+(global-set-key (kbd "C-c v a") #'conda-env-activate)
+(global-set-key (kbd "C-c v d") #'conda-env-deactivate)
 
-    "c f" '(apheleia-format-buffer          :wk "format")
-    "c p" '(my/python-run-current-file      :wk "run python")
-    "c c" '(my/cpp-compile-run-current-file :wk "compile c++")
+;; ── Windows (w) ───────────────────────────────
+(global-set-key (kbd "C-c w u") #'winner-undo)
+(global-set-key (kbd "C-c w U") #'winner-redo)
+(global-set-key (kbd "C-c w f") #'toggle-frame-fullscreen)
+(global-set-key (kbd "C-c w =") #'balance-windows)
 
-    "l r" '(eglot-rename              :wk "rename")
-    "l a" '(eglot-code-actions        :wk "code action")
-    "l i" '(eglot-find-implementation :wk "implementation")
-    "l d" '(xref-find-references      :wk "references")
-    "l f" '(eglot-format-buffer       :wk "format")
+;; ── AI (a) ────────────────────────────────────
+(global-set-key (kbd "C-c a c") #'gptel)
+(global-set-key (kbd "C-c a s") #'gptel-send)
+(global-set-key (kbd "C-c a r") #'gptel-rewrite)
+(global-set-key (kbd "C-c a m") #'gptel-menu)
 
-    "e l" '(consult-flymake         :wk "list errors")
-    "e n" '(flymake-goto-next-error :wk "next error")
-    "e p" '(flymake-goto-prev-error :wk "prev error")
+;; ── Help (h) ──────────────────────────────────
+(global-set-key (kbd "C-c h k") #'helpful-key)
+(global-set-key (kbd "C-c h f") #'helpful-callable)
+(global-set-key (kbd "C-c h v") #'helpful-variable)
+(global-set-key (kbd "C-c h .") #'helpful-at-point)
 
-    "g g" '(magit-status      :wk "magit")
-    "g c" '(magit-commit      :wk "commit")
-    "g p" '(magit-push        :wk "push")
-    "g i" '(magit-pull        :wk "pull")
-    "g f" '(magit-fetch       :wk "fetch")
-    "g l" '(magit-log-current :wk "log")
-    "g d" '(magit-diff-dwim   :wk "diff")
-    "g b" '(magit-branch      :wk "branch")
-    "g a" '(magit-blame       :wk "blame")
-    "g t" '(magit-stash       :wk "stash")
-
-    "p p" '(project-switch-project   :wk "switch")
-    "p f" '(project-find-file        :wk "find file")
-    "p b" '(project-switch-to-buffer :wk "buffer")
-    "p k" '(project-kill-buffers     :wk "kill")
-    "p s" '(project-eshell           :wk "eshell")
-    "p c" '(project-compile          :wk "compile")
-
-    "o a" '(org-agenda           :wk "agenda")
-    "o c" '(org-capture          :wk "capture")
-    "o r" '(org-roam-node-find   :wk "roam find")
-    "o i" '(org-roam-node-insert :wk "roam insert")
-    "o s" '(consult-org-roam-search :wk "roam search")
-    "o d" '(deft                 :wk "deft")
-    "o u" '(org-roam-ui-open     :wk "roam graph")
-    "o l" '(org-cliplink         :wk "paste url")
-    "o t" '(org-transclusion-mode :wk "transclusion")
-    "o y" '(org-download-yank    :wk "paste image")
-
-    "n i" '((lambda () (interactive) (org-capture nil "i")) :wk "inbox")
-    "n j" '((lambda () (interactive) (org-capture nil "j")) :wk "journal")
-    "n v" '((lambda () (interactive) (org-capture nil "v")) :wk "review")
-    "n r" '((lambda () (interactive) (org-capture nil "r")) :wk "reading")
-    "n w" '((lambda () (interactive) (org-capture nil "w")) :wk "work task")
-    "n W" '((lambda () (interactive) (org-capture nil "W")) :wk "work project")
-    "n t" '((lambda () (interactive) (org-capture nil "t")) :wk "personal task")
-    "n p" '((lambda () (interactive) (org-capture nil "p")) :wk "personal project")
-    "n k" '(my/roam-capture-concept  :wk "concept node")
-    "n q" '(my/roam-capture-question :wk "question node")
-    "n a" '(my/learn-review          :wk "review agenda")
-    "n d" '(my/learn-reviewed        :wk "mark reviewed")
-    "n s" '(my/learn-search          :wk "search")
-
-    "a c" '(gptel         :wk "ai chat")
-    "a s" '(gptel-send    :wk "send")
-    "a r" '(gptel-rewrite :wk "rewrite")
-    "a m" '(gptel-menu    :wk "menu")
-
-    "m a" '(conda-env-activate   :wk "activate env")
-    "m d" '(conda-env-deactivate :wk "deactivate env")
-
-    "j j" '(avy-goto-char-2 :wk "jump")
-
-    "h k" '(helpful-key      :wk "key")
-    "h f" '(helpful-callable :wk "function")
-    "h v" '(helpful-variable :wk "variable")
-    "h ." '(helpful-at-point :wk "at point")
-
-    "q q" '(save-buffers-kill-terminal :wk "quit")
-    "q r" '(restart-emacs              :wk "restart"))
-
-  (general-define-key
-    :states '(normal visual)
-    "]h" '(diff-hl-next-hunk      :wk "next hunk")
-    "[h" '(diff-hl-previous-hunk  :wk "prev hunk")
-    "]e" '(flymake-goto-next-error :wk "next error")
-    "[e" '(flymake-goto-prev-error :wk "prev error")))
-
-;; which-key — built-in since Emacs 30
-(use-package which-key
-  :ensure nil
-  :custom (which-key-idle-delay 0.3)
-  :config (which-key-mode 1))
-
-;; repeat-mode — built-in, repeat window/error navigation without prefix
-(repeat-mode 1)
+;; ── Quit (q) ──────────────────────────────────
+(global-set-key (kbd "C-c q q") #'save-buffers-kill-terminal)
+(global-set-key (kbd "C-c q r") #'restart-emacs)
 
 ;;; ─────────────────────────────────────────────
 ;;; 5. COMPLETION (vertico + corfu)
@@ -281,19 +215,27 @@
   (corfu-auto-prefix 2)
   (corfu-quit-no-match 'separator)
   (corfu-preview-current nil)
+  :bind (:map corfu-map
+         ("C-n"      . corfu-next)
+         ("C-p"      . corfu-previous)
+         ("<tab>"    . corfu-insert)
+         ("TAB"      . corfu-insert)
+         ("<escape>" . corfu-quit)
+         ("C-g"      . corfu-quit))
   :config
+  (keymap-unset corfu-map "RET")
   (corfu-popupinfo-mode 1)
   (setq corfu-popupinfo-delay '(0.5 . 0.2)))
 
 (use-package cape
   :init
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  (add-to-list 'completion-at-point-functions #'cape-file)
-  (add-to-list 'completion-at-point-functions #'cape-keyword)
+  (add-hook 'completion-at-point-functions #'cape-keyword)
+  (add-hook 'completion-at-point-functions #'cape-file)
+  (add-hook 'completion-at-point-functions #'cape-dabbrev)
   :config
   (add-hook 'emacs-lisp-mode-hook
             (lambda ()
-              (add-to-list 'completion-at-point-functions #'cape-elisp-symbol))))
+              (add-hook 'completion-at-point-functions #'cape-elisp-symbol nil t))))
 
 ;;; ─────────────────────────────────────────────
 ;;; 6. THEME & MODELINE
@@ -324,6 +266,7 @@
 (setq electric-pair-inhibit-predicate #'electric-pair-conservative-inhibit)
 
 (add-hook 'prog-mode-hook #'subword-mode)
+(add-hook 'prog-mode-hook #'hl-line-mode)
 
 (use-package rainbow-delimiters :hook (prog-mode . rainbow-delimiters-mode))
 
@@ -357,11 +300,7 @@
   (eglot-events-buffer-size 0)
   (eglot-autoshutdown t)
   (eglot-sync-connect 0)
-  (eglot-extend-to-xref t)
-  :config
-  (add-hook 'eglot-managed-mode-hook
-            (lambda ()
-              (evil-local-set-key 'normal (kbd "gi") #'eglot-find-implementation))))
+  (eglot-extend-to-xref t))
 
 ;;; ─────────────────────────────────────────────
 ;;; 9. FLYMAKE (built-in)
@@ -543,6 +482,11 @@
       "#+FILETAGS: :question:\n\n* Question\n%?\n\n* Answer\n\n* Related Concepts\n"
       :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
                          "#+TITLE: ${title}\n#+CREATED: %U\n")
+      :unnarrowed t)
+     ("P" "person" plain
+      "#+FILETAGS: :person:\n#+AREA: \n\n* Who\n\n* Find Them\n- \n\n* Interactions\n** %U\n%?\n\n* Follow-up\n- [ ] \n\n* Notes\n"
+      :target (file+head "people/%<%Y%m%d%H%M%S>-${slug}.org"
+                         "#+TITLE: ${title}\n#+CREATED: %U\n")
       :unnarrowed t)))
   :config
   (org-roam-db-autosync-mode)
@@ -557,7 +501,26 @@
     (interactive)
     (org-roam-capture- :node (org-roam-node-create
                               :title (read-string "Question topic: "))
-                       :templates (list (nth 2 org-roam-capture-templates)))))
+                       :templates (list (nth 2 org-roam-capture-templates))))
+
+  (defun my/roam-capture-person ()
+    (interactive)
+    (org-roam-capture- :node (org-roam-node-create
+                              :title (read-string "Person name: "))
+                       :templates (list (nth 3 org-roam-capture-templates))))
+
+  (defun my/roam-log-interaction ()
+    (interactive)
+    (let* ((node (org-roam-node-read nil
+                   (lambda (n) (member "person" (org-roam-node-tags n)))))
+           (file (org-roam-node-file node)))
+      (find-file file)
+      (goto-char (point-min))
+      (if (search-forward "* Interactions" nil t)
+          (progn
+            (org-end-of-subtree)
+            (insert "\n** " (format-time-string "[%Y-%m-%d %a]") "\n"))
+        (error "No Interactions heading in %s" file)))))
 
 (use-package consult-org-roam
   :after org-roam
@@ -605,9 +568,7 @@
          ("C-c t a" . org-transclusion-add)
          ("C-c t t" . org-transclusion-mode)))
 
-(use-package org-cliplink
-  :after org
-  :bind (:map org-mode-map ("C-c l" . org-cliplink)))
+(use-package org-cliplink :after org)
 
 ;;; ─────────────────────────────────────────────
 ;;; 14. MARKDOWN
@@ -752,6 +713,7 @@
 (delete-selection-mode 1)
 (global-auto-revert-mode 1)
 (setq global-auto-revert-non-file-buffers t)
+(repeat-mode 1)
 
 ;;; ─────────────────────────────────────────────
 ;;; 20. WORKFLOW FUNCTIONS

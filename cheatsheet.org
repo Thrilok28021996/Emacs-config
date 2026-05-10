@@ -1,206 +1,239 @@
-#+TITLE: Emacs Cheatsheet
+#+TITLE: Emacs Cheatsheet (Pure Emacs)
 #+AUTHOR: Thrilok
 #+STARTUP: overview
 
-* File Operations
-** Open / Find Files
-| Key         | Action                              |
-|-------------+-------------------------------------|
-| SPC f f     | find file (browse filesystem)       |
-| SPC f r     | recent files                        |
-| SPC p f     | find file inside current project    |
-| C-x C-f     | find file (classic emacs)           |
-| SPC b b     | switch to open buffer               |
+* Movement
+** Character / Word
+| Key       | Action                        |
+|-----------+-------------------------------|
+| C-f / C-b | char forward / backward       |
+| M-f / M-b | word forward / backward       |
+| C-a / C-e | line start / end              |
+| C-n / C-p | line down / up                |
+| M-a / M-e | sentence start / end          |
+| C-v / M-v | page down / up                |
+| M-< / M-> | file start / end              |
+| C-l       | recenter (cycle top/mid/bot)  |
 
-** Save / Write
-| Key         | Action                              |
-|-------------+-------------------------------------|
-| :w (normal) | save file (evil)                    |
-| C-x C-s     | save file (classic)                 |
-| :wa         | save all open buffers               |
-| C-x C-w     | save as (write to new path)         |
-| :wq         | save and close buffer               |
-
-** Read / View
-| Key         | Action                              |
-|-------------+-------------------------------------|
-| SPC f f     | open any file to read               |
-| SPC s s     | search inside current buffer        |
-| SPC s r     | search across all project files     |
-| SPC s i     | jump to section/symbol in file      |
-| C-s         | isearch in buffer                   |
-
-** Edit Files
-| Key         | Action                              |
-|-------------+-------------------------------------|
-| i           | enter insert mode (start editing)   |
-| ESC         | back to normal mode (stop editing)  |
-| u           | undo                                |
-| U / C-r     | redo                                |
-| dd          | delete line                         |
-| yy          | copy line                           |
-| p           | paste                               |
-| ciw         | change inner word                   |
-| V           | select whole line (visual)          |
-| v           | character visual select             |
-| C-v         | block visual select                 |
-
-** Close / Kill
-| Key         | Action                              |
-|-------------+-------------------------------------|
-| SPC b k     | kill (close) current buffer         |
-| :q          | close window                        |
-| :q!         | close without saving                |
-| SPC w d     | close current window split          |
-| SPC p k     | kill all buffers in project         |
-
-** Dired (file manager)
-| Key         | Action                              |
-|-------------+-------------------------------------|
-| SPC p p → d | open project in dired               |
-| RET         | open file or enter directory        |
-| ^           | go up one directory                 |
-| d           | mark for deletion                   |
-| x           | execute deletions                   |
-| R           | rename file                         |
-| C           | copy file                           |
-| +           | create directory                    |
-| q           | quit dired                          |
-
-* Navigation
-** Basic Movement
-| Key   | Action                  |
-|-------+-------------------------|
-| h j k l | left / down / up / right (evil) |
-| w / b   | next / prev word        |
-| 0 / $   | line start / end        |
-| g h / g l | visual line start / end |
-| gg / G  | file start / end        |
-| C-d / C-u | half page down / up   |
-| { / }   | prev / next paragraph   |
+** Mark & Region (Emacs selection model)
+| Key       | Action                          |
+|-----------+---------------------------------|
+| C-SPC     | set mark (start of selection)   |
+| C-x C-x   | swap point and mark             |
+| C-w       | cut (kill) region               |
+| M-w       | copy region                     |
+| C-y       | paste (yank)                    |
+| M-y       | cycle through kill ring         |
+| C-x h     | select all (mark whole buffer)  |
 
 ** Jump
-| Key       | Action                      |
-|-----------+-----------------------------|
-| SPC j j   | avy jump to char (2 chars)  |
-| gd        | go to definition            |
-| gD        | definition in other window  |
-| gr        | find references             |
-| C-o / C-i | jump back / forward         |
+| Key       | Action                          |
+|-----------+---------------------------------|
+| C-c j     | avy jump (2-char)               |
+| M-.       | go to definition (xref)         |
+| M-,       | jump back (xref)                |
+| M-?       | find references (xref)          |
+| C-x C-SPC | pop global mark                 |
+| C-u C-SPC | pop local mark ring             |
 
 ** Search
-| Key       | Action                  |
-|-----------+-------------------------|
-| /         | search in buffer        |
-| n / N     | next / prev match       |
-| *         | search word under cursor|
-| SPC s s   | consult search buffer   |
-| SPC s r   | ripgrep project         |
-| SPC s i   | jump to symbol (imenu)  |
+| Key       | Action                          |
+|-----------+---------------------------------|
+| C-s       | search buffer (consult-line)    |
+| C-c s s   | search buffer                   |
+| C-c s r   | ripgrep project                 |
+| C-c s i   | jump to symbol (imenu)          |
 
-* Files & Buffers
-| Key       | Action              |
-|-----------+---------------------|
-| SPC f f   | find file           |
-| SPC f r   | recent files        |
-| SPC b b   | switch buffer       |
-| SPC b k   | kill buffer         |
-| SPC TAB   | last buffer         |
+* Files
+| Key         | Action                          |
+|-------------+---------------------------------|
+| C-c f f     | find / open file                |
+| C-x C-f     | find file (native)              |
+| C-c f r     | recent files                    |
+| C-x C-s     | save file                       |
+| C-x C-w     | save as                         |
+
+** Dired (file manager)
+| Key   | Action                          |
+|-------+---------------------------------|
+| C-x d | open dired                      |
+| RET   | open file or enter directory    |
+| ^     | go up one directory             |
+| d     | mark for deletion               |
+| x     | execute deletions               |
+| R     | rename file                     |
+| C     | copy file                       |
+| +     | create directory                |
+| m     | mark file                       |
+| u     | unmark file                     |
+| q     | quit dired                      |
+
+* Buffers
+** Switch
+| Key           | Action                          |
+|---------------+---------------------------------|
+| C-c b b       | switch buffer (consult)         |
+| C-c b TAB     | switch to last buffer           |
+| C-x b         | switch buffer (native)          |
+| C-x C-b       | list all buffers                |
+
+** Kill (remove buffer from memory)
+| Key           | Action                          |
+|---------------+---------------------------------|
+| C-c b k       | kill current buffer             |
+| C-x k         | kill buffer — prompts which one |
+
+** Quit (close window/pane, buffer stays alive)
+| Key           | Action                          |
+|---------------+---------------------------------|
+| C-x 0         | close this window               |
+| C-x 1         | close all other windows         |
+| q             | quit special buffers (magit, help, dired, agenda) |
+
+Rule: =q= dismisses read-only/special buffers. =C-c b k= removes a file buffer from memory.
 
 * Windows
-| Key       | Action              |
-|-----------+---------------------|
-| SPC w v   | split vertical      |
-| SPC w s   | split horizontal    |
-| SPC w h/j/k/l | move between windows |
-| SPC w d   | close window        |
-| SPC w o   | keep only this window |
-| SPC w =   | balance windows     |
-| SPC w u   | undo layout (winner)|
-| SPC w f   | fullscreen toggle   |
+| Key         | Action                          |
+|-------------+---------------------------------|
+| C-x 2       | split window below              |
+| C-x 3       | split window right              |
+| C-x 0       | close this window               |
+| C-x 1       | keep only this window           |
+| C-x o       | other window (cycle)            |
+| M-o         | other window (shortcut)         |
+| C-c w u     | undo window layout (winner)     |
+| C-c w U     | redo window layout (winner)     |
+| C-c w =     | balance windows                 |
+| C-c w f     | fullscreen toggle               |
 
 * Editing
-| Key       | Action                    |
-|-----------+---------------------------|
-| i / a     | insert / append           |
-| o / O     | new line below / above    |
-| d / c / y | delete / change / yank    |
-| p / P     | paste after / before      |
-| u / U     | undo / redo               |
-| gc        | comment line (evil-commentary) |
-| ys / cs / ds | surround add/change/delete |
-| >  / <    | indent / dedent (visual)  |
-| Q         | replay last macro         |
-| Y         | yank to end of line       |
+** Basic
+| Key         | Action                          |
+|-------------+---------------------------------|
+| C-d         | delete char forward             |
+| M-d         | delete word forward             |
+| DEL         | delete char backward            |
+| M-DEL       | delete word backward            |
+| C-k         | kill (cut) to end of line       |
+| C-/         | undo                            |
+| C-?         | redo                            |
+| M-;         | comment / uncomment             |
+| TAB         | indent line                     |
+| M-q         | fill/wrap paragraph             |
 
-* Code (LSP via eglot)
-| Key       | Action              |
-|-----------+---------------------|
-| SPC l r   | rename symbol       |
-| SPC l a   | code actions        |
-| SPC l i   | find implementation |
-| SPC l d   | find references     |
-| SPC l f   | format buffer       |
-| SPC c f   | format (apheleia)   |
-| SPC c p   | run python file     |
-| SPC c c   | compile C++         |
-| K         | show docs (eldoc)   |
-| gi        | go to implementation|
+** Keyboard Macros
+| Key         | Action                          |
+|-------------+---------------------------------|
+| C-x (       | start recording macro           |
+| C-x )       | stop recording macro            |
+| C-x e       | execute last macro              |
+| C-x C-k r   | apply macro to region lines     |
 
-* Errors (flymake)
-| Key       | Action              |
-|-----------+---------------------|
-| SPC e l   | list all errors     |
-| SPC e n   | next error          |
-| SPC e p   | prev error          |
-| ] e / [ e | next / prev error   |
+** Registers (named clipboard slots)
+| Key         | Action                          |
+|-------------+---------------------------------|
+| C-x r s R   | save region to register R       |
+| C-x r i R   | insert register R               |
+| C-x r SPC R | save point to register R        |
+| C-x r j R   | jump to register R              |
 
-* Git (magit)
-| Key       | Action              |
-|-----------+---------------------|
-| SPC g g   | magit status        |
-| SPC g c   | commit              |
-| SPC g p   | push                |
-| SPC g i   | pull                |
-| SPC g l   | log                 |
-| SPC g d   | diff                |
-| SPC g b   | branch              |
-| SPC g a   | blame               |
-| SPC g t   | stash               |
-| ] h / [ h | next / prev hunk    |
+** Rectangle (column editing)
+| Key         | Action                          |
+|-------------+---------------------------------|
+| C-x r k     | kill rectangle                  |
+| C-x r y     | yank rectangle                  |
+| C-x r t     | replace rectangle with string   |
+| C-x r o     | open rectangle (insert spaces)  |
 
-* Projects (project.el)
-| Key       | Action              |
-|-----------+---------------------|
-| SPC p p   | switch project      |
-| SPC p f   | find file in project|
-| SPC p b   | project buffer      |
-| SPC p k   | kill project buffers|
-| SPC p s   | project eshell      |
-| SPC p c   | compile project     |
+* Code (C-c c)
+| Key         | Action                          |
+|-------------+---------------------------------|
+| C-c c r     | rename symbol (eglot)           |
+| C-c c a     | code actions (eglot)            |
+| C-c c i     | find implementation (eglot)     |
+| C-c c d     | find references (xref)          |
+| C-c c f     | format buffer (apheleia)        |
+| C-c c p     | run python file                 |
+| C-c c c     | compile C++                     |
+| M-.         | go to definition                |
+| M-,         | jump back                       |
+| C-h .       | show docs (eldoc) at point      |
 
-* Org Mode
-** Capture
-| Key       | Action              |
-|-----------+---------------------|
-| SPC o c   | org capture menu    |
-| SPC n i   | inbox (shared)      |
-| SPC n j   | journal entry       |
-| SPC n v   | review item (SRS)   |
-| SPC n r   | reading note        |
-| SPC n w   | work task           |
-| SPC n W   | work project        |
-| SPC n t   | personal task       |
-| SPC n p   | personal project    |
+* Errors (C-c e)
+| Key         | Action                          |
+|-------------+---------------------------------|
+| C-c e l     | list all errors (consult)       |
+| C-c e n     | next error                      |
+| C-c e p     | prev error                      |
 
-** Navigation & Editing in org buffers
+* Git (C-c g)
+| Key         | Action                          |
+|-------------+---------------------------------|
+| C-c g g     | magit status                    |
+| C-c g c     | commit                          |
+| C-c g p     | push                            |
+| C-c g u     | pull (update)                   |
+| C-c g f     | fetch                           |
+| C-c g l     | log                             |
+| C-c g d     | diff                            |
+| C-c g b     | branch                          |
+| C-c g a     | blame (annotate)                |
+| C-c g s     | stash                           |
+| C-c g n     | next hunk (diff-hl)             |
+| C-c g N     | prev hunk (diff-hl)             |
+
+* Projects (C-c p)
+| Key         | Action                          |
+|-------------+---------------------------------|
+| C-c p p     | switch project                  |
+| C-c p f     | find file in project            |
+| C-c p b     | project buffer                  |
+| C-c p k     | kill project buffers            |
+| C-c p s     | project eshell                  |
+| C-c p c     | compile project                 |
+
+* Org Mode (C-c o)
+** Org commands
+| Key         | Action                          |
+|-------------+---------------------------------|
+| C-c o a     | open agenda                     |
+| C-c o c     | org capture                     |
+| C-c o r     | roam find node                  |
+| C-c o i     | roam insert link                |
+| C-c o s     | roam search                     |
+| C-c o u     | roam graph UI                   |
+| C-c o d     | deft (quick search)             |
+| C-c o l     | paste URL as link               |
+| C-c o t     | transclusion toggle             |
+| C-c o y     | paste image                     |
+
+** Capture shortcuts (C-c n)
+| Key         | Action                          |
+|-------------+---------------------------------|
+| C-c n i     | inbox (shared)                  |
+| C-c n j     | journal entry                   |
+| C-c n v     | review item (SRS)               |
+| C-c n r     | reading note                    |
+| C-c n w     | work task                       |
+| C-c n W     | work project                    |
+| C-c n t     | personal task                   |
+| C-c n p     | personal project                |
+| C-c n k     | new concept node (roam)         |
+| C-c n q     | new question node (roam)        |
+| C-c n P     | new person node                 |
+| C-c n x     | log interaction with person     |
+| C-c n a     | review agenda (SRS)             |
+| C-c n d     | mark item reviewed              |
+| C-c n s     | search garden                   |
+
+** Navigation inside org buffers
 | Key           | Action                      |
 |---------------+-----------------------------|
 | TAB           | cycle heading visibility    |
 | S-TAB         | cycle all headings          |
 | M-RET         | new heading at same level   |
-| M-h/l         | promote / demote heading    |
-| M-j/k         | move subtree up / down      |
+| M-h / M-l     | promote / demote heading    |
+| M-j / M-k     | move subtree up / down      |
 | C-c C-t       | cycle TODO state            |
 | C-c C-s       | schedule                    |
 | C-c C-d       | deadline                    |
@@ -208,14 +241,7 @@
 | C-c C-o       | open link                   |
 | C-c C-e       | export                      |
 
-** Agenda
-| Key       | Action              |
-|-----------+---------------------|
-| SPC o a   | open agenda         |
-| SPC n a   | review agenda (SRS) |
-| SPC n d   | mark item reviewed  |
-
-In agenda buffer:
+** Agenda buffer
 | Key | Action                    |
 |-----+---------------------------|
 | t   | cycle TODO                |
@@ -224,76 +250,181 @@ In agenda buffer:
 | r   | refile                    |
 | q   | quit                      |
 
-** org-roam (Zettelkasten)
-| Key       | Action                  |
-|-----------+-------------------------|
-| SPC o r   | find / open roam node   |
-| SPC o i   | insert roam link        |
-| SPC o s   | search roam nodes       |
-| SPC o u   | open roam graph (UI)    |
-| SPC n k   | new concept node        |
-| SPC n q   | new question node       |
+** How to Use Each System
 
-Concept node structure:
-- * What — definition
-- * Why — reason it matters
-- * When — when to use it
-- * Code — example
-- * Links — related nodes
+*** Agenda
+The agenda pulls TODO/scheduled items from all files in =org-agenda-files=.
 
-Question node structure:
-- * Question
-- * Answer
-- * Related Concepts
+1. =C-c o a= → open agenda (day view by default)
+2. Navigate days with =f= (forward) / =b= (backward)
+3. On any item: =t= cycle state, =s= schedule, =d= deadline, =r= refile, =q= quit
+4. Press =v w= for week view, =v m= for month view
 
-** Spaced Repetition (SRS)
-1. Capture item with =SPC n v= (Review template)
+Tip: agenda shows only items with a date or active TODO. Undated TODOs live in =C-x b tasks.org=.
+
+*** Capture → Refile
+Capture = quick drop into inbox. Refile = move to the right place later.
+
+1. =C-c o c= (or shortcut) → pick template → write → =C-c C-c= to save
+2. Items land in their target file (inbox, tasks, journal, etc.)
+3. To refile: open the item, =C-c C-w= → pick destination heading
+4. Refile targets = all files in =org-agenda-files= up to 3 levels deep
+
+*** Org-Roam (knowledge graph)
+Each note is a node. Nodes link to each other — backlinks show what points at the current node.
+
+| Action                     | Key / Command          |
+|----------------------------+------------------------|
+| Find or create a node      | =C-c o r=              |
+| Insert a link to a node    | =C-c o i=              |
+| New concept node           | =C-c n k=              |
+| New question node          | =C-c n q=              |
+| New person node            | =C-c n P=              |
+| See backlinks (what links here) | =M-x org-roam-buffer-toggle= |
+| Search all nodes           | =C-c o s=              |
+
+Workflow: write a note → link related nodes with =C-c o i= → backlinks panel shows connections automatically.
+
+*** Roam UI (visual graph)
+Launches a browser-based interactive graph of all your nodes.
+
+1. =C-c o u= → opens browser tab with live graph
+2. Click any node to open it in Emacs
+3. Graph updates on save (=org-roam-ui-update-on-save t=)
+4. Theme syncs with doom-one automatically
+
+*** People (relationship tracking)
+1. =C-c n P= → create person node (name, where they post, area: career/tech/drawing)
+2. Fill in =* Who=, =* Find Them= (handle/link), =* Follow-up= (next action)
+3. After any exchange → =C-c n x= → pick person → type what happened
+4. =C-c o r= to find anyone by name
+5. Follow-up checkboxes stay visible in the file — check when done with =C-c C-c=
+
+*** Spaced Repetition (SRS)
+1. Capture with =C-c n v=
 2. Item gets REVIEW state + scheduled date
-3. On review day: open agenda =SPC n a=
-4. After recall: =SPC n d= (marks reviewed, schedules next)
+3. On review day: =C-c n a= → open review agenda
+4. After recall: =C-c n d= → schedules next interval
 
 Intervals: 1 → 3 → 7 → 14 → 30 → 60 days → MASTERED
 
-* AI Assistant (gptel + LM Studio)
-| Key       | Action              |
-|-----------+---------------------|
-| SPC a c   | open AI chat        |
-| SPC a s   | send to AI          |
-| SPC a r   | AI rewrite          |
-| SPC a m   | AI menu             |
+*** Pomodoro
+Work in focused 25-minute blocks, tracked per org heading.
 
-Start a chat: =SPC a c= opens gptel buffer. Write your prompt, =SPC a s= sends.
-Works in any buffer — select text, =SPC a r= to rewrite it.
+1. Go to any task heading in an org file
+2. =M-x org-pomodoro= → starts 25-min timer, logs time to the heading
+3. Bell rings at end → short break auto-starts
+4. Clock time visible in agenda and modeline
 
-* Completion
-- =corfu= — inline completion popup (auto after 2 chars)
-- =TAB= — accept completion
-- =M-n / M-p= — next / prev candidate
-- =vertico= — minibuffer completion (file find, M-x, etc.)
-- =orderless= — fuzzy matching: type any words in any order
+*** Transclusion
+Include live content from another node — changes in source reflect everywhere it's transcluded.
 
-* Misc
-| Key       | Action              |
-|-----------+---------------------|
-| SPC SPC   | M-x (command palette)|
-| SPC h k   | describe key        |
-| SPC h f   | describe function   |
-| SPC h v   | describe variable   |
-| SPC h .   | describe at point   |
-| SPC q q   | quit emacs          |
-| SPC q r   | restart emacs       |
-| SPC o d   | deft (quick search) |
-| SPC o l   | paste URL as link   |
-| SPC o y   | paste image         |
-| SPC o t   | transclusion toggle |
+1. =C-c o t= → toggle transclusion mode in current buffer
+2. =C-c t a= (in org-mode) → add a transclusion at point — prompts for source node
+3. Content appears inline; edit the source file to update it everywhere
+4. Toggle off with =C-c o t= to see raw =#+transclude= links
+
+*** Paste Image (org-download)
+1. Copy an image to clipboard (screenshot, browser, etc.)
+2. =C-c o y= → image saved to =garden/images/= and link inserted at point
+3. Image previews inline if =org-toggle-inline-images= is on (=C-c C-x C-v=)
+
+*** Paste URL as Link (org-cliplink)
+1. Copy a URL to clipboard
+2. =C-c o l= → fetches page title, inserts =[[url][Page Title]]= at point
+
+*** Deft (quick search)
+Full-text search across all garden files. Faster than roam for fuzzy recall.
+
+1. =C-c o d= → opens deft buffer with live filter
+2. Type any word → results narrow in real time
+3. =RET= to open, =C-c C-n= to create a new roam node from the search term
+4. =C-g= to quit
+
+*** Org-Babel (run code in notes)
+Execute code blocks inside org files. Results insert below the block.
+
+1. In any org file, create a block: =<s TAB= → expands to =#+begin_src=
+2. Specify language: =#+begin_src python=
+3. =C-c C-c= inside the block → runs it, inserts =#+RESULTS:= below
+4. Supported: python, shell, emacs-lisp (configured in your setup)
+
+*** Super Agenda (agenda grouping)
+=org-super-agenda-mode= is active — groups agenda items by category automatically.
+No extra keys needed; configure grouping in =org-super-agenda-groups= if you want custom sections.
+
+* AI Assistant (C-c a)
+| Key         | Action                          |
+|-------------+---------------------------------|
+| C-c a c     | open AI chat                    |
+| C-c a s     | send to AI                      |
+| C-c a r     | AI rewrite selection            |
+| C-c a m     | AI menu                         |
+
+* Completion (corfu)
+| Key         | Action                          |
+|-------------+---------------------------------|
+| C-n / C-p   | next / prev candidate           |
+| TAB         | accept completion               |
+| C-g / ESC   | dismiss popup                   |
+| RET         | newline only (never accepts)    |
+| M-y         | cycle kill ring after yank      |
+
+- =corfu= — inline popup, auto after 2 chars
+- =vertico= — minibuffer completion
+- =orderless= — fuzzy: type words in any order
+
+* Virtual Environment (C-c v)
+| Key         | Action                          |
+|-------------+---------------------------------|
+| C-c v a     | activate conda env              |
+| C-c v d     | deactivate conda env            |
+
+* Help & Discovery (C-c h)
+| Key         | Action                          |
+|-------------+---------------------------------|
+| M-x         | command palette (all commands)  |
+| C-c h k     | describe key                    |
+| C-c h f     | describe function               |
+| C-c h v     | describe variable               |
+| C-c h .     | describe thing at point         |
+| C-h m       | describe current major mode     |
+| C-h b       | list all active keybindings     |
+
+Tip: press =C-c= and wait 0.3s — which-key shows all options.
+
+* Quit (C-c q)
+| Key         | Action                          |
+|-------------+---------------------------------|
+| C-c q q     | quit emacs                      |
+| C-c q r     | restart emacs                   |
+
+* Prefix Map at a Glance
+| Prefix  | Domain        |
+|---------+---------------|
+| C-c b   | Buffers       |
+| C-c c   | Code / LSP    |
+| C-c e   | Errors        |
+| C-c f   | Files         |
+| C-c g   | Git           |
+| C-c j   | Jump (avy)    |
+| C-c n   | Notes/capture |
+| C-c o   | Org / Roam    |
+| C-c p   | Projects      |
+| C-c s   | Search        |
+| C-c v   | Virtual env   |
+| C-c w   | Windows       |
+| C-c a   | AI            |
+| C-c h   | Help          |
+| C-c q   | Quit          |
 
 * Workflow — Daily Use
-1. Start day: =SPC o a= → check agenda (scheduled tasks, reviews due)
-2. Capture anything: =SPC o c= → pick template
-3. Work task comes up: =SPC n w= → captured to work/tasks.org
-4. Learn something: =SPC n k= → concept node in roam
-5. Question arises: =SPC n q= → question node
-6. End of day: =SPC n j= → journal entry (worked on, notes, reading)
+1. Start day: =C-c o a= → check agenda
+2. Capture anything: =C-c o c= → pick template
+3. Work task: =C-c n w= → work/tasks.org
+4. Learn something: =C-c n k= → concept node in roam
+5. Question arises: =C-c n q= → question node
+6. End of day: =C-c n j= → journal entry
 7. Weekly: fill out reviews.org weekly section
 
 * File Locations
