@@ -1,3 +1,5 @@
 ;;; -*- lisp-data -*-
-(("/Users/thrilok/Documents/garden/") ("/Users/thrilok/.emacs.d/")
+(("/Users/thrilok/.emacs.d/elpa/embark-consult/")
+ ("/Users/thrilok/.emacs.d/elpa/embark/")
+ ("/Users/thrilok/Documents/garden/") ("/Users/thrilok/.emacs.d/")
  ("/Users/thrilok/.emacs.d/elpa/gptel/"))

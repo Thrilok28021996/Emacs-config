@@ -27,6 +27,8 @@
 (use-package exec-path-from-shell
   :if (memq window-system '(mac ns x))
   :defer 1
+  :custom
+  (exec-path-from-shell-arguments '("-l"))   ; login shell only, not interactive — skips ~/.zshrc
   :config
   (dolist (var '("PATH" "MANPATH" "PYTHONPATH" "CONDA_PREFIX"
                  "CONDA_DEFAULT_ENV" "GOPATH" "CARGO_HOME"))
@@ -45,12 +47,6 @@
 (add-hook 'text-mode-hook #'display-line-numbers-mode)
 
 (pixel-scroll-precision-mode 1)   ; built-in Emacs 29+
-
-;; which-key — built-in since Emacs 30
-(use-package which-key
-  :ensure nil
-  :custom (which-key-idle-delay 0.3)
-  :config (which-key-mode 1))
 
 (defun my/set-font ()
   (cond
@@ -94,7 +90,6 @@
 (global-set-key (kbd "C-c e p") #'flymake-goto-prev-error)
 
 ;; ── Files (f) ─────────────────────────────────
-(global-set-key (kbd "C-c f f") #'find-file)
 (global-set-key (kbd "C-c f r") #'consult-recent-file)
 
 ;; ── Git (g): magit + hunks ────────────────────
@@ -142,6 +137,10 @@
 (global-set-key (kbd "C-c o l") #'org-cliplink)
 (global-set-key (kbd "C-c o t") #'org-transclusion-mode)
 (global-set-key (kbd "C-c o y") #'org-download-yank)
+(global-set-key (kbd "C-c o I") #'org-clock-in)
+(global-set-key (kbd "C-c o O") #'org-clock-out)
+(global-set-key (kbd "C-c o R") #'org-clock-report)
+(global-set-key (kbd "C-c o e") #'org-set-effort)
 
 ;; ── Projects (p) ──────────────────────────────
 (global-set-key (kbd "C-c p p") #'project-switch-project)
@@ -182,6 +181,14 @@
 (global-set-key (kbd "C-c q q") #'save-buffers-kill-terminal)
 (global-set-key (kbd "C-c q r") #'restart-emacs)
 
+;; which-key — built-in since Emacs 30
+(use-package which-key
+  :ensure nil
+  :custom (which-key-idle-delay 0.3)
+  :config (which-key-mode 1))
+
+(repeat-mode 1)
+
 ;;; ─────────────────────────────────────────────
 ;;; 5. COMPLETION (vertico + corfu)
 ;;; ─────────────────────────────────────────────
@@ -195,7 +202,9 @@
 (use-package orderless
   :custom
   (completion-styles '(orderless basic))
-  (completion-category-overrides '((file (styles basic partial-completion)))))
+  (completion-category-overrides '((file      (styles basic partial-completion))
+                                   (eglot     (styles orderless))
+                                   (eglot-capf (styles orderless)))))
 
 (use-package marginalia :init (marginalia-mode 1))
 
@@ -225,17 +234,45 @@
   :config
   (keymap-unset corfu-map "RET")
   (corfu-popupinfo-mode 1)
-  (setq corfu-popupinfo-delay '(0.5 . 0.2)))
+  (setq corfu-popupinfo-delay '(0.5 . 0.2))
+  (corfu-history-mode 1)
+  (require 'savehist)
+  (add-to-list 'savehist-additional-variables 'corfu-history))
 
 (use-package cape
   :init
-  (add-hook 'completion-at-point-functions #'cape-keyword)
-  (add-hook 'completion-at-point-functions #'cape-file)
-  (add-hook 'completion-at-point-functions #'cape-dabbrev)
+  (add-hook 'completion-at-point-functions #'cape-file)   ; file paths everywhere
   :config
+  (add-hook 'prog-mode-hook
+            (lambda ()
+              (add-hook 'completion-at-point-functions #'cape-keyword nil t)
+              (add-hook 'completion-at-point-functions #'cape-dabbrev nil t)))
   (add-hook 'emacs-lisp-mode-hook
             (lambda ()
               (add-hook 'completion-at-point-functions #'cape-elisp-symbol nil t))))
+
+(use-package embark
+  :ensure nil
+  :vc (:url "https://github.com/oantolin/embark" :rev :newest)
+  :bind ("C-." . embark-act)
+  :config
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil (window-parameters (mode-line-format . none)))))
+
+(use-package embark-consult
+  :ensure nil
+  :vc (:url "https://github.com/oantolin/embark" :rev :newest)
+  :after (embark consult)
+  :hook (embark-collect-mode . consult-preview-at-point-mode))
+
+(use-package wgrep :commands wgrep-change-to-wgrep-mode)
+
+(use-package consult-dir
+  :bind (("C-x C-d" . consult-dir)
+         :map vertico-map
+         ("C-x C-d" . consult-dir)
+         ("C-x C-j" . consult-dir-jump-file)))
 
 ;;; ─────────────────────────────────────────────
 ;;; 6. THEME & MODELINE
@@ -297,7 +334,7 @@
          (c-ts-mode      . eglot-ensure)
          (c++-ts-mode    . eglot-ensure))
   :custom
-  (eglot-events-buffer-size 0)
+  (eglot-events-buffer-config '(:size 0))
   (eglot-autoshutdown t)
   (eglot-sync-connect 0)
   (eglot-extend-to-xref t))
@@ -347,7 +384,6 @@
 ;;; ─────────────────────────────────────────────
 
 (use-package avy :commands (avy-goto-char-2 avy-goto-char avy-goto-line))
-(use-package rg  :commands (rg rg-project rg-dwim))
 
 (use-package magit
   :commands (magit-status magit-commit magit-push magit-pull magit-fetch
@@ -389,6 +425,8 @@
   :custom
   (org-directory            "~/Documents/garden/")
   (org-log-done             'time)
+  (org-log-into-drawer      t)
+  (org-clock-mode-line-total 'today)
   (org-startup-indented     t)
   (org-hide-emphasis-markers t)
   (org-return-follows-link  t)
@@ -401,24 +439,31 @@
                                    (concat my/work-dir     "projects.org")
                                    (concat my/personal-dir "tasks.org")
                                    (concat my/personal-dir "projects.org"))
-                             (directory-files my/work-projects-dir t "\\.org$")
-                             (directory-files my/personal-projects-dir t "\\.org$")))
+                             (when (file-directory-p my/work-projects-dir)
+                               (directory-files my/work-projects-dir t "\\.org$"))
+                             (when (file-directory-p my/personal-projects-dir)
+                               (directory-files my/personal-projects-dir t "\\.org$"))))
   (org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
   (org-confirm-babel-evaluate nil)
   (org-src-preserve-indentation t)
+  (org-clock-persist t)
   :config
   (require 'org-agenda)
   (require 'org-capture)
   (require 'org-habit)
+  (setq org-habit-graph-column           55
+        org-habit-show-habits-only-for-today t)
   (require 'org-id)
+  (org-clock-persistence-insinuate)
 
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((python . t) (shell . t) (emacs-lisp . t)))
 
-  (setq org-refile-targets         '((org-agenda-files :maxlevel . 3))
-        org-refile-use-outline-path 'file
-        org-outline-path-complete-in-steps nil)
+  (setq org-refile-targets                    '((org-agenda-files :maxlevel . 3))
+        org-refile-use-outline-path            'file
+        org-outline-path-complete-in-steps     nil
+        org-refile-allow-creating-parent-nodes 'confirm)
 
   (setq org-todo-keywords
         '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
@@ -460,7 +505,27 @@
 
 (use-package org-super-agenda
   :after org
-  :config (org-super-agenda-mode))
+  :config
+  (org-super-agenda-mode)
+  (setq org-super-agenda-groups
+        '((:name "Overdue"
+           :deadline past
+           :scheduled past)
+          (:name "Today"
+           :time-grid t
+           :scheduled today
+           :deadline today)
+          (:name "Next Actions"
+           :todo "NEXT")
+          (:name "Learning"
+           :todo ("NEW" "LEARNING" "REVIEW" "APPLY"))
+          (:name "Work"
+           :file-path "work/")
+          (:name "Personal"
+           :file-path "personal/")
+          (:name "Inbox"
+           :file-path "inbox\\.org")
+          (:discard (:anything t)))))
 
 (use-package org-roam
   :after org
@@ -468,6 +533,8 @@
   (org-roam-directory          (expand-file-name "~/Documents/garden/"))
   (org-roam-completion-everywhere t)
   (org-roam-database-connector 'sqlite-builtin)   ; Emacs 30 native sqlite
+  (org-roam-node-display-template
+   (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
   (org-roam-capture-templates
    '(("d" "default" plain "%?"
       :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
@@ -491,23 +558,26 @@
   :config
   (org-roam-db-autosync-mode)
 
+  (defun my/roam--template (key)
+    (cl-find key org-roam-capture-templates :key #'car :test #'string=))
+
   (defun my/roam-capture-concept ()
     (interactive)
     (org-roam-capture- :node (org-roam-node-create
                               :title (read-string "Concept: "))
-                       :templates (list (nth 1 org-roam-capture-templates))))
+                       :templates (list (my/roam--template "c"))))
 
   (defun my/roam-capture-question ()
     (interactive)
     (org-roam-capture- :node (org-roam-node-create
                               :title (read-string "Question topic: "))
-                       :templates (list (nth 2 org-roam-capture-templates))))
+                       :templates (list (my/roam--template "q"))))
 
   (defun my/roam-capture-person ()
     (interactive)
     (org-roam-capture- :node (org-roam-node-create
                               :title (read-string "Person name: "))
-                       :templates (list (nth 3 org-roam-capture-templates))))
+                       :templates (list (my/roam--template "P"))))
 
   (defun my/roam-log-interaction ()
     (interactive)
@@ -614,6 +684,14 @@
   :hook (org-mode . olivetti-mode)
   :custom (olivetti-body-width 90))
 
+(use-package jinx
+  :ensure nil
+  :vc (:url "https://github.com/minad/jinx" :rev :newest)
+  :hook ((org-mode      . jinx-mode)
+         (markdown-mode . jinx-mode)
+         (text-mode     . jinx-mode))
+  :bind ("M-$" . jinx-correct))
+
 ;;; ─────────────────────────────────────────────
 ;;; 16. PYTHON / CONDA
 ;;; ─────────────────────────────────────────────
@@ -679,6 +757,7 @@
 (setq auto-save-default  t
       auto-save-timeout  20
       auto-save-interval 200)
+(auto-save-visited-mode 1)
 
 (save-place-mode 1)
 (setq save-place-file (expand-file-name "saveplace" user-emacs-directory))
@@ -700,7 +779,12 @@
 
 (setq use-short-answers     t
       scroll-conservatively 101
-      scroll-margin         3)
+      scroll-margin         8
+      isearch-lazy-count    t
+      text-mode-ispell-word-completion nil)
+
+(setq compilation-environment '("NO_COLOR=1"))
+(add-hook 'compilation-filter-hook #'ansi-color-compilation-filter)
 
 (setq backup-directory-alist `(("." . ,(expand-file-name "backups/" user-emacs-directory)))
       backup-by-copying    t
@@ -713,7 +797,6 @@
 (delete-selection-mode 1)
 (global-auto-revert-mode 1)
 (setq global-auto-revert-non-file-buffers t)
-(repeat-mode 1)
 
 ;;; ─────────────────────────────────────────────
 ;;; 20. WORKFLOW FUNCTIONS

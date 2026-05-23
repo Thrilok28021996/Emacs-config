@@ -9,6 +9,7 @@
 | C-f / C-b | char forward / backward       |
 | M-f / M-b | word forward / backward       |
 | C-a / C-e | line start / end              |
+| M-m       | first non-whitespace on line  |
 | C-n / C-p | line down / up                |
 | M-a / M-e | sentence start / end          |
 | C-v / M-v | page down / up                |
@@ -27,14 +28,16 @@
 | C-x h     | select all (mark whole buffer)  |
 
 ** Jump
-| Key       | Action                          |
-|-----------+---------------------------------|
-| C-c j     | avy jump (2-char)               |
-| M-.       | go to definition (xref)         |
-| M-,       | jump back (xref)                |
-| M-?       | find references (xref)          |
-| C-x C-SPC | pop global mark                 |
-| C-u C-SPC | pop local mark ring             |
+| Key       | Action                                              |
+|-----------+-----------------------------------------------------|
+| C-c j     | avy jump (2-char)                                   |
+| M-.       | go to definition (xref)                             |
+| M-,       | jump back (xref)                                    |
+| M-?       | find references (xref)                              |
+| C-u C-SPC | pop local mark ring (back button within buffer)     |
+| C-x C-SPC | pop global mark (back button across buffers)        |
+
+Tip: xref jumps, isearch, and avy all set the mark automatically — =C-u C-SPC= acts as a back button after any of them.
 
 ** Search
 | Key       | Action                          |
@@ -44,11 +47,20 @@
 | C-c s r   | ripgrep project                 |
 | C-c s i   | jump to symbol (imenu)          |
 
+Tip: =C-s= shows ="3 of 12"= match count automatically (=isearch-lazy-count=).
+
+*** wgrep — edit ripgrep results
+1. =C-c s r= → run ripgrep
+2. =C-.= → =e= to enter wgrep mode (all matches become editable)
+3. Edit any line directly
+4. =C-c C-c= → write all changes back to their files
+5. =C-c C-k= → abort without saving
+
 * Files
 | Key         | Action                          |
 |-------------+---------------------------------|
-| C-c f f     | find / open file                |
-| C-x C-f     | find file (native)              |
+| C-x C-f     | find / open file                |
+| C-x C-d     | jump to directory (consult-dir) |
 | C-c f r     | recent files                    |
 | C-x C-s     | save file                       |
 | C-x C-w     | save as                         |
@@ -207,6 +219,16 @@ Rule: =q= dismisses read-only/special buffers. =C-c b k= removes a file buffer f
 | C-c o t     | transclusion toggle             |
 | C-c o y     | paste image                     |
 
+** Org Clock (C-c o)
+| Key         | Action                          |
+|-------------+---------------------------------|
+| C-c o I     | clock in (start timer)          |
+| C-c o O     | clock out (stop timer)          |
+| C-c o R     | clock report (table)            |
+| C-c o e     | set effort estimate             |
+
+Tip: clock-in/out against any heading to track time. =C-c o R= inserts a report table at point.
+
 ** Capture shortcuts (C-c n)
 | Key         | Action                          |
 |-------------+---------------------------------|
@@ -225,6 +247,35 @@ Rule: =q= dismisses read-only/special buffers. =C-c b k= removes a file buffer f
 | C-c n a     | review agenda (SRS)             |
 | C-c n d     | mark item reviewed              |
 | C-c n s     | search garden                   |
+
+** Tables
+*** Create
+| Method                          | How                                      |
+|---------------------------------+------------------------------------------|
+| Type directly                   | start line with =|=, press TAB           |
+| Convert region                  | select text, =C-c |=                     |
+| Insert hline (header separator) | =C-c -= after first row                  |
+
+Example:
+#+begin_example
+| Name  | Area  |    ← type, press TAB
+|-------+-------|    ← C-c -
+| Alice | Tech  |    ← keep tabbing
+#+end_example
+
+*** Navigate & Edit
+| Key           | Action                          |
+|---------------+---------------------------------|
+| TAB           | next cell (new row at end)      |
+| S-TAB         | prev cell                       |
+| RET           | next row, same column           |
+| C-c C-c       | realign table                   |
+| C-c -         | insert hline below              |
+| C-c ^         | sort column                     |
+| M-← / M-→    | move column left / right        |
+| M-↑ / M-↓    | move row up / down              |
+| M-S-← / M-S-→ | delete / insert column         |
+| M-S-↑ / M-S-↓ | delete / insert row            |
 
 ** Navigation inside org buffers
 | Key           | Action                      |
@@ -353,6 +404,14 @@ Execute code blocks inside org files. Results insert below the block.
 =org-super-agenda-mode= is active — groups agenda items by category automatically.
 No extra keys needed; configure grouping in =org-super-agenda-groups= if you want custom sections.
 
+* Writing & Spell Check
+| Key         | Action                          |
+|-------------+---------------------------------|
+| M-$         | jinx-correct — fix word at point |
+
+=jinx= checks spelling in org, markdown, and text files. Fast, uses system =enchant= dictionaries.
+Press =M-$= on any underlined word → pick correction or add to dictionary.
+
 * AI Assistant (C-c a)
 | Key         | Action                          |
 |-------------+---------------------------------|
@@ -373,6 +432,16 @@ No extra keys needed; configure grouping in =org-super-agenda-groups= if you wan
 - =corfu= — inline popup, auto after 2 chars
 - =vertico= — minibuffer completion
 - =orderless= — fuzzy: type words in any order
+
+** Embark (act on any candidate)
+| Key         | Action                          |
+|-------------+---------------------------------|
+| C-.         | embark-act — open action menu   |
+
+Works anywhere: minibuffer candidates, =corfu= completions, region, symbol at point.
+Examples: on a file candidate → open, delete, rename; on a symbol → describe, find-refs.
+
+Tip: =C-.= in =consult-ripgrep= results → =e= → enter =wgrep= mode to edit all matches inline.
 
 * Virtual Environment (C-c v)
 | Key         | Action                          |
