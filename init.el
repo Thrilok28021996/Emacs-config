@@ -17,8 +17,7 @@
 (unless package-archive-contents (package-refresh-contents))
 
 (require 'use-package)
-(setq use-package-always-ensure t
-      use-package-verbose nil)
+(setq use-package-always-ensure t)
 
 ;;; ─────────────────────────────────────────────
 ;;; 2. PATH (macOS)
@@ -46,7 +45,7 @@
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
 (add-hook 'text-mode-hook #'display-line-numbers-mode)
 
-(pixel-scroll-precision-mode 1)   ; built-in Emacs 29+
+(pixel-scroll-precision-mode 1)
 
 (defun my/set-font ()
   (cond
@@ -60,6 +59,15 @@
               (lambda (f) (with-selected-frame f (my/set-font))))
   (my/set-font))
 
+(use-package tab-bar
+  :ensure nil
+  :custom
+  (tab-bar-show 1)
+  (tab-bar-new-tab-choice "*scratch*")
+  (tab-bar-close-button-show nil)
+  (tab-bar-new-button-show nil)
+  :config (tab-bar-mode 1))
+
 ;;; ─────────────────────────────────────────────
 ;;; 4. KEYBINDINGS
 ;;; ─────────────────────────────────────────────
@@ -67,8 +75,12 @@
 ;; Redo — Emacs 28+ builtin undo-redo
 (global-set-key (kbd "C-?") #'undo-redo)
 
-;; other-window shortcut
 (global-set-key (kbd "M-o") #'other-window)
+
+(global-set-key (kbd "C->") #'indent-rigidly-right-to-tab-stop)
+(global-set-key (kbd "C-<") #'indent-rigidly-left-to-tab-stop)
+(global-set-key (kbd "C-c i r") #'indent-rigidly-right-to-tab-stop)
+(global-set-key (kbd "C-c i l") #'indent-rigidly-left-to-tab-stop)
 
 ;; ── Buffers (b) ──────────────────────────────
 (global-set-key (kbd "C-c b b")   #'consult-buffer)
@@ -83,6 +95,8 @@
 (global-set-key (kbd "C-c c f") #'apheleia-format-buffer)
 (global-set-key (kbd "C-c c p") #'my/python-run-current-file)
 (global-set-key (kbd "C-c c c") #'my/cpp-compile-run-current-file)
+(global-set-key (kbd "C-c c b") #'dape-breakpoint-toggle)
+(global-set-key (kbd "C-c c B") #'dape)
 
 ;; ── Errors (e): flymake ───────────────────────
 (global-set-key (kbd "C-c e l") #'consult-flymake)
@@ -154,6 +168,7 @@
 (global-set-key (kbd "C-c s s") #'consult-line)
 (global-set-key (kbd "C-c s r") #'consult-ripgrep)
 (global-set-key (kbd "C-c s i") #'consult-imenu)
+(global-set-key (kbd "C-c s t") #'consult-todo)
 
 ;; ── Virtual env (v): conda ────────────────────
 (global-set-key (kbd "C-c v a") #'conda-env-activate)
@@ -164,6 +179,14 @@
 (global-set-key (kbd "C-c w U") #'winner-redo)
 (global-set-key (kbd "C-c w f") #'toggle-frame-fullscreen)
 (global-set-key (kbd "C-c w =") #'balance-windows)
+(global-set-key (kbd "C-c w h") #'windmove-left)
+(global-set-key (kbd "C-c w l") #'windmove-right)
+(global-set-key (kbd "C-c w k") #'windmove-up)
+(global-set-key (kbd "C-c w j") #'windmove-down)
+(global-set-key (kbd "C-c w H") #'shrink-window-horizontally)
+(global-set-key (kbd "C-c w L") #'enlarge-window-horizontally)
+(global-set-key (kbd "C-c w K") #'shrink-window)
+(global-set-key (kbd "C-c w J") #'enlarge-window)
 
 ;; ── AI (a) ────────────────────────────────────
 (global-set-key (kbd "C-c a c") #'gptel)
@@ -197,20 +220,34 @@
   :init (vertico-mode 1)
   :custom
   (vertico-cycle t)
-  (vertico-count 15))
+  (vertico-count 15)
+  (vertico-resize nil)
+  :config
+  (add-hook 'rfn-eshadow-update-overlay-hook #'vertico-directory-tidy)
+  (add-hook 'minibuffer-setup-hook #'vertico-repeat-save)
+  (keymap-set vertico-map "DEL" #'vertico-directory-delete-char))
 
 (use-package orderless
   :custom
   (completion-styles '(orderless basic))
-  (completion-category-overrides '((file      (styles basic partial-completion))
-                                   (eglot     (styles orderless))
-                                   (eglot-capf (styles orderless)))))
+  (completion-category-defaults nil)
+  (completion-category-overrides '((file       (styles basic partial-completion))
+                                   (eglot      (styles orderless))
+                                   (eglot-capf (styles orderless))))
+  (orderless-component-separator #'orderless-escapable-split-on-space))
 
 (use-package marginalia :init (marginalia-mode 1))
 
 (use-package consult
   :bind ("C-s" . consult-line)
-  :custom (consult-preview-key "M-.")
+  :custom
+  (consult-preview-key "M-.")
+  (consult-narrow-key "<")
+  (consult-line-numbers-widen t)
+  (consult-async-min-input 2)
+  (consult-async-refresh-delay 0.15)
+  (consult-async-input-throttle 0.2)
+  (consult-async-input-debounce 0.1)
   :config
   (setq xref-show-xrefs-function       #'consult-xref
         xref-show-definitions-function #'consult-xref))
@@ -222,6 +259,7 @@
   (corfu-auto t)
   (corfu-auto-delay 0.15)
   (corfu-auto-prefix 2)
+  (corfu-quit-at-boundary 'separator)
   (corfu-quit-no-match 'separator)
   (corfu-preview-current nil)
   :bind (:map corfu-map
@@ -241,7 +279,7 @@
 
 (use-package cape
   :init
-  (add-hook 'completion-at-point-functions #'cape-file)   ; file paths everywhere
+  (add-hook 'completion-at-point-functions #'cape-file)
   :config
   (add-hook 'prog-mode-hook
             (lambda ()
@@ -274,6 +312,10 @@
          ("C-x C-d" . consult-dir)
          ("C-x C-j" . consult-dir-jump-file)))
 
+(use-package consult-todo
+  :vc (:url "https://github.com/liuyinz/consult-todo" :rev :newest)
+  :after (consult hl-todo))
+
 ;;; ─────────────────────────────────────────────
 ;;; 6. THEME & MODELINE
 ;;; ─────────────────────────────────────────────
@@ -291,7 +333,9 @@
   :custom
   (doom-modeline-height 28)
   (doom-modeline-icon t)
-  (doom-modeline-major-mode-icon t))
+  (doom-modeline-major-mode-icon t)
+  (doom-modeline-which-function t)
+  :config (which-function-mode 1))
 
 (use-package nerd-icons :defer t)
 
@@ -321,18 +365,37 @@
   (highlight-indent-guides-character ?|)
   (highlight-indent-guides-responsive 'top))
 
+(use-package ligature
+  :vc (:url "https://github.com/mickeynp/ligature.el" :rev :newest)
+  :config
+  (ligature-set-ligatures 'prog-mode
+    '("->" "=>" "!=" ">=" "<=" "==" "===" "!==" "::" "..."
+      "++" "--" "||" "&&" "??" ":=" "<-" "<>" "<<" ">>" "<=>" "/**" "/*" "*/"))
+  (global-ligature-mode t))
+
+(use-package hl-todo
+  :vc (:url "https://github.com/tarsius/hl-todo" :rev :newest)
+  :hook (prog-mode . hl-todo-mode))
+
+(use-package expand-region
+  :bind ("C-=" . er/expand-region))
+
+(use-package symbol-overlay
+  :hook (prog-mode . symbol-overlay-mode))
+
 ;;; ─────────────────────────────────────────────
 ;;; 8. LSP — eglot (built-in)
 ;;; ─────────────────────────────────────────────
 
 (use-package eglot
   :ensure nil
-  :hook ((python-mode    . eglot-ensure)
-         (python-ts-mode . eglot-ensure)
-         (c-mode         . eglot-ensure)
-         (c++-mode       . eglot-ensure)
-         (c-ts-mode      . eglot-ensure)
-         (c++-ts-mode    . eglot-ensure))
+  :hook ((python-mode       . eglot-ensure)
+         (python-ts-mode    . eglot-ensure)
+         (c-mode            . eglot-ensure)
+         (c++-mode          . eglot-ensure)
+         (c-ts-mode         . eglot-ensure)
+         (c++-ts-mode       . eglot-ensure)
+         (eglot-managed-mode . eglot-inlay-hints-mode))
   :custom
   (eglot-events-buffer-config '(:size 0))
   (eglot-autoshutdown t)
@@ -359,7 +422,9 @@
 ;;; ─────────────────────────────────────────────
 
 (use-package treesit-auto
-  :custom (treesit-auto-install 'prompt)
+  :custom
+  (treesit-auto-install 'prompt)
+  (treesit-font-lock-level 4)
   :config
   (treesit-auto-add-to-auto-mode-alist 'all)
   (global-treesit-auto-mode))
@@ -371,6 +436,9 @@
 (use-package project
   :ensure nil
   :custom
+  (project-vc-extra-root-markers
+   '("pyproject.toml" "setup.py" "Cargo.toml" "go.mod"
+     "package.json" "CMakeLists.txt" "Makefile"))
   (project-switch-commands
    '((project-find-file    "Find file"      ?f)
      (project-find-regexp  "Find regexp"    ?g)
@@ -393,7 +461,10 @@
   :custom
   (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
   (magit-save-repository-buffers 'dontask)
-  (magit-diff-refine-hunk 'all))
+  (magit-diff-refine-hunk 'all)
+  (magit-revision-insert-related-refs nil)
+  (magit-uniquify-buffer-names nil)
+  (transient-default-level 5))
 
 (use-package diff-hl
   :hook ((after-init         . global-diff-hl-mode)
@@ -401,6 +472,15 @@
   :config (diff-hl-flydiff-mode 1))
 
 (use-package restart-emacs :commands restart-emacs)
+
+(use-package vundo
+  :bind ("C-x u" . vundo))
+
+(use-package dape
+  :custom
+  (dape-buffer-window-arrangement 'right)
+  :config
+  (dape-breakpoint-global-mode 1))
 
 (use-package helpful
   :commands (helpful-callable helpful-variable helpful-key helpful-at-point)
@@ -446,7 +526,11 @@
   (org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
   (org-confirm-babel-evaluate nil)
   (org-src-preserve-indentation t)
+  (org-src-tab-acts-natively t)
   (org-clock-persist t)
+  (org-enforce-todo-dependencies t)
+  (org-agenda-window-setup 'current-window)
+  (org-image-actual-width nil)
   :config
   (require 'org-agenda)
   (require 'org-capture)
@@ -635,8 +719,7 @@
 (use-package org-transclusion
   :after org
   :bind (:map org-mode-map
-         ("C-c t a" . org-transclusion-add)
-         ("C-c t t" . org-transclusion-mode)))
+         ("C-c t a" . org-transclusion-add)))
 
 (use-package org-cliplink :after org)
 
@@ -646,9 +729,23 @@
 
 (use-package markdown-mode
   :mode ("\\.md\\'" "\\.markdown\\'")
-  :custom (markdown-command "pandoc"))
+  :hook (markdown-mode . visual-line-mode)
+  :custom
+  (markdown-command "pandoc")
+  (markdown-fontify-code-blocks-natively t)
+  (markdown-header-scaling t)
+  (markdown-hide-urls t))
 
 (use-package pandoc-mode :hook (markdown-mode . pandoc-mode))
+
+(use-package markdown-toc
+  :after markdown-mode
+  :commands (markdown-toc-generate-toc markdown-toc-refresh-toc))
+
+(use-package grip-mode
+  :vc (:url "https://github.com/seagle0128/grip-mode" :rev :newest)
+  :after markdown-mode
+  :commands grip-mode)
 
 (use-package deft
   :commands deft
@@ -681,7 +778,8 @@
 ;;; ─────────────────────────────────────────────
 
 (use-package olivetti
-  :hook (org-mode . olivetti-mode)
+  :hook ((org-mode      . olivetti-mode)
+         (markdown-mode . olivetti-mode))
   :custom (olivetti-body-width 90))
 
 (use-package jinx
@@ -795,6 +893,20 @@
 
 (show-paren-mode 1)
 (delete-selection-mode 1)
+(global-so-long-mode 1)
+
+;; Sync kill ring with macOS clipboard in terminal mode
+(unless (display-graphic-p)
+  (setq interprogram-cut-function
+        (lambda (text)
+          (with-temp-buffer
+            (insert text)
+            (call-process-region (point-min) (point-max) "pbcopy"))))
+  (setq interprogram-paste-function
+        (lambda ()
+          (with-temp-buffer
+            (call-process "pbpaste" nil t nil)
+            (buffer-string)))))
 (global-auto-revert-mode 1)
 (setq global-auto-revert-non-file-buffers t)
 

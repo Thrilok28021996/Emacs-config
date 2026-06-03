@@ -46,8 +46,22 @@ Tip: xref jumps, isearch, and avy all set the mark automatically — =C-u C-SPC=
 | C-c s s   | search buffer                   |
 | C-c s r   | ripgrep project                 |
 | C-c s i   | jump to symbol (imenu)          |
+| C-c s t   | search TODO comments            |
 
 Tip: =C-s= shows ="3 of 12"= match count automatically (=isearch-lazy-count=).
+
+** Isearch (built-in incremental search)
+| Key       | Action                              |
+|-----------+-------------------------------------|
+| C-s       | start forward isearch               |
+| C-r       | start backward isearch              |
+| C-s       | next match (while searching)        |
+| C-r       | previous match (while searching)    |
+| M-s .     | search symbol at point              |
+| C-s C-w   | extend search to word at point      |
+| RET       | stop, stay at match                 |
+| C-g       | cancel, return to start             |
+| M-s o     | occur — list all matches in buffer  |
 
 *** wgrep — edit ripgrep results
 1. =C-c s r= → run ripgrep
@@ -55,12 +69,13 @@ Tip: =C-s= shows ="3 of 12"= match count automatically (=isearch-lazy-count=).
 3. Edit any line directly
 4. =C-c C-c= → write all changes back to their files
 5. =C-c C-k= → abort without saving
-
+   
 * Files
 | Key         | Action                          |
 |-------------+---------------------------------|
 | C-x C-f     | find / open file                |
 | C-x C-d     | jump to directory (consult-dir) |
+| C-x C-j     | jump to file in dir (minibuffer)|
 | C-c f r     | recent files                    |
 | C-x C-s     | save file                       |
 | C-x C-w     | save as                         |
@@ -112,11 +127,28 @@ Rule: =q= dismisses read-only/special buffers. =C-c b k= removes a file buffer f
 | C-x 0       | close this window               |
 | C-x 1       | keep only this window           |
 | C-x o       | other window (cycle)            |
-| M-o         | other window (shortcut)         |
+| M-o         | other window (fast cycle)       |
+| C-c w h     | move to left window             |
+| C-c w l     | move to right window            |
+| C-c w k     | move to window above            |
+| C-c w j     | move to window below            |
+| C-c w H     | shrink window horizontally      |
+| C-c w L     | enlarge window horizontally     |
+| C-c w K     | shrink window vertically        |
+| C-c w J     | enlarge window vertically       |
 | C-c w u     | undo window layout (winner)     |
 | C-c w U     | redo window layout (winner)     |
 | C-c w =     | balance windows                 |
 | C-c w f     | fullscreen toggle               |
+
+** Tabs (tab-bar)
+| Key         | Action                          |
+|-------------+---------------------------------|
+| C-x t 2     | new tab                         |
+| C-x t 0     | close current tab               |
+| C-x t o     | next tab                        |
+| C-x t RET   | switch tab by name              |
+| C-x t r     | rename tab                      |
 
 * Editing
 ** Basic
@@ -129,9 +161,33 @@ Rule: =q= dismisses read-only/special buffers. =C-c b k= removes a file buffer f
 | C-k         | kill (cut) to end of line       |
 | C-/         | undo                            |
 | C-?         | redo                            |
+| C-x u       | visual undo tree (vundo)        |
 | M-;         | comment / uncomment             |
 | TAB         | indent line                     |
+| C->         | indent region right (GUI only)  |
+| C-<         | indent region left (GUI only)   |
+| C-c i r     | indent region right (terminal)  |
+| C-c i l     | indent region left (terminal)   |
+| C-x TAB     | indent rigidly (then ←/→ keys)  |
+| C-=         | expand selection (expand-region)|
 | M-q         | fill/wrap paragraph             |
+
+** Symbol Overlay (prog-mode — highlight all occurrences)
+| Key | Action                              |
+|-----+-------------------------------------|
+| M-i | highlight symbol at point           |
+| M-n | jump to next occurrence             |
+| M-p | jump to previous occurrence         |
+| M-Q | query-replace highlighted symbol    |
+| q   | remove all highlights               |
+
+Tip: =M-i= then =M-n/M-p= to navigate all uses of a variable/function without a full search.
+
+** Yasnippet (prog-mode)
+| Key     | Action                              |
+|---------+-------------------------------------|
+| TAB     | expand snippet trigger              |
+| M-x yas-insert-snippet | pick snippet by name  |
 
 ** Keyboard Macros
 | Key         | Action                          |
@@ -167,9 +223,19 @@ Rule: =q= dismisses read-only/special buffers. =C-c b k= removes a file buffer f
 | C-c c f     | format buffer (apheleia)        |
 | C-c c p     | run python file                 |
 | C-c c c     | compile C++                     |
+| C-c c b     | toggle breakpoint (dape)        |
+| C-c c B     | start debug session (dape)      |
 | M-.         | go to definition                |
 | M-,         | jump back                       |
 | C-h .       | show docs (eldoc) at point      |
+
+** Compilation Buffer
+| Key     | Action                              |
+|---------+-------------------------------------|
+| g       | recompile                           |
+| n / p   | next / prev error line              |
+| q       | quit compilation window             |
+| C-x `   | jump to next error in source        |
 
 * Errors (C-c e)
 | Key         | Action                          |
@@ -193,6 +259,28 @@ Rule: =q= dismisses read-only/special buffers. =C-c b k= removes a file buffer f
 | C-c g s     | stash                           |
 | C-c g n     | next hunk (diff-hl)             |
 | C-c g N     | prev hunk (diff-hl)             |
+
+** Inside Magit Status Buffer
+| Key   | Action                          |
+|-------+---------------------------------|
+| s     | stage file / hunk at point      |
+| u     | unstage                         |
+| S     | stage all                       |
+| U     | unstage all                     |
+| c c   | commit                          |
+| P p   | push to remote                  |
+| F p   | pull from remote                |
+| l l   | log current branch              |
+| b b   | checkout branch                 |
+| b c   | create and checkout branch      |
+| d d   | diff working tree               |
+| z z   | stash                           |
+| z p   | pop stash                       |
+| r r   | rebase interactively            |
+| t t   | create tag                      |
+| ?     | show all magit keys             |
+| q     | quit magit                      |
+| TAB   | expand / collapse section       |
 
 * Projects (C-c p)
 | Key         | Action                          |
@@ -283,14 +371,22 @@ Example:
 | TAB           | cycle heading visibility    |
 | S-TAB         | cycle all headings          |
 | M-RET         | new heading at same level   |
-| M-h / M-l     | promote / demote heading    |
-| M-j / M-k     | move subtree up / down      |
+| M-LEFT        | promote heading             |
+| M-RIGHT       | demote heading              |
+| M-UP          | move subtree up             |
+| M-DOWN        | move subtree down           |
+| C-c C-n       | next heading                |
+| C-c C-p       | previous heading            |
+| C-c C-f       | next heading same level     |
+| C-c C-b       | prev heading same level     |
 | C-c C-t       | cycle TODO state            |
 | C-c C-s       | schedule                    |
 | C-c C-d       | deadline                    |
+| C-c C-w       | refile heading              |
 | C-c C-l       | insert link                 |
 | C-c C-o       | open link                   |
 | C-c C-e       | export                      |
+| C-c C-x C-v   | toggle inline images        |
 
 ** Agenda buffer
 | Key | Action                    |
@@ -370,8 +466,13 @@ Work in focused 25-minute blocks, tracked per org heading.
 *** Transclusion
 Include live content from another node — changes in source reflect everywhere it's transcluded.
 
+| Key     | Action                          |
+|---------+---------------------------------|
+| C-c o t | toggle transclusion mode        |
+| C-c t a | add transclusion at point       |
+
 1. =C-c o t= → toggle transclusion mode in current buffer
-2. =C-c t a= (in org-mode) → add a transclusion at point — prompts for source node
+2. =C-c t a= (org-mode only) → add a transclusion at point — prompts for source node
 3. Content appears inline; edit the source file to update it everywhere
 4. Toggle off with =C-c o t= to see raw =#+transclude= links
 
@@ -403,6 +504,25 @@ Execute code blocks inside org files. Results insert below the block.
 *** Super Agenda (agenda grouping)
 =org-super-agenda-mode= is active — groups agenda items by category automatically.
 No extra keys needed; configure grouping in =org-super-agenda-groups= if you want custom sections.
+
+* Markdown
+| Key                           | Action                          |
+|-------------------------------+---------------------------------|
+| C-c C-c p                     | preview (pandoc-mode)           |
+| M-x grip-mode                 | live GitHub preview in browser  |
+| M-x markdown-toc-generate-toc | insert TOC at point             |
+| M-x markdown-toc-refresh-toc  | update existing TOC             |
+| C-c C-s b                     | bold (wrap selection)           |
+| C-c C-s i                     | italic                          |
+| C-c C-s c                     | inline code                     |
+| C-c C-l                       | insert link                     |
+| C-c C-i                       | insert image                    |
+| TAB                           | cycle heading / fold block      |
+| C-c C-n / C-c C-p            | next / prev heading             |
+| C-c s i                       | jump to heading (consult-imenu) |
+| C-c c f                       | format with prettier (apheleia) |
+
+Tip: =grip-mode= needs =pip install grip= once. Renders GitHub-flavored markdown live.
 
 * Writing & Spell Check
 | Key         | Action                          |
@@ -469,23 +589,24 @@ Tip: press =C-c= and wait 0.3s — which-key shows all options.
 | C-c q r     | restart emacs                   |
 
 * Prefix Map at a Glance
-| Prefix  | Domain        |
-|---------+---------------|
-| C-c b   | Buffers       |
-| C-c c   | Code / LSP    |
-| C-c e   | Errors        |
-| C-c f   | Files         |
-| C-c g   | Git           |
-| C-c j   | Jump (avy)    |
-| C-c n   | Notes/capture |
-| C-c o   | Org / Roam    |
-| C-c p   | Projects      |
-| C-c s   | Search        |
-| C-c v   | Virtual env   |
-| C-c w   | Windows       |
-| C-c a   | AI            |
-| C-c h   | Help          |
-| C-c q   | Quit          |
+| Prefix  | Domain           |
+|---------+------------------|
+| C-c b   | Buffers          |
+| C-c c   | Code / LSP / Debug |
+| C-c e   | Errors           |
+| C-c f   | Files            |
+| C-c g   | Git              |
+| C-c j   | Jump (avy)       |
+| C-c n   | Notes/capture    |
+| C-c o   | Org / Roam       |
+| C-c p   | Projects         |
+| C-c s   | Search           |
+| C-c v   | Virtual env      |
+| C-c w   | Windows / Tabs   |
+| C-c a   | AI               |
+| C-c h   | Help             |
+| C-c q   | Quit             |
+| C-x t   | Tab bar          |
 
 * Workflow — Daily Use
 1. Start day: =C-c o a= → check agenda
