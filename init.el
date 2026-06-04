@@ -57,7 +57,9 @@
 (if (daemonp)
     (add-hook 'after-make-frame-functions
               (lambda (f) (with-selected-frame f (my/set-font))))
-  (my/set-font))
+  (my/set-font)
+  (add-hook 'after-make-frame-functions
+            (lambda (f) (with-selected-frame f (my/set-font)))))
 
 (use-package tab-bar
   :ensure nil
@@ -290,7 +292,6 @@
               (add-hook 'completion-at-point-functions #'cape-elisp-symbol nil t))))
 
 (use-package embark
-  :ensure nil
   :vc (:url "https://github.com/oantolin/embark" :rev :newest)
   :bind ("C-." . embark-act)
   :config
@@ -299,7 +300,6 @@
                  nil (window-parameters (mode-line-format . none)))))
 
 (use-package embark-consult
-  :ensure nil
   :vc (:url "https://github.com/oantolin/embark" :rev :newest)
   :after (embark consult)
   :hook (embark-collect-mode . consult-preview-at-point-mode))
@@ -335,7 +335,11 @@
   (doom-modeline-icon t)
   (doom-modeline-major-mode-icon t)
   (doom-modeline-which-function t)
-  :config (which-function-mode 1))
+  :config
+  (which-function-mode 1)
+  (add-hook 'after-make-frame-functions
+            (lambda (f) (with-selected-frame f
+                          (setq doom-modeline-icon (display-graphic-p))))))
 
 (use-package nerd-icons :defer t)
 
@@ -371,7 +375,7 @@
   (ligature-set-ligatures 'prog-mode
     '("->" "=>" "!=" ">=" "<=" "==" "===" "!==" "::" "..."
       "++" "--" "||" "&&" "??" ":=" "<-" "<>" "<<" ">>" "<=>" "/**" "/*" "*/"))
-  (global-ligature-mode t))
+  (when (display-graphic-p) (global-ligature-mode t)))
 
 (use-package hl-todo
   :vc (:url "https://github.com/tarsius/hl-todo" :rev :newest)
@@ -399,7 +403,7 @@
   :custom
   (eglot-events-buffer-config '(:size 0))
   (eglot-autoshutdown t)
-  (eglot-sync-connect 0)
+  (eglot-sync-connect 1)
   (eglot-extend-to-xref t))
 
 ;;; ─────────────────────────────────────────────
@@ -463,7 +467,6 @@
   (magit-save-repository-buffers 'dontask)
   (magit-diff-refine-hunk 'all)
   (magit-revision-insert-related-refs nil)
-  (magit-uniquify-buffer-names nil)
   (transient-default-level 5))
 
 (use-package diff-hl
@@ -694,8 +697,7 @@
   :hook ((org-mode            . org-modern-mode)
          (org-agenda-finalize . org-modern-agenda))
   :custom
-  (org-modern-star '("◉" "○" "◈" "◇" "✦"))
-  (org-modern-hide-stars nil))
+  (org-modern-star '("◉" "○" "◈" "◇" "✦")))
 
 (use-package org-pomodoro
   :after org
@@ -783,7 +785,6 @@
   :custom (olivetti-body-width 90))
 
 (use-package jinx
-  :ensure nil
   :vc (:url "https://github.com/minad/jinx" :rev :newest)
   :hook ((org-mode      . jinx-mode)
          (markdown-mode . jinx-mode)
@@ -817,7 +818,7 @@
   (when (buffer-file-name)
     (let* ((src (buffer-file-name))
            (exe (concat (file-name-sans-extension src) ".out")))
-      (compile (format "g++ -std=c++17 -Wall %s -o %s && ./%s"
+      (compile (format "g++ -std=c++17 -Wall %s -o %s && %s"
                        (shell-quote-argument src)
                        (shell-quote-argument exe)
                        (shell-quote-argument exe))))))
@@ -852,9 +853,7 @@
 ;;; 19. PERSISTENCE & DEFAULTS (built-ins)
 ;;; ─────────────────────────────────────────────
 
-(setq auto-save-default  t
-      auto-save-timeout  20
-      auto-save-interval 200)
+(setq auto-save-default nil)
 (auto-save-visited-mode 1)
 
 (save-place-mode 1)
@@ -878,10 +877,9 @@
 (setq use-short-answers     t
       scroll-conservatively 101
       scroll-margin         8
-      isearch-lazy-count    t
-      text-mode-ispell-word-completion nil)
+      isearch-lazy-count    t)
 
-(setq compilation-environment '("NO_COLOR=1"))
+(add-to-list 'compilation-environment "NO_COLOR=1")
 (add-hook 'compilation-filter-hook #'ansi-color-compilation-filter)
 
 (setq backup-directory-alist `(("." . ,(expand-file-name "backups/" user-emacs-directory)))
@@ -938,7 +936,6 @@
 ;;; ─────────────────────────────────────────────
 
 (use-package gptel
-  :ensure nil
   :vc (:url "https://github.com/karthink/gptel" :rev :newest)
   :config
   (setq gptel-backend
