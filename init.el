@@ -531,6 +531,8 @@
   (org-enforce-todo-dependencies t)
   (org-agenda-window-setup 'current-window)
   (org-image-actual-width nil)
+  (org-agenda-inhibit-startup t)          ; skip per-file startup → faster agenda
+  (org-fold-catch-invisible-edits 'smart) ; never silently edit folded text
   :config
   (require 'org-agenda)
   (require 'org-capture)
@@ -547,6 +549,7 @@
   (setq org-refile-targets                    '((org-agenda-files :maxlevel . 3))
         org-refile-use-outline-path            'file
         org-outline-path-complete-in-steps     nil
+        org-refile-use-cache                   t   ; cache targets → faster refile (C-0 C-c C-w to clear)
         org-refile-allow-creating-parent-nodes 'confirm)
 
   (setq org-todo-keywords
@@ -617,6 +620,7 @@
   (org-roam-directory          (expand-file-name "~/Documents/garden/"))
   (org-roam-completion-everywhere t)
   (org-roam-database-connector 'sqlite-builtin)   ; Emacs 30 native sqlite
+  (org-roam-db-gc-threshold most-positive-fixnum) ; fewer GC pauses during cache build
   (org-roam-node-display-template
    (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
   (org-roam-capture-templates
@@ -798,24 +802,30 @@
 (use-package apheleia
   :config
   (apheleia-global-mode 1)
-  (setf (alist-get 'python-mode     apheleia-mode-alist) 'ruff)
-  (setf (alist-get 'python-ts-mode  apheleia-mode-alist) 'ruff)
-  (setf (alist-get 'c-mode          apheleia-mode-alist) 'clang-format)
-  (setf (alist-get 'c++-mode        apheleia-mode-alist) 'clang-format)
-  (setf (alist-get 'c-ts-mode       apheleia-mode-alist) 'clang-format)
-  (setf (alist-get 'c++-ts-mode     apheleia-mode-alist) 'clang-format)
-  (setf (alist-get 'js-mode         apheleia-mode-alist) 'prettier)
-  (setf (alist-get 'js-ts-mode      apheleia-mode-alist) 'prettier)
-  (setf (alist-get 'typescript-mode apheleia-mode-alist) 'prettier)
-  (setf (alist-get 'tsx-ts-mode     apheleia-mode-alist) 'prettier)
-  (setf (alist-get 'css-mode        apheleia-mode-alist) 'prettier)
-  (setf (alist-get 'html-mode       apheleia-mode-alist) 'prettier)
-  (setf (alist-get 'json-mode       apheleia-mode-alist) 'prettier)
-  (setf (alist-get 'markdown-mode   apheleia-mode-alist) 'prettier)
-  (setf (alist-get 'sh-mode         apheleia-mode-alist) 'shfmt)
-  (setf (alist-get 'rust-mode       apheleia-mode-alist) 'rustfmt)
-  (setf (alist-get 'go-mode         apheleia-mode-alist) 'gofmt)
-  (setf (alist-get 'emacs-lisp-mode apheleia-mode-alist) nil))
+  (setf (alist-get 'python-mode        apheleia-mode-alist) 'ruff)
+  (setf (alist-get 'python-ts-mode     apheleia-mode-alist) 'ruff)
+  (setf (alist-get 'c-mode             apheleia-mode-alist) 'clang-format)
+  (setf (alist-get 'c++-mode           apheleia-mode-alist) 'clang-format)
+  (setf (alist-get 'c-ts-mode          apheleia-mode-alist) 'clang-format)
+  (setf (alist-get 'c++-ts-mode        apheleia-mode-alist) 'clang-format)
+  (setf (alist-get 'js-mode            apheleia-mode-alist) 'prettier)
+  (setf (alist-get 'js-ts-mode         apheleia-mode-alist) 'prettier)
+  (setf (alist-get 'typescript-mode    apheleia-mode-alist) 'prettier)
+  (setf (alist-get 'typescript-ts-mode apheleia-mode-alist) 'prettier)
+  (setf (alist-get 'tsx-ts-mode        apheleia-mode-alist) 'prettier)
+  (setf (alist-get 'css-mode           apheleia-mode-alist) 'prettier)
+  (setf (alist-get 'css-ts-mode        apheleia-mode-alist) 'prettier)
+  (setf (alist-get 'html-mode          apheleia-mode-alist) 'prettier)
+  (setf (alist-get 'json-mode          apheleia-mode-alist) 'prettier)
+  (setf (alist-get 'json-ts-mode       apheleia-mode-alist) 'prettier)
+  (setf (alist-get 'markdown-mode      apheleia-mode-alist) 'prettier)
+  (setf (alist-get 'sh-mode            apheleia-mode-alist) 'shfmt)
+  (setf (alist-get 'bash-ts-mode       apheleia-mode-alist) 'shfmt)
+  (setf (alist-get 'rust-mode          apheleia-mode-alist) 'rustfmt)
+  (setf (alist-get 'rust-ts-mode       apheleia-mode-alist) 'rustfmt)
+  (setf (alist-get 'go-mode            apheleia-mode-alist) 'gofmt)
+  (setf (alist-get 'go-ts-mode         apheleia-mode-alist) 'gofmt)
+  (setf (alist-get 'emacs-lisp-mode    apheleia-mode-alist) nil))
 
 ;;; ─────────────────────────────────────────────
 ;;; 19. PERSISTENCE & DEFAULTS (built-ins)

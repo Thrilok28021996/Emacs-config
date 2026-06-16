@@ -1,6 +1,8 @@
 # Emacs 30.2 Configuration
 
-Vim-centric Emacs config with Evil, LSP, org-roam PKM, and Learning OS. Single file: `init.el`.
+Pure-Emacs config (no Evil) with `C-c` keybindings, built-in `eglot` LSP,
+org-roam PKM, local AI via gptel, and a lightweight spaced-repetition
+learning loop. Single file: `init.el`.
 
 ---
 
@@ -11,33 +13,40 @@ Vim-centric Emacs config with Evil, LSP, org-roam PKM, and Learning OS. Single f
 | Tool | Install | Purpose |
 |------|---------|---------|
 | Emacs 30.2+ | `brew install emacs-plus@30` | Editor |
-| ripgrep | `brew install ripgrep` | Project search |
-| Node.js | `brew install node` | LSP servers |
-| pyright | `npm install -g pyright` | Python LSP |
+| ripgrep | `brew install ripgrep` | Project / note search (consult-ripgrep) |
+| Node.js | `brew install node` | Several LSP servers + prettier |
+| Python language server | `npm install -g pyright` (or `pip install basedpyright`) | Python LSP — eglot auto-detects |
 
-### Per-language
+### Per-language (optional, install what you use)
 
 | Tool | Install | Purpose |
 |------|---------|---------|
-| ruff | `brew install ruff` | Python formatter |
+| ruff | `brew install ruff` | Python formatter (apheleia) |
 | clangd | `brew install llvm` | C/C++ LSP |
 | clang-format | included with llvm | C/C++ formatter |
-| prettier | `npm install -g prettier` | JS/TS/CSS/HTML formatter |
+| prettier | `npm install -g prettier` | JS/TS/CSS/HTML/JSON/Markdown formatter |
 | shfmt | `brew install shfmt` | Shell formatter |
-| pandoc | `brew install pandoc` | Markdown preview |
-| graphviz | `brew install graphviz` | org-roam graph |
+| rustfmt | `rustup component add rustfmt` | Rust formatter |
+| gofmt | included with Go | Go formatter |
+| pandoc | `brew install pandoc` | Markdown export (`markdown-command`) |
+| grip | `pip install grip` | Live GitHub-flavored Markdown preview (grip-mode) |
+| graphviz | `brew install graphviz` | org-roam-ui graph |
+| enchant + dict | `brew install enchant` | Spell-check backend (jinx) |
 | miniconda | [docs.conda.io](https://docs.conda.io) | Python env management |
-| LM Studio | [lmstudio.ai](https://lmstudio.ai) | Local AI assistant |
+| LM Studio | [lmstudio.ai](https://lmstudio.ai) | Local AI assistant (gptel) |
 
 ### Fonts
 
-Install **Victor Mono** (preferred) or falls back to Menlo.
+Install **Victor Mono** (preferred); falls back to **Menlo**. Run
+`M-x nerd-icons-install-fonts` once for modeline icons.
 
 ### Directories
 
+The config expects a single notes root at `~/Documents/garden/`:
+
 ```bash
-mkdir -p ~/Documents/garden/learn ~/Documents/garden/images
-mkdir -p ~/org-roam   # if using separate roam dir (currently uses garden)
+mkdir -p ~/Documents/garden/{work,personal}/projects
+mkdir -p ~/Documents/garden/{images,people}
 ```
 
 ---
@@ -46,68 +55,69 @@ mkdir -p ~/org-roam   # if using separate roam dir (currently uses garden)
 
 ```bash
 git clone <repo> ~/.emacs.d
-emacs --daemon   # start server
+emacs --daemon          # start the server (first launch installs packages)
 ```
 
 Add to `~/.zshrc`:
 
 ```bash
 emacs --daemon 2>/dev/null &
+alias e='emacsclient -nw'      # terminal
+alias ec='emacsclient -c'      # new GUI frame
 ```
 
 ---
 
 ## Folder Structure
 
-All notes live under one root:
+All notes live under one root. org-roam indexes the whole tree recursively.
 
 ```
 ~/Documents/garden/
-├── *.org               ← general org notes, roam nodes
-├── images/             ← org-download image attachments
-└── learn/
-    ├── inbox.org       ← raw input (process within 24h)
-    ├── concepts.org    ← atomic concepts
-    ├── questions.org   ← recall questions
-    ├── reviews.org     ← spaced repetition schedule
-    ├── projects.org    ← applied projects
-    ├── journal.org     ← daily learning log
-    └── los             ← CLI script
+├── inbox.org          ← quick-capture todos        (C-c n i)
+├── journal.org        ← daily datetree journal      (C-c n j)
+├── reading.org        ← books / resources           (C-c n r)
+├── reviews.org        ← spaced-repetition schedule   (C-c n v)
+├── *.org              ← org-roam nodes (Zettelkasten)
+├── images/            ← org-download attachments
+├── people/            ← org-roam person nodes        (C-c n P)
+├── work/
+│   ├── tasks.org      ← work tasks                   (C-c n w)
+│   ├── projects.org   ← work projects                (C-c n W)
+│   └── projects/      ← per-project org files (auto-added to agenda)
+└── personal/
+    ├── tasks.org      ← personal tasks               (C-c n t)
+    ├── projects.org   ← personal projects            (C-c n p)
+    └── projects/      ← per-project org files (auto-added to agenda)
 ```
 
 ---
 
 ## Packages
 
-### Core
+### Completion & Minibuffer
 
 | Package | Purpose |
 |---------|---------|
-| evil | Vim keybindings |
-| evil-collection | Evil bindings for all major modes |
-| evil-commentary | `gcc` to comment |
-| evil-surround | `cs"'` to change surrounding quotes |
-| evil-matchit | `%` to jump between matched pairs |
-| general | Leader key (`SPC`) definitions |
-| undo-fu | Undo/redo backend for evil |
-| which-key | Shows key hints after delay |
-
-### Completion
-
-| Package | Purpose |
-|---------|---------|
-| vertico | Vertical completion UI |
-| orderless | Fuzzy/space-separated completion matching |
-| marginalia | Annotations in completion lists |
-| consult | Enhanced search, buffer, imenu commands |
+| vertico | Vertical minibuffer completion UI |
+| orderless | Space-separated / fuzzy matching |
+| marginalia | Rich annotations in completion lists |
+| consult | Search, buffer switch, imenu, ripgrep, flymake |
+| corfu | In-buffer popup autocomplete |
+| cape | Extra completion sources (file, dabbrev, keyword, elisp) |
+| embark / embark-consult | Act on completion candidates (`C-.`) |
+| wgrep | Editable grep buffers for project-wide replace |
+| consult-dir | Fast directory jumping |
+| consult-todo | Jump to TODO/FIXME across project |
 
 ### UI
 
 | Package | Purpose |
 |---------|---------|
+| **tab-bar** (built-in) | Tab workspaces |
 | doom-themes | `doom-one` dark theme |
 | doom-modeline | Status bar with icons |
-| nerd-icons | Icon font (run `M-x nerd-icons-install-fonts`) |
+| nerd-icons | Icon font |
 
 ### Editing
 
@@ -115,20 +125,24 @@ All notes live under one root:
 |---------|---------|
 | **electric-pair-mode** (built-in) | Auto-pair brackets |
 | rainbow-delimiters | Color-coded bracket depth |
-| **corfu** | In-buffer autocomplete (replaces company) |
-| **cape** | Extra completion sources (file, dabbrev, keyword) |
-| yasnippet | Code snippets |
-| ws-butler | Strip trailing whitespace on save |
+| yasnippet / yasnippet-snippets | Code snippets |
+| ws-butler | Strip trailing whitespace (only on touched lines) |
 | highlight-indent-guides | Indent level lines |
+| ligature | Programming ligatures (GUI only) |
+| hl-todo | Highlight TODO/FIXME/HACK keywords |
+| expand-region | Grow selection semantically (`C-=`) |
+| symbol-overlay | Highlight & navigate symbol occurrences |
 
 ### LSP & Languages
 
 | Package | Purpose |
 |---------|---------|
-| **eglot** (built-in) | LSP client — auto-detects pyright, clangd |
-| **flymake** (built-in) | Inline error checking |
+| **eglot** (built-in) | LSP client — auto-detects clangd, pyright |
+| **flymake** (built-in) | Inline diagnostics |
 | treesit-auto | Auto-install tree-sitter grammars |
-| apheleia | Async format on save |
+| apheleia | Async format-on-save |
+| dape | Debug Adapter Protocol client |
+| conda | Conda env management |
 
 ### Git
 
@@ -141,254 +155,209 @@ All notes live under one root:
 
 | Package | Purpose |
 |---------|---------|
-| org | Built-in org mode |
-| org-roam | Linked notes (Zettelkasten) |
-| org-roam-ui | Visual graph of notes |
+| **org** (built-in) | Org mode |
+| org-roam | Linked notes (Zettelkasten), native sqlite |
+| org-roam-ui | Visual graph of notes (browser) |
 | consult-org-roam | Ripgrep search across roam |
 | org-super-agenda | Grouped agenda view |
 | org-modern | Modern org visual style |
-| org-pomodoro | Pomodoro timer tied to tasks |
-| org-appear | Reveal emphasis markers when cursor is on text |
-| org-download | Paste/drag images into org buffers |
-| org-transclusion | Embed content from other org files inline |
-| org-cliplink | Paste a URL and auto-fetch its title |
-| deft | Fast full-text note search |
+| org-pomodoro | Pomodoro timer tied to clock |
+| org-appear | Reveal emphasis markers under cursor |
+| org-download | Paste/drag images into org |
+| org-transclusion | Embed content from other org files |
+| org-cliplink | Paste URL, auto-fetch title |
+
+### Markdown & Writing
+
+| Package | Purpose |
+|---------|---------|
+| markdown-mode | Markdown editing, native code-block fontification |
+| grip-mode | Live GitHub-flavored preview in browser |
 | olivetti | Centered writing mode |
+| jinx | Fast spell-check (enchant) |
 
 ### Tools
 
 | Package | Purpose |
 |---------|---------|
-| **project.el** (built-in) | Project management (replaces projectile) |
-| **which-key** (built-in in 30) | Key hints |
-| **pixel-scroll-precision-mode** (built-in) | Smooth pixel-level scrolling |
-| **repeat-mode** (built-in) | Repeat last command without prefix |
-| avy | Jump to any visible char |
-| rg | ripgrep integration |
+| **project.el** (built-in) | Project management |
+| **which-key** (built-in) | Key hints after a short delay |
+| **pixel-scroll-precision-mode** (built-in) | Smooth scrolling |
+| **repeat-mode** (built-in) | Repeat commands without prefix |
+| avy | Jump to any visible char (`C-c j`) |
 | helpful | Better help buffers |
+| vundo | Visual undo tree (`C-x u`) |
 | restart-emacs | Restart from inside Emacs |
-| gptel | AI chat via LM Studio |
-| conda | Conda env management |
+| gptel | AI chat via local LM Studio |
 | exec-path-from-shell | Inherit shell PATH on macOS |
 
 ---
 
 ## Keybindings
 
-### Leader (`SPC`)
+All custom bindings live under the `C-c` prefix, grouped by letter. Press a
+prefix (e.g. `C-c g`) and wait — **which-key** shows the rest.
 
-#### Top-level
-
-| Key | Action |
-|-----|--------|
-| `SPC SPC` | M-x |
-| `SPC TAB` | last buffer |
-| `SPC ;` | comment line |
-
-#### Files (`SPC f`)
+### Top-level
 
 | Key | Action |
 |-----|--------|
-| `SPC f f` | find file |
-| `SPC f r` | recent files |
+| `M-o` | other window |
+| `C-s` | search line (consult-line) |
+| `C-.` | embark act on candidate |
+| `C-=` | expand region |
+| `C-x u` | visual undo tree (vundo) |
+| `C-?` | redo (undo-redo) |
+| `C-x C-d` | jump to directory (consult-dir) |
+| `M-$` | spell-correct word (jinx) |
+| `C-c i r` / `C-c i l` | indent region right / left |
 
-#### Buffers (`SPC b`)
-
-| Key | Action |
-|-----|--------|
-| `SPC b b` | switch buffer |
-| `SPC b k` | kill buffer |
-
-#### Windows (`SPC w`)
-
-| Key | Action |
-|-----|--------|
-| `SPC w h/j/k/l` | navigate windows |
-| `SPC w s` | split horizontal |
-| `SPC w v` | split vertical |
-| `SPC w d` | close window |
-| `SPC w o` | close others |
-| `SPC w =` | balance windows |
-| `SPC w f` | toggle fullscreen |
-
-#### Search (`SPC s`)
+### Buffers (`C-c b`)
 
 | Key | Action |
 |-----|--------|
-| `SPC s s` | search buffer |
-| `SPC s r` | search project (ripgrep) |
-| `SPC s i` | jump to symbol |
+| `C-c b b` | switch buffer |
+| `C-c b k` | kill current buffer |
+| `C-c b TAB` | last buffer |
 
-#### Code (`SPC c`)
-
-| Key | Action |
-|-----|--------|
-| `SPC c f` | format buffer |
-| `SPC c p` | run python file |
-| `SPC c c` | compile & run c++ |
-
-#### LSP — eglot (`SPC l`)
+### Code (`C-c c`)
 
 | Key | Action |
 |-----|--------|
-| `SPC l r` | rename symbol |
-| `SPC l d` | find references |
-| `SPC l a` | code action |
-| `SPC l i` | find implementation |
-| `SPC l f` | format buffer |
+| `C-c c r` | rename symbol (eglot) |
+| `C-c c a` | code action (eglot) |
+| `C-c c i` | find implementation |
+| `C-c c d` | find references |
+| `C-c c f` | format buffer (apheleia) |
+| `C-c c p` | run current Python file |
+| `C-c c c` | compile & run current C++ file |
+| `C-c c b` | toggle breakpoint (dape) |
+| `C-c c B` | start debugger (dape) |
 
-#### Errors — flymake (`SPC e`)
+Native xref also works everywhere: `M-.` definition, `M-,` back, `M-?` references.
 
-| Key | Action |
-|-----|--------|
-| `SPC e l` | list errors (consult-flymake) |
-| `SPC e n` | next error |
-| `SPC e p` | previous error |
-
-#### Git (`SPC g`)
+### Errors (`C-c e`)
 
 | Key | Action |
 |-----|--------|
-| `SPC g g` | magit status |
-| `SPC g c` | commit |
-| `SPC g p` | push |
-| `SPC g i` | pull |
-| `SPC g f` | fetch |
-| `SPC g l` | log |
-| `SPC g d` | diff |
-| `SPC g s` | stage |
-| `SPC g u` | unstage |
-| `SPC g b` | branch |
-| `SPC g a` | blame |
-| `SPC g r` | rebase |
-| `SPC g m` | merge |
-| `SPC g t` | stash |
+| `C-c e l` | list errors (consult-flymake) |
+| `C-c e n` / `C-c e p` | next / previous error |
 
-#### Project — project.el (`SPC p`)
+### Files & Search
 
 | Key | Action |
 |-----|--------|
-| `SPC p p` | switch project |
-| `SPC p f` | find file in project |
-| `SPC p b` | switch project buffer |
-| `SPC p k` | kill project buffers |
-| `SPC p s` | project shell |
-| `SPC p c` | compile in project |
+| `C-c f r` | recent files |
+| `C-c s s` | search lines in buffer |
+| `C-c s r` | search project (ripgrep) |
+| `C-c s i` | jump to symbol (imenu) |
+| `C-c s t` | jump to TODO |
 
-#### Org / Notes (`SPC o`)
-
-| Key | Action |
-|-----|--------|
-| `SPC o a` | agenda |
-| `SPC o c` | capture |
-| `SPC o r` | roam find node |
-| `SPC o i` | roam insert link |
-| `SPC o s` | roam search |
-| `SPC o d` | deft (fast search) |
-| `SPC o u` | roam graph (browser) |
-| `SPC o l` | paste URL as org link |
-| `SPC o t` | toggle transclusion mode |
-| `SPC o y` | paste image from clipboard |
-
-#### Learning OS (`SPC n`)
+### Git (`C-c g`)
 
 | Key | Action |
 |-----|--------|
-| `SPC n i` | open inbox |
-| `SPC n k` | capture new concept |
-| `SPC n q` | capture recall question |
-| `SPC n v` | schedule review item |
-| `SPC n p` | capture new project |
-| `SPC n j` | write journal entry |
-| `SPC n r` | open review session |
-| `SPC n d` | mark current item reviewed |
-| `SPC n s` | search all notes |
-| `SPC n c` | open concepts file |
-| `SPC n f` | open questions file |
-| `SPC n t` | open projects file |
+| `C-c g g` | magit status |
+| `C-c g c` | commit |
+| `C-c g p` | push |
+| `C-c g u` | pull |
+| `C-c g f` | fetch |
+| `C-c g l` | log |
+| `C-c g d` | diff |
+| `C-c g b` | branch |
+| `C-c g a` | blame |
+| `C-c g s` | stash |
+| `C-c g n` / `C-c g N` | next / previous hunk |
 
-#### AI Assistant (`SPC a`)
-
-| Key | Action |
-|-----|--------|
-| `SPC a c` | open AI chat |
-| `SPC a s` | send prompt |
-| `SPC a r` | rewrite selected region |
-| `SPC a e` | AI menu |
-
-#### Conda (`SPC m`)
+### Projects (`C-c p`)
 
 | Key | Action |
 |-----|--------|
-| `SPC m a` | activate conda env |
-| `SPC m d` | deactivate conda env |
+| `C-c p p` | switch project |
+| `C-c p f` | find file in project |
+| `C-c p b` | switch project buffer |
+| `C-c p k` | kill project buffers |
+| `C-c p s` | project eshell |
+| `C-c p c` | compile in project |
 
-#### Jump (`SPC j`)
-
-| Key | Action |
-|-----|--------|
-| `SPC j j` | jump to char (avy) |
-
-#### Help (`SPC h`)
+### Windows (`C-c w`)
 
 | Key | Action |
 |-----|--------|
-| `SPC h k` | describe key |
-| `SPC h f` | describe function |
-| `SPC h v` | describe variable |
-| `SPC h .` | help at point |
+| `C-c w h/j/k/l` | move to window left/down/up/right |
+| `C-c w H/J/K/L` | resize window |
+| `C-c w u` / `C-c w U` | winner undo / redo |
+| `C-c w =` | balance windows |
+| `C-c w f` | toggle fullscreen |
 
-#### Quit (`SPC q`)
+Native splits: `C-x 2` (below), `C-x 3` (right), `C-x 0` (close), `C-x 1` (only).
 
-| Key | Action |
-|-----|--------|
-| `SPC q q` | quit emacs |
-| `SPC q r` | restart emacs |
-
----
-
-### LSP Navigation (normal mode)
+### Org (`C-c o`)
 
 | Key | Action |
 |-----|--------|
-| `gd` | go to definition |
-| `gD` | go to declaration |
-| `gr` | find references |
-| `gi` | find implementation |
-| `K` | hover docs |
+| `C-c o a` | agenda |
+| `C-c o c` | capture |
+| `C-c o r` | roam find node |
+| `C-c o i` | roam insert link |
+| `C-c o s` | roam search |
+| `C-c o u` | roam graph (browser) |
+| `C-c o l` | paste URL as org link |
+| `C-c o t` | toggle transclusion mode |
+| `C-c o y` | paste image from clipboard |
+| `C-c o I` / `C-c o O` | clock in / out |
+| `C-c o R` | clock report |
+| `C-c o e` | set effort estimate |
 
-### Vim Extras (normal mode)
-
-| Key | Action |
-|-----|--------|
-| `j / k` | move by visual line |
-| `gj / gk` | move by real line |
-| `gh / gl` | start / end of line |
-| `Y` | yank to end of line |
-| `U` | redo |
-| `Q` | replay macro |
-| `n / N` | search next/prev + center |
-| `* / #` | search word + center |
-| `]h / [h` | next/prev git hunk |
-| `]e / [e` | next/prev error |
-
-### Visual Mode
+### Notes & Learning (`C-c n`)
 
 | Key | Action |
 |-----|--------|
-| `> / <` | indent/dedent, keep selection |
+| `C-c n i` | capture → inbox |
+| `C-c n j` | capture → journal |
+| `C-c n r` | capture → reading |
+| `C-c n v` | capture → review item |
+| `C-c n w` / `C-c n W` | capture → work task / project |
+| `C-c n t` / `C-c n p` | capture → personal task / project |
+| `C-c n k` | new roam concept node |
+| `C-c n q` | new roam question node |
+| `C-c n P` | new roam person node |
+| `C-c n x` | log interaction with a person |
+| `C-c n a` | open today's review session |
+| `C-c n d` | mark current item reviewed (advance schedule) |
+| `C-c n s` | search all notes |
+
+### AI (`C-c a`)
+
+| Key | Action |
+|-----|--------|
+| `C-c a c` | open AI chat |
+| `C-c a s` | send prompt |
+| `C-c a r` | rewrite region |
+| `C-c a m` | gptel menu |
+
+### Virtual env (`C-c v`)
+
+| Key | Action |
+|-----|--------|
+| `C-c v a` / `C-c v d` | activate / deactivate conda env |
+
+### Help (`C-c h`) & Quit (`C-c q`)
+
+| Key | Action |
+|-----|--------|
+| `C-c h k` / `C-c h f` / `C-c h v` / `C-c h .` | describe key / function / variable / at-point |
+| `C-c q q` / `C-c q r` | quit / restart emacs |
+| `C-c j` | jump to char (avy) |
 
 ### Inside Magit
 
 | Key | Action |
 |-----|--------|
-| `s` | stage file/hunk |
-| `u` | unstage |
+| `s` / `u` | stage / unstage |
 | `c c` | commit |
-| `P p` | push |
-| `F p` | pull |
-| `b b` | switch branch |
-| `b c` | create branch |
+| `P p` / `F p` | push / pull |
+| `b b` / `b c` | switch / create branch |
 | `l l` | log |
 | `d d` | diff |
 | `z z` | stash |
@@ -396,7 +365,7 @@ All notes live under one root:
 
 ---
 
-## Formatters (auto on save)
+## Formatters (auto on save — apheleia)
 
 | Language | Formatter |
 |----------|-----------|
@@ -409,56 +378,38 @@ All notes live under one root:
 | Rust | rustfmt |
 | Go | gofmt |
 
----
-
-## Org Capture Templates
-
-| Key | Template |
-|-----|---------|
-| `t` | Todo (general) |
-| `n` | Note (general) |
-| `j` | Journal entry (general) |
-| `i` | Learning inbox |
-| `k` | Atomic concept |
-| `q` | Recall question |
-| `v` | Review item (scheduled) |
-| `P` | Project |
-| `J` | Learning journal |
+Both classic (`python-mode`) and tree-sitter (`python-ts-mode`) major modes are
+mapped, so formatting fires regardless of which mode treesit-auto selects.
 
 ---
 
-## Learning OS
+## Org Capture Templates (`C-c o c`)
 
-A structured learning system inside Emacs. Forces the full loop:
+| Key | Template | Destination |
+|-----|----------|-------------|
+| `i` | Inbox todo | `inbox.org` |
+| `j` | Journal entry (datetree) | `journal.org` |
+| `v` | Review item (scheduled) | `reviews.org` |
+| `r` | Reading note | `reading.org` |
+| `w` | Work task | `work/tasks.org` |
+| `W` | Work project | `work/projects.org` |
+| `t` | Personal task | `personal/tasks.org` |
+| `p` | Personal project | `personal/projects.org` |
 
-```
-Read/Watch → los inbox → los learn → los question → los review → los projects
-```
+### Roam capture nodes
 
-### CLI (`los`)
+| Command | Node type |
+|---------|-----------|
+| `C-c n k` | Concept (What / Why / When / Code / Links) |
+| `C-c n q` | Question (Question / Answer / Related) |
+| `C-c n P` | Person (`people/`, interactions log) |
+| `C-c o i` | default node (insert link) |
 
-Add to PATH:
-```bash
-echo 'export PATH="$HOME/Documents/garden/learn:$PATH"' >> ~/.zshrc
-source ~/.zshrc
-```
+---
 
-| Command | Action |
-|---------|--------|
-| `los inbox` | Open raw input buffer |
-| `los learn` | Capture new concept (What/Why/When/Code) |
-| `los question` | Capture recall question |
-| `los review` | Open today's review session |
-| `los search <q>` | Search all notes |
-| `los concepts` | Open concepts file |
-| `los questions` | Open questions file |
-| `los projects` | Open projects file |
-| `los journal` | Write daily journal |
-| `los stats` | Show counts |
+## Spaced Repetition
 
-### Spaced Repetition
-
-`SPC n d` on a review item advances the schedule:
+`C-c n d` on a review item advances its schedule via the `REVIEW_COUNT` property:
 
 | Review # | Next interval |
 |----------|--------------|
@@ -467,18 +418,16 @@ source ~/.zshrc
 | 3 | 7 days |
 | 4 | 14 days |
 | 5 | 30 days |
-| 6 | 60 days → MASTERED |
+| 6 | 60 days → **MASTERED** |
 
 ### TODO States
 
 | State | Meaning |
 |-------|---------|
-| `TODO` | General task |
-| `NEXT` | Next action |
-| `DONE` | Completed |
+| `TODO` / `NEXT` / `DONE` | General task flow |
 | `NEW` | Just captured, not processed |
 | `LEARNING` | Actively studying |
-| `REVIEW` | In spaced repetition loop |
+| `REVIEW` | In spaced-repetition loop |
 | `APPLY` | Building something with it |
 | `MASTERED` | Recalled 6+ times |
 | `DROPPED` | Abandoned |
@@ -487,19 +436,20 @@ source ~/.zshrc
 
 ## AI Assistant (gptel + LM Studio)
 
-1. Download [LM Studio](https://lmstudio.ai), load a model, start local server (port 1234)
-2. Update model name in `init.el` section 21:
+1. Download [LM Studio](https://lmstudio.ai), load a model, start the local
+   server (port 1234).
+2. Update the model name in `init.el` (section 21, the `gptel` block):
    ```elisp
    :models '(your-model-name)
    gptel-model 'your-model-name
    ```
-3. `SPC a c` to open chat, `SPC a s` to send
+3. `C-c a c` opens chat, `C-c a s` sends.
 
 ---
 
 ## Theme
 
-`doom-one` (dark). Change in section 7:
+`doom-one` (dark). Change in the `doom-themes` block (section 6):
 
 ```elisp
 (load-theme 'doom-one t)  ; doom-dracula, doom-gruvbox, doom-nord, etc.
@@ -509,16 +459,21 @@ source ~/.zshrc
 
 ## Troubleshooting
 
-**`gd` shows "Visit tags table"**: eglot not connected. Run `M-x eglot` manually. Verify LSP server installed: `which pyright-langserver` (Python) or `which clangd` (C/C++).
+**LSP not connecting**: run `M-x eglot` manually. Verify the server is on PATH:
+`which clangd` (C/C++) or `which pyright-langserver` (Python). Inspect with
+`M-x eglot-list-connections`.
 
-**LSP slow / not starting**: check `*EGLOT events*` buffer and `M-x eglot-list-connections`. Eglot auto-detects servers from `eglot-server-programs`.
-
-**Packages not installing**: `M-x package-refresh-contents` then restart.
+**Packages not installing**: `M-x package-refresh-contents`, then restart.
 
 **Icons broken**: `M-x nerd-icons-install-fonts`.
 
-**Tree-sitter grammars missing**: `M-x treesit-auto-install-all`.
+**Tree-sitter grammars missing**: `M-x treesit-auto-install-all`, or accept the
+prompt when opening a file. JSON grammar for Markdown code blocks:
+`M-x treesit-install-language-grammar RET json`.
 
 **org-roam DB stale**: `M-x org-roam-db-sync`.
 
-**gptel not connecting**: Make sure LM Studio local server is running on port 1234.
+**Refile targets out of date** (after adding files): `C-0 C-c C-w` clears the
+refile cache.
+
+**gptel not connecting**: ensure the LM Studio local server is running on port 1234.
