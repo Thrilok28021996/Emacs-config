@@ -79,8 +79,6 @@
 
 (global-set-key (kbd "M-o") #'other-window)
 
-(global-set-key (kbd "C->") #'indent-rigidly-right-to-tab-stop)
-(global-set-key (kbd "C-<") #'indent-rigidly-left-to-tab-stop)
 (global-set-key (kbd "C-c i r") #'indent-rigidly-right-to-tab-stop)
 (global-set-key (kbd "C-c i l") #'indent-rigidly-left-to-tab-stop)
 
@@ -149,7 +147,6 @@
 (global-set-key (kbd "C-c o i") #'org-roam-node-insert)
 (global-set-key (kbd "C-c o s") #'consult-org-roam-search)
 (global-set-key (kbd "C-c o u") #'org-roam-ui-open)
-(global-set-key (kbd "C-c o d") #'deft)
 (global-set-key (kbd "C-c o l") #'org-cliplink)
 (global-set-key (kbd "C-c o t") #'org-transclusion-mode)
 (global-set-key (kbd "C-c o y") #'org-download-yank)
@@ -729,6 +726,9 @@
 ;;; 14. MARKDOWN
 ;;; ─────────────────────────────────────────────
 
+(add-to-list 'treesit-language-source-alist
+             '(json "https://github.com/tree-sitter/tree-sitter-json"))
+
 (use-package markdown-mode
   :mode ("\\.md\\'" "\\.markdown\\'")
   :hook (markdown-mode . visual-line-mode)
@@ -738,42 +738,10 @@
   (markdown-header-scaling t)
   (markdown-hide-urls t))
 
-(use-package pandoc-mode :hook (markdown-mode . pandoc-mode))
-
-(use-package markdown-toc
-  :after markdown-mode
-  :commands (markdown-toc-generate-toc markdown-toc-refresh-toc))
-
 (use-package grip-mode
   :vc (:url "https://github.com/seagle0128/grip-mode" :rev :newest)
   :after markdown-mode
   :commands grip-mode)
-
-(use-package deft
-  :commands deft
-  :custom
-  (deft-directory   (expand-file-name "~/Documents/garden/"))
-  (deft-extensions  '("org" "md" "txt"))
-  (deft-recursive   t)
-  (deft-use-filename-as-title nil)
-  (deft-use-filter-string-for-filename t)
-  (deft-strip-summary-regexp
-   (concat "\\(" "[\n\t]"
-           "\\|^#\\+[[:alpha:]_]+:.*$"
-           "\\|^:PROPERTIES:.*"
-           "\\|^:END:.*"
-           "\\|^\\* " "\\)"))
-  :config
-  (defun my/deft-new-note-via-roam ()
-    (interactive)
-    (let ((title (or (and (> (length deft-filter-regexp) 0)
-                          (car deft-filter-regexp))
-                     (read-string "Note title: "))))
-      (deft-filter-clear)
-      (quit-window)
-      (org-roam-capture- :node (org-roam-node-create :title title)
-                         :props '(:immediate-finish nil))))
-  (define-key deft-mode-map (kbd "C-c C-n") #'my/deft-new-note-via-roam))
 
 ;;; ─────────────────────────────────────────────
 ;;; 15. WRITING

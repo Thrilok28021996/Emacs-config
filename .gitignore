@@ -24,6 +24,8 @@ custom.el
 .lsp-session-v1
 org-roam.db
 projectile-bookmarks.eld
+org-clock-save.el
+projects
 
 # Backup / lock files
 *~

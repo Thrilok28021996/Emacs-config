@@ -164,10 +164,8 @@ Rule: =q= dismisses read-only/special buffers. =C-c b k= removes a file buffer f
 | C-x u       | visual undo tree (vundo)        |
 | M-;         | comment / uncomment             |
 | TAB         | indent line                     |
-| C->         | indent region right (GUI only)  |
-| C-<         | indent region left (GUI only)   |
-| C-c i r     | indent region right (terminal)  |
-| C-c i l     | indent region left (terminal)   |
+| C-c i r     | indent region right             |
+| C-c i l     | indent region left              |
 | C-x TAB     | indent rigidly (then ←/→ keys)  |
 | C-=         | expand selection (expand-region)|
 | M-q         | fill/wrap paragraph             |
@@ -302,7 +300,6 @@ Tip: =M-i= then =M-n/M-p= to navigate all uses of a variable/function without a 
 | C-c o i     | roam insert link                |
 | C-c o s     | roam search                     |
 | C-c o u     | roam graph UI                   |
-| C-c o d     | deft (quick search)             |
 | C-c o l     | paste URL as link               |
 | C-c o t     | transclusion toggle             |
 | C-c o y     | paste image                     |
@@ -485,14 +482,6 @@ Include live content from another node — changes in source reflect everywhere 
 1. Copy a URL to clipboard
 2. =C-c o l= → fetches page title, inserts =[[url][Page Title]]= at point
 
-*** Deft (quick search)
-Full-text search across all garden files. Faster than roam for fuzzy recall.
-
-1. =C-c o d= → opens deft buffer with live filter
-2. Type any word → results narrow in real time
-3. =RET= to open, =C-c C-n= to create a new roam node from the search term
-4. =C-g= to quit
-
 *** Org-Babel (run code in notes)
 Execute code blocks inside org files. Results insert below the block.
 
@@ -508,10 +497,7 @@ No extra keys needed; configure grouping in =org-super-agenda-groups= if you wan
 * Markdown
 | Key                           | Action                          |
 |-------------------------------+---------------------------------|
-| C-c C-c p                     | preview (pandoc-mode)           |
 | M-x grip-mode                 | live GitHub preview in browser  |
-| M-x markdown-toc-generate-toc | insert TOC at point             |
-| M-x markdown-toc-refresh-toc  | update existing TOC             |
 | C-c C-s b                     | bold (wrap selection)           |
 | C-c C-s i                     | italic                          |
 | C-c C-s c                     | inline code                     |

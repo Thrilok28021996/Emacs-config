@@ -1,1 +1,0 @@
-("~/Desktop/sc-aaaserviceml-mlscripts/" "/Volumes/personal/programmingFolders/pdf-to-audio/" "/Volumes/personal/programmingFolders/RAG-streamlit/" "/Volumes/personal/programmingFolders/RAG/" "~/.emacs.d/" "~/Desktop/broko-micro-services-fastapi/")
