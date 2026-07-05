@@ -4,6 +4,14 @@
 ;;            treesit, which-key, pixel-scroll-precision, repeat,
 ;;            savehist, recentf, save-place, winner, sqlite.
 
+;; macOS: jinx's native module drags in a second glib, and the objc runtime
+;; prints a duplicate-class warning straight to stderr — over the tty in -nw.
+;; No env var silences it; repoint this process's stderr to a log instead.
+(when (and (eq system-type 'darwin)
+           (not noninteractive)
+           (fboundp 'redirect-debugging-output))
+  (redirect-debugging-output "/tmp/emacs-stderr.log"))
+
 ;;; ─────────────────────────────────────────────
 ;;; 1. PACKAGE BOOTSTRAP
 ;;; ─────────────────────────────────────────────
@@ -796,16 +804,7 @@
   :hook ((org-mode      . jinx-mode)
          (markdown-mode . jinx-mode)
          (text-mode     . jinx-mode))
-  :bind ("M-$" . jinx-correct)
-  :init
-  ;; Emacs.app bundles its own glib; jinx-mod links Homebrew glib, so its
-  ;; dlopen prints an objc duplicate-class warning to stderr. In a tty that
-  ;; lands on top of the buffer — load the module during init instead, so the
-  ;; first full redraw covers it. GUI stays lazy (stderr invisible there).
-  (unless (display-graphic-p)
-    (require 'jinx nil t)
-    (when (fboundp 'jinx--load-module)
-      (jinx--load-module))))
+  :bind ("M-$" . jinx-correct))
 
 ;;; ─────────────────────────────────────────────
 ;;; 16. PYTHON / CONDA
