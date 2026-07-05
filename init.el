@@ -796,7 +796,16 @@
   :hook ((org-mode      . jinx-mode)
          (markdown-mode . jinx-mode)
          (text-mode     . jinx-mode))
-  :bind ("M-$" . jinx-correct))
+  :bind ("M-$" . jinx-correct)
+  :init
+  ;; Emacs.app bundles its own glib; jinx-mod links Homebrew glib, so its
+  ;; dlopen prints an objc duplicate-class warning to stderr. In a tty that
+  ;; lands on top of the buffer — load the module during init instead, so the
+  ;; first full redraw covers it. GUI stays lazy (stderr invisible there).
+  (unless (display-graphic-p)
+    (require 'jinx nil t)
+    (when (fboundp 'jinx--load-module)
+      (jinx--load-module))))
 
 ;;; ─────────────────────────────────────────────
 ;;; 16. PYTHON / CONDA
