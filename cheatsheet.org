@@ -303,6 +303,9 @@ Tip: =M-i= then =M-n/M-p= to navigate all uses of a variable/function without a 
 | C-c o l     | paste URL as link               |
 | C-c o t     | transclusion toggle             |
 | C-c o y     | paste image                     |
+| C-c o q     | org-ql find (query agenda)      |
+| C-c o k     | org-kanban board (insert)       |
+| C-c o A     | archive subtree                 |
 
 ** Org Clock (C-c o)
 | Key         | Action                          |
@@ -406,6 +409,17 @@ The agenda pulls TODO/scheduled items from all files in =org-agenda-files=.
 
 Tip: agenda shows only items with a date or active TODO. Undated TODOs live in =C-x b tasks.org=.
 
+Dashboard view: =C-c o a= → =d= → combined day agenda + Next Actions + Due for Review (=org-agenda-custom-commands=).
+
+*** Archiving (keep agenda files lean)
+Completed/dead items pile up in active files and slow agenda + refile. Archive them out.
+
+1. On any heading → =C-c o A= (org-archive-subtree)
+2. Item moves to =<file>_archive= in the same directory, under an =* Archived= heading
+3. Archive files are not in =org-agenda-files=, so they drop out of agenda/refile but stay searchable on disk
+
+Tip: archive DONE/MASTERED/DROPPED items periodically — they're done, they don't need to be in your active views.
+
 *** Capture → Refile
 Capture = quick drop into inbox. Refile = move to the right place later.
 
@@ -493,6 +507,26 @@ Execute code blocks inside org files. Results insert below the block.
 *** Super Agenda (agenda grouping)
 =org-super-agenda-mode= is active — groups agenda items by category automatically.
 No extra keys needed; configure grouping in =org-super-agenda-groups= if you want custom sections.
+
+*** Org-QL (query language for agenda views)
+Build custom agenda views with a query language — sharper than the date-based agenda.
+
+1. =C-c o q= (org-ql-find) → live-filter headings across =org-agenda-files= by text
+2. =M-x org-ql-search= → prompt for a query, e.g. =(and (todo "NEXT") (tags "work"))=
+3. =M-x org-ql-view= → pick from saved/preset views
+4. Results open in an agenda-like buffer (same keys: =t=, =s=, =d=, =q=)
+
+Example queries: =(todo "NEXT")=, =(deadline :to today)=, =(and (tags "urgent") (not (done)))=.
+
+*** Org-Kanban (kanban board from TODO states)
+Renders a kanban table whose columns are your TODO keywords; cards move by shifting state.
+
+1. In an org file, place point where you want the board
+2. =C-c o k= (org-kanban/initialize) → inserts a =#+BEGIN: kanban= dynamic block
+3. =C-c C-c= on the block → refresh after TODO states change
+4. On a card: =M-x org-kanban/shift= → move it left/right (changes the heading's TODO state)
+
+The board is a live view of headings — editing the underlying TODO state and refreshing keeps it in sync.
 
 * Markdown
 | Key                           | Action                          |
