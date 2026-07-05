@@ -14,7 +14,6 @@
         ("gnu"   . "https://elpa.gnu.org/packages/")
         ("nongnu". "https://elpa.nongnu.org/nongnu/")))
 (package-initialize)
-(unless package-archive-contents (package-refresh-contents))
 
 (require 'use-package)
 (setq use-package-always-ensure t)
@@ -38,8 +37,14 @@
 ;;; 3. UI
 ;;; ─────────────────────────────────────────────
 
-(setq inhibit-startup-message t
-      inhibit-startup-echo-area-message t)
+(setq inhibit-startup-message t)
+
+;; *scratch* in lisp-interaction fires every prog-mode hook at startup —
+;; fundamental-mode skips that; M-x lisp-interaction-mode when needed
+(setq initial-major-mode 'fundamental-mode)
+;; inhibit-startup-echo-area-message only works as a literal (setq ... "username")
+;; in the init file — override the printer instead, stays portable
+(advice-add 'display-startup-echo-area-message :override #'ignore)
 
 (setq display-line-numbers-type t)
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
@@ -154,6 +159,9 @@
 (global-set-key (kbd "C-c o O") #'org-clock-out)
 (global-set-key (kbd "C-c o R") #'org-clock-report)
 (global-set-key (kbd "C-c o e") #'org-set-effort)
+(global-set-key (kbd "C-c o q") #'org-ql-find)
+(global-set-key (kbd "C-c o k") #'org-kanban/initialize)
+(global-set-key (kbd "C-c o A") #'org-archive-subtree)
 
 ;; ── Projects (p) ──────────────────────────────
 (global-set-key (kbd "C-c p p") #'project-switch-project)
@@ -382,7 +390,15 @@
   :bind ("C-=" . er/expand-region))
 
 (use-package symbol-overlay
-  :hook (prog-mode . symbol-overlay-mode))
+  :hook (prog-mode . symbol-overlay-mode)
+  :bind (:map symbol-overlay-mode-map
+         ("M-i" . symbol-overlay-put)
+         ("M-n" . symbol-overlay-jump-next)
+         ("M-p" . symbol-overlay-jump-prev)
+         ("M-Q" . symbol-overlay-query-replace))
+  :config
+  ;; transient map (active on a highlighted symbol): q removes all highlights
+  (define-key symbol-overlay-map (kbd "q") #'symbol-overlay-remove-all))
 
 ;;; ─────────────────────────────────────────────
 ;;; 8. LSP — eglot (built-in)
@@ -477,6 +493,7 @@
   :bind ("C-x u" . vundo))
 
 (use-package dape
+  :commands (dape dape-breakpoint-toggle)
   :custom
   (dape-buffer-window-arrangement 'right)
   :config
@@ -564,6 +581,16 @@
           ("MASTERED" . (:foreground "#98be65" :weight bold))
           ("DROPPED"  . (:foreground "#5B6268" :weight bold))))
 
+  ;; Archive completed items to <file>_archive in the same dir → keeps agenda files lean
+  (setq org-archive-location "%s_archive::* Archived")
+
+  ;; Daily dashboard: agenda + next actions + items due for review (C-c o a → d)
+  (setq org-agenda-custom-commands
+        '(("d" "Dashboard"
+           ((agenda "" ((org-agenda-span 'day)))
+            (todo "NEXT" ((org-agenda-overriding-header "Next Actions")))
+            (todo "REVIEW" ((org-agenda-overriding-header "Due for Review")))))))
+
   (setq org-capture-templates
         `(;; Shared
           ("i" "Inbox"   entry (file+headline ,(concat my/garden-dir "inbox.org") "Tasks")
@@ -613,6 +640,14 @@
           (:name "Inbox"
            :file-path "inbox\\.org")
           (:discard (:anything t)))))
+
+(use-package org-ql
+  :after org
+  :commands (org-ql-search org-ql-view org-ql-find))
+
+(use-package org-kanban
+  :after org
+  :commands (org-kanban/initialize org-kanban/shift))
 
 (use-package org-roam
   :after org
@@ -772,6 +807,7 @@
   (conda-anaconda-home      (expand-file-name "~/miniconda3/"))
   (conda-env-home-directory (expand-file-name "~/miniconda3/"))
   (conda-env-subdirectory   "envs")
+  (conda-message-on-environment-switch nil)
   :config (conda-env-autoactivate-mode 1))
 
 ;;; ─────────────────────────────────────────────
@@ -857,7 +893,9 @@
       scroll-margin         8
       isearch-lazy-count    t)
 
-(add-to-list 'compilation-environment "NO_COLOR=1")
+;; compilation-environment is defined in compile.el (loaded on first compile)
+(with-eval-after-load 'compile
+  (add-to-list 'compilation-environment "NO_COLOR=1"))
 (add-hook 'compilation-filter-hook #'ansi-color-compilation-filter)
 
 (setq backup-directory-alist `(("." . ,(expand-file-name "backups/" user-emacs-directory)))
@@ -915,6 +953,7 @@
 
 (use-package gptel
   :vc (:url "https://github.com/karthink/gptel" :rev :newest)
+  :commands (gptel gptel-send gptel-rewrite gptel-menu)
   :config
   (setq gptel-backend
         (gptel-make-openai "lmstudio"
