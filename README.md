@@ -26,12 +26,8 @@ learning loop. Single file: `init.el`.
 | clang-format | included with llvm | C/C++ formatter |
 | prettier | `npm install -g prettier` | JS/TS/CSS/HTML/JSON/Markdown formatter |
 | shfmt | `brew install shfmt` | Shell formatter |
-| rustfmt | `rustup component add rustfmt` | Rust formatter |
-| gofmt | included with Go | Go formatter |
 | pandoc | `brew install pandoc` | Markdown export (`markdown-command`) |
-| grip | `pip install grip` | Live GitHub-flavored Markdown preview (grip-mode) |
 | graphviz | `brew install graphviz` | org-roam-ui graph |
-| enchant + dict | `brew install enchant` | Spell-check backend (jinx) |
 | miniconda | [docs.conda.io](https://docs.conda.io) | Python env management |
 | LM Studio | [lmstudio.ai](https://lmstudio.ai) | Local AI assistant (gptel) |
 
@@ -46,7 +42,7 @@ The config expects a single notes root at `~/Documents/garden/`:
 
 ```bash
 mkdir -p ~/Documents/garden/{work,personal}/projects
-mkdir -p ~/Documents/garden/{images,people}
+mkdir -p ~/Documents/garden/people
 ```
 
 ---
@@ -79,7 +75,6 @@ All notes live under one root. org-roam indexes the whole tree recursively.
 ├── reading.org        ← books / resources           (C-c n r)
 ├── reviews.org        ← spaced-repetition schedule   (C-c n v)
 ├── *.org              ← org-roam nodes (Zettelkasten)
-├── images/            ← org-download attachments
 ├── people/            ← org-roam person nodes        (C-c n P)
 ├── work/
 │   ├── tasks.org      ← work tasks                   (C-c n w)
@@ -163,18 +158,17 @@ All notes live under one root. org-roam indexes the whole tree recursively.
 | org-modern | Modern org visual style |
 | org-pomodoro | Pomodoro timer tied to clock |
 | org-appear | Reveal emphasis markers under cursor |
-| org-download | Paste/drag images into org |
 | org-transclusion | Embed content from other org files |
 | org-cliplink | Paste URL, auto-fetch title |
+| org-ql | Query language for org (find/search) |
+| org-kanban | Kanban board view for org headings |
 
 ### Markdown & Writing
 
 | Package | Purpose |
 |---------|---------|
 | markdown-mode | Markdown editing, native code-block fontification |
-| grip-mode | Live GitHub-flavored preview in browser |
 | olivetti | Centered writing mode |
-| jinx | Fast spell-check (enchant) |
 
 ### Tools
 
@@ -209,7 +203,6 @@ prefix (e.g. `C-c g`) and wait — **which-key** shows the rest.
 | `C-x u` | visual undo tree (vundo) |
 | `C-?` | redo (undo-redo) |
 | `C-x C-d` | jump to directory (consult-dir) |
-| `M-$` | spell-correct word (jinx) |
 | `C-c i r` / `C-c i l` | indent region right / left |
 
 ### Buffers (`C-c b`)
@@ -304,10 +297,12 @@ Native splits: `C-x 2` (below), `C-x 3` (right), `C-x 0` (close), `C-x 1` (only)
 | `C-c o u` | roam graph (browser) |
 | `C-c o l` | paste URL as org link |
 | `C-c o t` | toggle transclusion mode |
-| `C-c o y` | paste image from clipboard |
 | `C-c o I` / `C-c o O` | clock in / out |
 | `C-c o R` | clock report |
 | `C-c o e` | set effort estimate |
+| `C-c o q` | org-ql find |
+| `C-c o k` | org-kanban initialize |
+| `C-c o A` | archive subtree |
 
 ### Notes & Learning (`C-c n`)
 
@@ -375,8 +370,6 @@ Native splits: `C-x 2` (below), `C-x 3` (right), `C-x 0` (close), `C-x 1` (only)
 | CSS / HTML / JSON | prettier |
 | Markdown | prettier |
 | Shell | shfmt |
-| Rust | rustfmt |
-| Go | gofmt |
 
 Both classic (`python-mode`) and tree-sitter (`python-ts-mode`) major modes are
 mapped, so formatting fires regardless of which mode treesit-auto selects.

@@ -4,7 +4,7 @@
 ;;            treesit, which-key, pixel-scroll-precision, repeat,
 ;;            savehist, recentf, save-place, winner, sqlite.
 
-;; macOS: jinx's native module drags in a second glib, and the objc runtime
+;; macOS: some native modules drag in a second glib, and the objc runtime
 ;; prints a duplicate-class warning straight to stderr — over the tty in -nw.
 ;; No env var silences it; repoint this process's stderr to a log instead.
 (when (and (eq system-type 'darwin)
@@ -37,7 +37,7 @@
   (exec-path-from-shell-arguments '("-l"))   ; login shell only, not interactive — skips ~/.zshrc
   :config
   (dolist (var '("PATH" "MANPATH" "PYTHONPATH" "CONDA_PREFIX"
-                 "CONDA_DEFAULT_ENV" "GOPATH" "CARGO_HOME"))
+                 "CONDA_DEFAULT_ENV"))
     (add-to-list 'exec-path-from-shell-variables var))
   (exec-path-from-shell-initialize))
 
@@ -67,12 +67,9 @@
    ((find-font (font-spec :name "Menlo"))
     (set-face-attribute 'default nil :font "Menlo-12"))))
 
-(if (daemonp)
-    (add-hook 'after-make-frame-functions
-              (lambda (f) (with-selected-frame f (my/set-font))))
-  (my/set-font)
-  (add-hook 'after-make-frame-functions
-            (lambda (f) (with-selected-frame f (my/set-font)))))
+(unless (daemonp) (my/set-font))
+(add-hook 'after-make-frame-functions
+          (lambda (f) (with-selected-frame f (my/set-font))))
 
 (use-package tab-bar
   :ensure nil
@@ -162,7 +159,6 @@
 (global-set-key (kbd "C-c o u") #'org-roam-ui-open)
 (global-set-key (kbd "C-c o l") #'org-cliplink)
 (global-set-key (kbd "C-c o t") #'org-transclusion-mode)
-(global-set-key (kbd "C-c o y") #'org-download-yank)
 (global-set-key (kbd "C-c o I") #'org-clock-in)
 (global-set-key (kbd "C-c o O") #'org-clock-out)
 (global-set-key (kbd "C-c o R") #'org-clock-report)
@@ -322,7 +318,6 @@
 (use-package consult-dir
   :bind (("C-x C-d" . consult-dir)
          :map vertico-map
-         ("C-x C-d" . consult-dir)
          ("C-x C-j" . consult-dir-jump-file)))
 
 (use-package consult-todo
@@ -462,8 +457,7 @@
   :ensure nil
   :custom
   (project-vc-extra-root-markers
-   '("pyproject.toml" "setup.py" "Cargo.toml" "go.mod"
-     "package.json" "CMakeLists.txt" "Makefile"))
+   '("pyproject.toml" "setup.py" "package.json" "CMakeLists.txt" "Makefile"))
   (project-switch-commands
    '((project-find-file    "Find file"      ?f)
      (project-find-regexp  "Find regexp"    ?g)
@@ -599,10 +593,13 @@
             (todo "NEXT" ((org-agenda-overriding-header "Next Actions")))
             (todo "REVIEW" ((org-agenda-overriding-header "Due for Review")))))))
 
+  (defvar my/task-capture-body    "* TODO %?\n  %U\n  %a")
+  (defvar my/project-capture-body "* NEW %^{Project} %^g\n:PROPERTIES:\n:CREATED: %U\n:END:\n\n** Goal\n%?\n\n** Tasks\n- [ ] \n\n** Outcome\n")
+
   (setq org-capture-templates
         `(;; Shared
           ("i" "Inbox"   entry (file+headline ,(concat my/garden-dir "inbox.org") "Tasks")
-           "* TODO %?\n  %U\n  %a")
+           ,my/task-capture-body)
           ("j" "Journal" entry (file+datetree ,(concat my/garden-dir "journal.org"))
            "* %U\n** Worked On\n%?\n** Notes\n\n** Reading Insight\n\n** Momentum: /10\n"
            :empty-lines 1)
@@ -614,16 +611,14 @@
            :empty-lines 1)
           ;; Work
           ("w" "Work Task"    entry (file+headline ,(concat my/work-dir "tasks.org") "Tasks")
-           "* TODO %?\n  %U\n  %a" :empty-lines 1)
+           ,my/task-capture-body :empty-lines 1)
           ("W" "Work Project" entry (file+headline ,(concat my/work-dir "projects.org") "Projects")
-           "* NEW %^{Project} %^g\n:PROPERTIES:\n:CREATED: %U\n:END:\n\n** Goal\n%?\n\n** Tasks\n- [ ] \n\n** Outcome\n"
-           :empty-lines 1)
+           ,my/project-capture-body :empty-lines 1)
           ;; Personal
           ("t" "Personal Task"    entry (file+headline ,(concat my/personal-dir "tasks.org") "Tasks")
-           "* TODO %?\n  %U\n  %a" :empty-lines 1)
+           ,my/task-capture-body :empty-lines 1)
           ("p" "Personal Project" entry (file+headline ,(concat my/personal-dir "projects.org") "Projects")
-           "* NEW %^{Project} %^g\n:PROPERTIES:\n:CREATED: %U\n:END:\n\n** Goal\n%?\n\n** Tasks\n- [ ] \n\n** Outcome\n"
-           :empty-lines 1))))
+           ,my/project-capture-body :empty-lines 1))))
 
 (use-package org-super-agenda
   :after org
@@ -692,23 +687,19 @@
   (defun my/roam--template (key)
     (cl-find key org-roam-capture-templates :key #'car :test #'string=))
 
-  (defun my/roam-capture-concept ()
-    (interactive)
+  (defun my/roam-capture (key prompt)
     (org-roam-capture- :node (org-roam-node-create
-                              :title (read-string "Concept: "))
-                       :templates (list (my/roam--template "c"))))
+                              :title (read-string prompt))
+                       :templates (list (my/roam--template key))))
+
+  (defun my/roam-capture-concept ()
+    (interactive) (my/roam-capture "c" "Concept: "))
 
   (defun my/roam-capture-question ()
-    (interactive)
-    (org-roam-capture- :node (org-roam-node-create
-                              :title (read-string "Question topic: "))
-                       :templates (list (my/roam--template "q"))))
+    (interactive) (my/roam-capture "q" "Question topic: "))
 
   (defun my/roam-capture-person ()
-    (interactive)
-    (org-roam-capture- :node (org-roam-node-create
-                              :title (read-string "Person name: "))
-                       :templates (list (my/roam--template "P"))))
+    (interactive) (my/roam-capture "P" "Person name: "))
 
   (defun my/roam-log-interaction ()
     (interactive)
@@ -753,15 +744,6 @@
   (org-appear-autolinks      t)
   (org-appear-autosubmarkers t))
 
-(use-package org-download
-  :hook ((org-mode   . org-download-enable)
-         (dired-mode . org-download-enable))
-  :custom
-  (org-download-method    'directory)
-  (org-download-image-dir (expand-file-name "~/Documents/garden/images/"))
-  (org-download-heading-lvl nil)
-  (org-download-timestamp "%Y%m%d-%H%M%S_"))
-
 (use-package org-transclusion
   :after org
   :bind (:map org-mode-map
@@ -773,9 +755,6 @@
 ;;; 14. MARKDOWN
 ;;; ─────────────────────────────────────────────
 
-(add-to-list 'treesit-language-source-alist
-             '(json "https://github.com/tree-sitter/tree-sitter-json"))
-
 (use-package markdown-mode
   :mode ("\\.md\\'" "\\.markdown\\'")
   :hook (markdown-mode . visual-line-mode)
@@ -784,11 +763,6 @@
   (markdown-fontify-code-blocks-natively t)
   (markdown-header-scaling t)
   (markdown-hide-urls t))
-
-(use-package grip-mode
-  :vc (:url "https://github.com/seagle0128/grip-mode" :rev :newest)
-  :after markdown-mode
-  :commands grip-mode)
 
 ;;; ─────────────────────────────────────────────
 ;;; 15. WRITING
@@ -799,13 +773,6 @@
          (markdown-mode . olivetti-mode))
   :custom (olivetti-body-width 90))
 
-(use-package jinx
-  :vc (:url "https://github.com/minad/jinx" :rev :newest)
-  :hook ((org-mode      . jinx-mode)
-         (markdown-mode . jinx-mode)
-         (text-mode     . jinx-mode))
-  :bind ("M-$" . jinx-correct))
-
 ;;; ─────────────────────────────────────────────
 ;;; 16. PYTHON / CONDA
 ;;; ─────────────────────────────────────────────
@@ -815,8 +782,7 @@
   (conda-anaconda-home      (expand-file-name "~/miniconda3/"))
   (conda-env-home-directory (expand-file-name "~/miniconda3/"))
   (conda-env-subdirectory   "envs")
-  (conda-message-on-environment-switch nil)
-  :config (conda-env-autoactivate-mode 1))
+  (conda-message-on-environment-switch nil))
 
 ;;; ─────────────────────────────────────────────
 ;;; 17. COMPILE / RUN
@@ -865,10 +831,6 @@
   (setf (alist-get 'markdown-mode      apheleia-mode-alist) 'prettier)
   (setf (alist-get 'sh-mode            apheleia-mode-alist) 'shfmt)
   (setf (alist-get 'bash-ts-mode       apheleia-mode-alist) 'shfmt)
-  (setf (alist-get 'rust-mode          apheleia-mode-alist) 'rustfmt)
-  (setf (alist-get 'rust-ts-mode       apheleia-mode-alist) 'rustfmt)
-  (setf (alist-get 'go-mode            apheleia-mode-alist) 'gofmt)
-  (setf (alist-get 'go-ts-mode         apheleia-mode-alist) 'gofmt)
   (setf (alist-get 'emacs-lisp-mode    apheleia-mode-alist) nil))
 
 ;;; ─────────────────────────────────────────────
@@ -919,6 +881,7 @@
 
 ;; Sync kill ring with macOS clipboard in terminal mode
 (unless (display-graphic-p)
+  (xterm-mouse-mode 1)
   (setq interprogram-cut-function
         (lambda (text)
           (with-temp-buffer

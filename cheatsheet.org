@@ -302,7 +302,6 @@ Tip: =M-i= then =M-n/M-p= to navigate all uses of a variable/function without a 
 | C-c o u     | roam graph UI                   |
 | C-c o l     | paste URL as link               |
 | C-c o t     | transclusion toggle             |
-| C-c o y     | paste image                     |
 | C-c o q     | org-ql find (query agenda)      |
 | C-c o k     | org-kanban board (insert)       |
 | C-c o A     | archive subtree                 |
@@ -487,11 +486,6 @@ Include live content from another node — changes in source reflect everywhere 
 3. Content appears inline; edit the source file to update it everywhere
 4. Toggle off with =C-c o t= to see raw =#+transclude= links
 
-*** Paste Image (org-download)
-1. Copy an image to clipboard (screenshot, browser, etc.)
-2. =C-c o y= → image saved to =garden/images/= and link inserted at point
-3. Image previews inline if =org-toggle-inline-images= is on (=C-c C-x C-v=)
-
 *** Paste URL as Link (org-cliplink)
 1. Copy a URL to clipboard
 2. =C-c o l= → fetches page title, inserts =[[url][Page Title]]= at point
@@ -531,7 +525,6 @@ The board is a live view of headings — editing the underlying TODO state and r
 * Markdown
 | Key                           | Action                          |
 |-------------------------------+---------------------------------|
-| M-x grip-mode                 | live GitHub preview in browser  |
 | C-c C-s b                     | bold (wrap selection)           |
 | C-c C-s i                     | italic                          |
 | C-c C-s c                     | inline code                     |
@@ -541,16 +534,6 @@ The board is a live view of headings — editing the underlying TODO state and r
 | C-c C-n / C-c C-p            | next / prev heading             |
 | C-c s i                       | jump to heading (consult-imenu) |
 | C-c c f                       | format with prettier (apheleia) |
-
-Tip: =grip-mode= needs =pip install grip= once. Renders GitHub-flavored markdown live.
-
-* Writing & Spell Check
-| Key         | Action                          |
-|-------------+---------------------------------|
-| M-$         | jinx-correct — fix word at point |
-
-=jinx= checks spelling in org, markdown, and text files. Fast, uses system =enchant= dictionaries.
-Press =M-$= on any underlined word → pick correction or add to dictionary.
 
 * AI Assistant (C-c a)
 | Key         | Action                          |

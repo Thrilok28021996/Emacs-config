@@ -7,212 +7,488 @@ lesson uses your real keybindings and your real files (=~/Documents/garden/=).
 Do the "▶ Do this now" steps in order — the point is muscle memory, not reading.
 
 Pair this with =cheatsheet.org= (=C-x C-f ~/.emacs.d/cheatsheet.org=): tutorial
-teaches the flow, cheatsheet is the lookup card once you know what you want.
+teaches the flow and the *why*, cheatsheet is the lookup card once you know
+what you want. Where cheatsheet gives you the numbered steps, this file gives
+you the reasoning and the practice.
 
-Suggested pace: one lesson a day for ~2 weeks. By the end the keys are reflex.
+Suggested pace: one lesson a day for ~3 weeks. By the end the keys are reflex
+and you understand *why* each piece of config is set the way it is — so when
+something behaves oddly, you know which knob in =init.el= to check.
 
-* Lesson 0 — Orientation (5 min)
+* Lesson 0 — Orientation (10 min)
 *What Org is:* plain-text =.org= files that fold into outlines. Headings start
-with =*=. Everything else (agenda, roam, capture) is built on that one idea.
+with =*=. Everything else (agenda, roam, capture, kanban, SRS) is layered on
+top of that one idea — a heading with a keyword and some properties. Nothing
+in this setup is magic; it's all outlines plus metadata plus Elisp that reads
+the metadata.
 
-*Your file layout* (all under =~/Documents/garden/=):
+*Why plain text:* every file here is =grep=-able, diff-able, sync-able with
+git, and outlives any specific tool. If Org disappeared tomorrow the files
+would still be readable. That's the whole design philosophy behind Org, and
+why this config leans on plain files instead of a database-backed app — except
+for org-roam, which *does* keep a SQLite cache (see Lesson 7) purely as a fast
+index over the same plain files, never as the source of truth.
+
+*Your file layout* (all under =~/Documents/garden/=, set by =org-directory=):
 | File                  | What lives here                       |
-|-----------------------+---------------------------------------|
+|-----------------------+----------------------------------------|
 | inbox.org             | quick capture dump — sort later       |
 | journal.org           | daily log (datetree)                  |
 | reading.org           | books + reading notes                 |
 | reviews.org           | spaced-repetition items               |
 | work/tasks.org        | work next actions                     |
 | work/projects.org     | work project index                    |
+| work/projects/*.org   | individual work project files (auto-added to agenda) |
 | personal/tasks.org    | personal next actions                 |
 | personal/projects.org | personal project index                |
+| personal/projects/*.org | individual personal project files (auto-added) |
+| people/*.org          | org-roam person nodes (Lesson 8)       |
 | (any) *_archive       | archived/done items, out of agenda    |
+
+*How agenda-files is actually built:* it isn't a static list. =init.el= starts
+with the eight named files above, then globs =work/projects/*.org= and
+=personal/projects/*.org= and appends whatever it finds. Practical effect: drop
+a new file in =work/projects/= and it's in your agenda on the next Emacs
+restart — no config edit needed. Restart is required because the glob runs
+once at startup, not on a timer.
 
 ▶ Do this now: =C-c o r= (roam find) — type any word, hit RET on "create". You
 just made your first node. =C-x C-f ~/Documents/garden/= to see your files.
+Then =C-x C-f ~/Documents/garden/work/projects/= and note it's currently empty
+(or not) — that's the directory the glob watches.
 
-* Lesson 1 — Structure: headings, folding, lists, links (15 min)
-The whole editor is an outline. Master folding and movement first.
+* Lesson 1 — Structure: headings, folding, lists, links (20 min)
+The whole editor is an outline. Master folding and movement first — everything
+else in this tutorial assumes you're fluent with these.
 
-| Key       | Action                      |
-|-----------+-----------------------------|
-| M-RET     | new heading at same level   |
-| TAB       | fold / unfold this heading  |
-| S-TAB     | fold / unfold whole file    |
-| M-LEFT/RIGHT | promote / demote heading |
-| M-UP/DOWN | move subtree up / down      |
-| C-c C-n/p | next / previous heading     |
+| Key          | Action                      |
+|--------------+------------------------------|
+| M-RET        | new heading at same level   |
+| TAB          | fold / unfold this heading  |
+| S-TAB        | fold / unfold whole file    |
+| M-LEFT/RIGHT | promote / demote heading    |
+| M-UP/DOWN    | move subtree up / down      |
+| C-c C-n/p    | next / previous heading (same level) |
+| C-u C-u TAB  | show only top-level headings (overview) |
+
+*Startup folding:* this file itself has =#+STARTUP: overview= at the top,
+which is why it opens fully folded — that's an Org file setting, not a global
+one. Your own notes default to fully open unless you add that line.
 
 Lists: start a line with =-= or =1.=. =M-RET= makes the next item. =C-c C-c= on
-a =[ ]= checkbox toggles it.
+a =[ ]= checkbox toggles it. A checkbox list under a heading shows progress —
+add =[/]= or =[%]= after the heading text and it auto-updates as a counter
+(e.g. =* Groceries [2/5]=).
 
-Links: =C-c C-l= insert a link, =C-c C-o= open the link under cursor.
+Links: =C-c C-l= insert a link (prompts for target + description), =C-c C-o=
+open the link under cursor, =C-c C-x C-v= toggle inline image display for
+image links. Link targets can be URLs, other files, headings in the same file
+(=*Heading text=), or roam node IDs (handled automatically by org-roam,
+Lesson 7).
 
 ▶ Do this now: open =inbox.org=, =M-RET=, type =* Practice=, =TAB= to fold/unfold,
 =M-RET= again for a sub-item, add a =- [ ] test= checkbox, =C-c C-c= to tick it.
+Then add a second checkbox, put =[/]= in the parent heading, and watch the
+counter update as you toggle each one.
 
-* Lesson 2 — TODO states & the agenda (the GTD core) (20 min)
-A heading becomes a task when it starts with a TODO keyword. =C-c C-t= cycles it.
+* Lesson 2 — The visual layer: modern stars, live emphasis, focused writing (10 min)
+None of this changes what your files *contain* — only how they're *displayed*.
+Worth knowing so you're not confused when markup looks like it "disappeared."
 
-*Your two TODO workflows:*
-- General: =TODO → NEXT → DONE=  (NEXT = "the thing I'll actually do next")
-- Learning: =NEW → LEARNING → REVIEW → APPLY → MASTERED= (or =DROPPED=)
+*Org-modern* replaces the plain =*= =**= =***= stars with =◉ ○ ◈ ◇ ✦= in both
+regular buffers and the agenda. It's pure display — the underlying file still
+has plain asterisks, which is what you see if you open the file in any other
+editor or with =cat=.
 
-*The agenda* pulls every dated/TODO item from your agenda files into one view.
+*Hidden emphasis markers:* =org-hide-emphasis-markers= is on, so =/italic/=
+shows as /italic/ with the slashes hidden, not as literal slashes. *Org-appear*
+is the fix for the annoying side effect of that: put your cursor *inside* a
+bit of emphasized or linked text and the markers reappear live so you can edit
+them, then hide again once you move off. Without org-appear you'd have to
+guess where the invisible =*= =/= =_= boundaries are.
 
-| Key       | Action                      |
-|-----------+-----------------------------|
-| C-c o a   | open agenda dispatcher      |
-| C-c o a → a | day/week agenda           |
-| C-c o a → d | your Dashboard (see L12)   |
-| (in agenda) t | cycle TODO              |
-| (in agenda) s / d | schedule / deadline |
-| (in agenda) f / b | next / prev day     |
-| (in agenda) q | quit                    |
+*Olivetti* centers and narrows the buffer to ~90 columns in Org buffers only —
+pure readability, toggled automatically by the =org-mode-hook=, not something
+you invoke by hand. If a buffer looks unusually narrow with wide margins,
+that's this, not a bug.
+
+*Theme integration:* =doom-themes-org-config= makes Org-specific faces (TODO
+colors, priority colors, block delimiters) match whatever Doom theme is
+active, rather than using Org's generic defaults.
+
+▶ Do this now: open any note with a =/italic/= or =*bold*= word, move your
+cursor onto it letter by letter and watch the =/= or =*= appear and disappear
+as you enter and leave the word. That live reveal is org-appear; everything
+else in this lesson is passive and needs no action.
+
+* Lesson 3 — TODO states & workflows (the GTD core) (25 min)
+A heading becomes a task when it starts with a TODO keyword. =C-c C-t= cycles
+forward through the sequence; =S-right/S-left= on the keyword cycles either
+direction without the menu.
+
+*Your two TODO sequences, exactly as configured:*
+- General: =TODO(t) NEXT(n) | DONE(d)=
+- Learning/SRS: =NEW(N) LEARNING(l) REVIEW(r) APPLY(a) | MASTERED(m) DROPPED(x)=
+
+The letter in parens after each keyword is a *fast-select* key: with cursor on
+a heading, =C-c C-t= then the letter jumps straight to that state instead of
+cycling. The =|= splits "in progress" states from "done" states — everything
+after it counts as complete for statistics and archiving purposes.
+
+*Why two sequences instead of one:* NEXT/DONE models one-shot work items.
+NEW→MASTERED models something you're gradually absorbing, with REVIEW/APPLY as
+checkpoints before you consider it internalized. Using the wrong sequence for
+the wrong kind of item is the most common way this system gets confusing —
+tasks that need "NEXT", not "REVIEW".
+
+*Custom colors:* each learning-sequence keyword has its own face color set via
+=org-todo-keyword-faces=, so NEW/LEARNING/REVIEW/APPLY/MASTERED/DROPPED are
+visually distinct from each other and from plain TODO/NEXT/DONE at a glance in
+both buffers and the agenda.
+
+*Dependencies:* =org-enforce-todo-dependencies= is on. If a parent heading has
+child headings that aren't DONE yet, Emacs will refuse to mark the parent DONE
+and tell you why — a guardrail against marking a project complete while a
+subtask is still open.
+
+*Logging:* =org-log-done= records a timestamp into a drawer (not inline) every
+time something is marked DONE, because =org-log-into-drawer= is on — so your
+heading text stays clean and the history lives in a collapsed =:LOGBOOK:=
+drawer under it.
 
 ▶ Do this now: in =work/tasks.org= add =* TODO Try the agenda=, =C-c C-t= to set
-=NEXT=, then =C-c o a → a=. See it appear. Press =t= on it to mark DONE.
+=NEXT=, then =C-c o a → a=. See it appear. Press =t= on it (in the agenda) to
+mark DONE, then look under the heading for the =:LOGBOOK:= drawer that
+appeared. Now make a heading with two TODO sub-children and try to mark the
+parent DONE before finishing them — watch it refuse.
 
-* Lesson 3 — Capture → Refile (don't break flow) (20 min)
+* Lesson 4 — The agenda system (25 min)
+The agenda pulls every dated/TODO item from your agenda files (Lesson 0) into
+one view. It's a *view*, not a file — editing in the agenda edits the real
+heading in its real file.
+
+| Key           | Action                          |
+|---------------+----------------------------------|
+| C-c o a       | open agenda dispatcher          |
+| C-c o a → a   | day/week agenda                 |
+| C-c o a → d   | your Dashboard (custom command) |
+| (in agenda) t | cycle TODO                       |
+| (in agenda) s / d | schedule / deadline          |
+| (in agenda) f / b | next / prev day/week         |
+| (in agenda) r | refresh (re-scan files)          |
+| (in agenda) q | quit                             |
+
+*Your Dashboard* (=C-c o a → d=) is a custom agenda command defined in
+=init.el= — it's not built into Org. It stacks three blocks in one buffer: the
+day agenda, a =todo "NEXT"= block, and a =todo "REVIEW"= block. That's *why* it
+exists: instead of three separate agenda commands, one keystroke shows "what's
+scheduled today, what I've decided to do next, and what's due for review."
+
+*Super-agenda grouping* runs automatically on every agenda view (not just the
+dashboard) — it re-buckets whatever the agenda would normally show into
+Overdue / Today / Next Actions / Learning / Work / Personal / Inbox, discarding
+the plain chronological layout Org uses by default. This is always on; there's
+no key to toggle it, because it's a global minor mode enabled at startup.
+
+*=org-agenda-window-setup= is =current-window=*, meaning the agenda replaces
+your current window instead of splitting — =q= returns you to what you were
+doing, it doesn't just close a second pane.
+
+▶ Do this now: =C-c o a → d= and read your dashboard top to bottom, noticing
+the three stacked sections. Then =C-c o a → a= for the plain day/week view and
+compare — same underlying data, different shape. Press =q=, confirm you're
+back exactly where you started.
+
+* Lesson 5 — Capture → Refile (don't break flow) (25 min)
 *Capture* = drop a thought in 5 seconds without leaving what you're doing.
-*Refile* = move it to its real home later.
+*Refile* = move it to its real home later. These exist as two separate steps
+on purpose: deciding *what* to write and deciding *where it belongs* are
+different kinds of thinking, and mixing them is what makes people avoid
+capturing things at all.
 
 Your capture keys (each opens a template, write, then =C-c C-c= to file it):
-| Key     | Captures to                  |
-|---------+------------------------------|
-| C-c n i | inbox                        |
-| C-c n j | journal entry (today)        |
-| C-c n w | work task                    |
-| C-c n t | personal task                |
-| C-c n r | reading note                 |
-| C-c n v | review item (SRS)            |
+| Key     | Captures to                     |
+|---------+---------------------------------|
+| C-c n i | inbox                           |
+| C-c n j | journal entry (today, datetree) |
+| C-c n v | review item (SRS)               |
+| C-c n r | reading note                    |
+| C-c n w | work task                       |
+| C-c n W | work project                    |
+| C-c n t | personal task                   |
+| C-c n p | personal project                |
 
-Refile: on any heading, =C-c C-w= → pick a destination (any heading in your
-agenda files, up to 3 levels deep).
+One more =C-c n= binding that isn't a capture template: =C-c n s= runs
+=my/learn-search=, a full-text ripgrep search across every file in
+=~/Documents/garden/= — the fastest way to find "where did I write about X"
+when you don't remember which file or node it's in.
+
+*Anatomy of a template:* each one is a target file + a heading pattern +
+sometimes properties. The journal template (=C-c n j=) uses a *datetree* —
+instead of one flat list, it auto-creates a Year → Month → Day heading
+structure the first time you capture on a given day, then files under today's
+date every time after. The review template (=C-c n v=) adds a hidden
+=REVIEW_COUNT= property at 0 — that counter is what Lesson 9's interval logic
+reads and increments.
+
+*Refile mechanics:* =C-c C-w= on any heading opens a completion prompt built
+from =org-refile-targets= — every heading in every agenda file, up to 3 levels
+deep (=maxlevel 3=). Two settings make this pleasant instead of tedious:
+=org-refile-use-outline-path='file= shows each candidate as a breadcrumb
+prefixed by the *file name only* (directory stripped), e.g.
+=projects.org/Q3 Migration/Backend=, so you're not guessing which
+"Backend" you're picking among several within the same file. (Two files with
+the same basename in different directories, like =work/projects.org= and
+=personal/projects.org=, would show identical prefixes — worth knowing if you
+ever rename files that way.) =org-refile-use-cache=t= means that
+breadcrumb list is built once and cached rather than rescanned on every
+refile, so it stays fast even with hundreds of headings. If you add a new
+heading and it doesn't show up in the refile list yet, =C-0 C-c C-w= (zero as
+the prefix arg) forces a cache refresh.
+
+=org-refile-allow-creating-parent-nodes='confirm= means you can type a
+brand-new heading name at the refile prompt (not just pick an existing one)
+and it will ask before creating it — useful for "file this under a project
+that doesn't have a section yet" without leaving the refile prompt to go
+create one first.
 
 ▶ Do this now: =C-c n i=, type =Buy a notebook=, =C-c C-c=. Open =inbox.org=,
-put cursor on it, =C-c C-w=, refile it into =personal/tasks.org=.
+put cursor on it, =C-c C-w=, refile it into an existing heading in
+=personal/tasks.org= (note the breadcrumb path shown). Then try =C-c n j= and see the
+datetree get created under today's date in =journal.org=.
 
-Habit to build: capture all day into inbox → once a day, refile the inbox to zero.
+Habit to build: capture all day into inbox → once a day, refile the inbox to
+zero.
 
-* Lesson 4 — Scheduling, deadlines, habits, archiving (15 min)
+* Lesson 6 — Scheduling, deadlines, habits, archiving (20 min)
 | Key     | Action                                  |
-|---------+-----------------------------------------|
+|---------+-------------------------------------------|
 | C-c C-s | SCHEDULED — "start working on date"     |
 | C-c C-d | DEADLINE — "must be done by date"       |
 | C-c o A | archive this subtree (out of agenda)    |
 
 *Scheduled vs Deadline:* scheduled = when it appears on your plate; deadline =
-the hard date (agenda warns you in advance).
+the hard date the agenda warns you about in advance, counting down.
+
+*Repeater syntax* (typed after the date, e.g. =<2026-07-10 +1w>=):
+- =+1w= — shift forward by exactly 1 week from the *original* date, every time, regardless of when you actually did it (good for "every Monday" style recurrence).
+- =++1w= — like =+1w= but skips forward past any dates you missed, landing on the next one still in the future (good for "weekly, but don't pile up missed ones").
+- =.+1w= — 1 week from *today* (the day you mark it done), not from the original date — this is what habits use, since a habit's next occurrence should count from when you actually did it.
 
 *Habits:* give a repeating task =:PROPERTIES: :STYLE: habit :END:= and a
-=SCHEDULED= with a repeater like =.+1d=. The agenda draws a consistency graph.
+=SCHEDULED= with a =.+= repeater. The agenda draws a consistency graph next to
+it. Two settings shape that graph: =org-habit-graph-column=55= fixes which
+column the graph starts at (so it lines up regardless of heading text length),
+and =org-habit-show-habits-only-for-today=t= means the graph only appears on
+today's agenda line, not stacked across every future day — keeps the agenda
+readable.
 
-*Archiving (hygiene):* DONE/MASTERED/DROPPED items pile up and slow things down.
-=C-c o A= moves a finished subtree to =<file>_archive= — gone from agenda, still
-on disk. Do this weekly.
+*Archiving (hygiene):* DONE/MASTERED/DROPPED items pile up and slow the agenda
+and refile-cache down. =C-c o A= moves a finished subtree out, governed by
+=org-archive-location = "%s_archive::* Archived"= — the =%s= is replaced with
+the current file's name, so archiving a heading in =work/tasks.org= creates or
+appends to =work/tasks.org_archive=, under a top-level =* Archived= heading in
+that archive file. Archived items are off the agenda (archive files aren't
+agenda files) but still on disk and still =grep=-able. Do this weekly.
 
 ▶ Do this now: schedule a task for tomorrow (=C-c C-s=, type =+1=), mark another
-DONE and =C-c o A= to archive it. Check it left the agenda.
+DONE and =C-c o A= to archive it. Open the =_archive= file that got created and
+confirm the =* Archived= heading and your item are there. Then set up one real
+habit with a =.+1d= repeater and =:STYLE: habit:=, and check the agenda for
+its consistency graph the next morning.
 
-* Lesson 5 — Org-Roam: your knowledge graph (30 min)
+* Lesson 7 — Org-Roam: your knowledge graph (35 min)
 Every note is a *node*. Nodes link to each other; *backlinks* show what points
-at the current note. This is your "second brain".
+at the current note. This is your "second brain" — the part of this setup
+that behaves least like a task manager and most like a wiki you write to
+yourself.
 
 | Key     | Action                         |
-|---------+--------------------------------|
+|---------+----------------------------------|
 | C-c o r | find or create a node          |
 | C-c o i | insert a link to another node  |
-| C-c o s | search all nodes               |
+| C-c o s | search all nodes (ripgrep-backed)|
 | C-c o u | open the visual graph (browser)|
-| C-c n k | new *concept* node             |
-| C-c n q | new *question* node            |
+| C-c n k | new *concept* node (template)   |
+| C-c n q | new *question* node (template)  |
 
-Workflow: write a note → wherever you mention a related idea, =C-c o i= to link
-it → the backlink panel (=M-x org-roam-buffer-toggle=) shows connections grow.
+*How org-roam actually finds things:* every node lives as a plain heading or
+file in =~/Documents/garden/= (same directory as everything else — roam notes
+aren't segregated). A SQLite database (=org-roam-db-autosync-mode=) indexes
+titles, tags, and links so =C-c o r= can search instantly instead of
+re-scanning every file on every keystroke. If the graph ever looks stale after
+manually editing a file outside Emacs, =M-x org-roam-db-sync= forces a
+rebuild — this is a cache, not the source of truth, so it's always safe to
+rebuild.
+
+*Completion everywhere:* =org-roam-completion-everywhere=t= means you can type
+=[[= almost anywhere in an Org buffer, even outside a dedicated roam workflow,
+and get node-completion — you don't have to remember =C-c o i= specifically if
+=[[= is faster muscle memory for you.
+
+*Templates:* =C-c n k= (concept) scaffolds What / Why / When / Code / Links
+sections — use it for "I learned a concept and want to actually retain it."
+=C-c n q= (question) is a lighter template for an open question you want to
+revisit, without the full concept scaffold. Both are org-roam capture
+templates, distinct from the =C-c n= task-capture templates in Lesson 5 —
+same prefix key, different subsystem, worth keeping straight.
+
+*Backlinks:* =M-x org-roam-buffer-toggle= opens a side panel showing every
+node that links *to* the one you're currently in. This is the payoff of
+linking consistently — a note becomes more valuable over time as more things
+point at it, and the backlink panel is how you discover those connections
+without remembering they exist.
+
+*The visual graph* (=C-c o u=, via org-roam-ui) opens a browser view of your
+whole node network. =org-roam-ui= is configured with =sync-theme=t= (matches
+your Emacs theme), =follow=t= (the graph highlights whatever node you're
+currently visiting in Emacs), and =update-on-save=t= (edits reflect live) —
+but =open-on-start=nil=, so it never launches automatically at Emacs startup,
+only when you press =C-c o u=.
 
 ▶ Do this now: =C-c n k=, title "Python decorators", fill =What/Why/When=. Then
 =C-c n k= again "Higher-order functions". In the first note, =C-c o i= and link
-to the second. Open =C-c o u= to see them connected in the graph.
+to the second. Open =C-c o u= to see them connected in the graph, then =M-x
+org-roam-buffer-toggle= inside the second note and confirm the first shows up
+as a backlink.
 
-* Lesson 6 — People tracking (15 min)
-Person nodes are roam notes tagged =:person:= with interaction logs.
+* Lesson 8 — People tracking (20 min)
+Person nodes are roam notes tagged =:person:=, filed into the =people/=
+subdirectory automatically by the capture template, with structured
+interaction logs.
 
 | Key     | Action                                |
-|---------+---------------------------------------|
+|---------+-----------------------------------------|
 | C-c n P | create a person node                  |
 | C-c n x | log an interaction with a person      |
-| C-c o r | find a person by name                 |
+| C-c o r | find a person by name (same as any node)|
 
-▶ Do this now: =C-c n P=, name someone, fill =* Who= and =* Find Them=. Later
-=C-c n x=, pick them, type what you talked about — it timestamps under
-=* Interactions= automatically. Add a =* Follow-up= checkbox and tick it with
-=C-c C-c= when done.
+*Why person nodes are roam nodes and not tasks:* a person isn't a thing you
+complete — it's an entity you accumulate context on over time, which is
+exactly what roam nodes with backlinks are good at. Every project note that
+mentions someone can link to their person node, and their person node's
+backlink panel becomes a running "everything connected to this person" view.
 
-* Lesson 7 — Spaced repetition (remember what you learn) (15 min)
+*=my/roam-log-interaction=* (bound to =C-c n x=) is a small custom function,
+not a stock org-roam feature: it prompts you to pick an existing person node,
+then appends a timestamped entry under a =* Interactions= heading in their
+file automatically — you never have to navigate to their file, find the
+right heading, and format the timestamp by hand.
+
+▶ Do this now: =C-c n P=, name someone, fill =* Who= and =* Find Them=. Confirm
+the file landed in =~/Documents/garden/people/=. Then =C-c n x=, pick them,
+type what you talked about — it timestamps under =* Interactions=
+automatically. Add a =* Follow-up= checkbox and tick it with =C-c C-c= when
+done.
+
+* Lesson 9 — Spaced repetition (remember what you learn) (20 min)
 Your homemade SRS: items get =REVIEW= state + a scheduled date. You review on
-the due date and reschedule at growing intervals.
+the due date and reschedule at growing intervals — the classic spaced-repetition
+idea, implemented in Elisp against your own =REVIEW_COUNT= property instead of
+a dedicated flashcard app.
 
-Intervals: =1 → 3 → 7 → 14 → 30 → 60 days → MASTERED=
+Intervals, from =my/learn-reviewed=: =1 → 3 → 7 → 14 → 30 → 60 days=, then
+=MASTERED= after the 6th successful review.
+
+| Key     | Action                                   |
+|---------+---------------------------------------------|
+| C-c n v | capture a review item (sets REVIEW_COUNT=0) |
+| C-c n a | open the review agenda (today's due items)  |
+| C-c n d | mark reviewed → advance state and reschedule|
+
+*What =C-c n d= actually does:* it reads the item's current =REVIEW_COUNT=,
+looks up the next interval in the =1/3/7/14/30/60= table, sets a new
+=SCHEDULED= date that many days out, and increments the counter — all in one
+keystroke. On the 6th successful review it still applies the final +60d
+reschedule, but *also* flips the TODO state to =MASTERED= in that same step —
+that state change is why MASTERED items stop appearing in =C-c n a= afterward,
+not the reschedule being skipped.
+
+*Why this beats a plain TODO for review items:* a normal reschedule is manual
+and you'd have to remember the interval yourself. This automates the interval
+math so the *only* decision you make on review day is "did I recall it or
+not" — everything else (next date, counter, eventual graduation) is handled.
+
+▶ Do this now: =C-c n v=, "What does org-refile do?", =C-c C-c=. Edit its
+SCHEDULED date to today (or wait for tomorrow): =C-c n a= to see it, recall the
+answer, =C-c n d= to push it to the next interval. Check the =REVIEW_COUNT=
+property (it'll be in the properties drawer) to see it increment.
+
+* Lesson 10 — Reading workflow (10 min)
+=reading.org= holds books/resources with a start page and rolling insights —
+the lightest-weight lesson here on purpose; reading notes should be
+frictionless to add to, or you'll stop adding to them.
 
 | Key     | Action                          |
-|---------+---------------------------------|
-| C-c n v | capture a review item           |
-| C-c n a | open the review agenda (today's)|
-| C-c n d | mark reviewed → schedule next   |
-
-▶ Do this now: =C-c n v=, "What does org-refile do?", =C-c C-c=. Tomorrow (or
-edit its date to today): =C-c n a= to see it, recall the answer, =C-c n d= to
-push it to the next interval.
-
-* Lesson 8 — Reading workflow (10 min)
-=reading.org= holds books/resources with a start page and rolling insights.
-
-| Key     | Action                          |
-|---------+---------------------------------|
+|---------+------------------------------------|
 | C-c n r | new reading note (prompts book) |
 
 ▶ Do this now: =C-c n r=, enter a book + start page, write one insight under
-=** Insights=, =C-c C-c=. As you read more, open the note and append insights.
+=** Insights=, =C-c C-c=. As you read more, open the note and append insights
+under the same heading — no new capture needed for each insight, just append.
 
-* Lesson 9 — Time tracking: clock + pomodoro (15 min)
-*Clock* logs real time against a heading. *Pomodoro* runs focused 25-min blocks.
+* Lesson 11 — Time tracking: clock + pomodoro (20 min)
+*Clock* logs real time against a heading. *Pomodoro* runs focused 25-min
+blocks and clocks automatically while it runs.
 
-| Key     | Action                          |
-|---------+---------------------------------|
-| C-c o I | clock in (start timer on heading)|
-| C-c o O | clock out                       |
-| C-c o R | insert a clock report table     |
-| C-c o e | set an effort estimate          |
+| Key     | Action                            |
+|---------+---------------------------------------|
+| C-c o I | clock in (start timer on heading) |
+| C-c o O | clock out                         |
+| C-c o R | insert a clock report table       |
+| C-c o e | set an effort estimate            |
 
-Pomodoro: cursor on a task heading → =M-x org-pomodoro= → 25-min timer, auto
-break, time logged to the heading.
+*Persistence:* =org-clock-persist=t= (with =org-clock-persistence-insinuate=)
+means if Emacs crashes or you quit while clocked in, the running clock resumes
+on restart instead of silently losing the time — clock state survives the
+session, not just the buffer.
+
+*Mode line:* =org-clock-mode-line-total='today= shows *today's* accumulated
+time for the current clock in the mode line, not the all-time total for that
+heading — useful for "how much have I actually worked on this today" at a
+glance without opening a report.
+
+*Effort vs actual:* =C-c o e= sets an *estimate* before you start (e.g. "2h").
+It's informational only — nothing enforces it — but a clock report (=C-c o R=)
+next to an effort estimate is how you calibrate your own estimates over time.
+
+*Pomodoro:* cursor on a task heading → =M-x org-pomodoro= → a 25-minute timer
+(=org-pomodoro-length=25=), automatic break, and the time gets logged to the
+heading exactly like a manual clock-in would — pomodoro is a thin automated
+wrapper around clocking, not a separate time-tracking system.
 
 ▶ Do this now: on any task, =C-c o I=, do something for a minute, =C-c o O=.
-Then =C-c o R= to see a time report table appear.
+Then =C-c o R= to see a time report table appear. Set an effort estimate with
+=C-c o e= on a different task, then run one =M-x org-pomodoro= session against
+it and compare the logged time to your estimate.
 
-* Lesson 10 — Tables (10 min)
+* Lesson 12 — Tables (15 min)
 Org has a full spreadsheet in plain text.
 
 Type a line starting with =|=, press =TAB= — it becomes a table and keeps
 aligning as you go. =C-c -= inserts a header separator line.
 
-| Key       | Action                  |
-|-----------+-------------------------|
-| TAB       | next cell (new row at end)|
-| C-c C-c   | realign                 |
-| C-c ^     | sort column             |
-| M-LEFT/RIGHT | move column          |
-| M-UP/DOWN | move row                |
+| Key          | Action                    |
+|--------------+----------------------------|
+| TAB          | next cell (new row at end)|
+| C-c C-c      | realign                   |
+| C-c ^        | sort column               |
+| M-LEFT/RIGHT | move column               |
+| M-UP/DOWN    | move row                  |
 
 Formulas: a column can compute. =:= field formula, =C-c == to enter one, e.g.
-=$3=$1*$2= then =C-c C-c=.
+=$3=$1*$2= then =C-c C-c= to recalculate. Formulas can reference whole columns
+(=@2$3..@>$3= = "column 3, row 2 to the last row") for things like a running
+total — useful for effort/clock-report tables you build by hand alongside the
+automatic ones from Lesson 11.
 
 ▶ Do this now: type =| Item | Qty | Price |=, =TAB=, =C-c -=, fill two rows, and
-=C-c ^= to sort.
+=C-c ^= to sort. Then add a fourth column =Total=, set its field formula to
+=$2*$3=, and =C-c C-c= to see it compute for every row.
 
-* Lesson 11 — Org-Babel: run code in your notes (15 min)
-Execute code blocks inline. Your setup runs =python=, =shell=, =emacs-lisp=.
+* Lesson 13 — Org-Babel: run code in your notes (15 min)
+Execute code blocks inline. Your setup runs =python=, =shell=, =emacs-lisp=
+(configured via =org-babel-do-load-languages=).
 
 Create a block (=<s TAB= expands a skeleton, or type it):
 #+begin_example
@@ -222,68 +498,137 @@ print(2 + 2)
 #+end_example
 
 Put the cursor inside, =C-c C-c= → runs it, inserts =#+RESULTS:= below.
+=org-confirm-babel-evaluate=nil= means it just runs without a
+"really evaluate this?" prompt every time — convenient for your own notes,
+worth remembering if you ever paste someone else's =.org= file with an
+untrusted code block into this config, since the safety prompt is off.
 
 ▶ Do this now: in any roam concept note, make a python block that prints
-something, =C-c C-c=, watch the result appear. (Confirmation is off in your
-config, so it just runs.)
+something, =C-c C-c=, watch the result appear. Then try a =shell= block (e.g.
+=echo hello=) and an =emacs-lisp= block (e.g. =(+ 2 2)=) to confirm all three
+configured languages actually run.
 
-* Lesson 12 — Power views: dashboard, super-agenda, org-ql, kanban (20 min)
-*Dashboard* (your custom command): =C-c o a → d= = today's agenda + Next Actions
-+ items Due for Review, in one screen. This is your morning view.
+* Lesson 14 — Power views: dashboard, super-agenda, org-ql, kanban (25 min)
+This lesson ties Lesson 4 (agenda) together with the two query/board tools
+that sit on top of the same TODO data.
 
-*Super-agenda* is always on — it auto-groups the agenda (Overdue / Today / Next
-Actions / Learning / Work / Personal / Inbox). No keys needed.
+*Dashboard* (=C-c o a → d=, covered in Lesson 4): today's agenda + Next Actions
++ items due for Review, in one screen. Your morning view.
 
-*Org-QL* — ad-hoc queries sharper than dates:
+*Super-agenda* (also Lesson 4) is always on — auto-groups the agenda (Overdue /
+Today / Next Actions / Learning / Work / Personal / Inbox). No keys needed.
+
+*Org-QL* — ad-hoc queries sharper than what dates alone can express:
 | Key     | Action                            |
-|---------+-----------------------------------|
+|---------+--------------------------------------|
 | C-c o q | live-filter headings by text      |
 
-=M-x org-ql-search= for query syntax, e.g. =(and (todo "NEXT") (tags "work"))=
-or =(deadline :to today)=.
+=M-x org-ql-search= opens full query syntax, e.g. =(and (todo "NEXT") (tags
+"work"))= for "next actions tagged work", or =(deadline :to today)= for
+"anything due today or overdue". Queries can combine TODO state, tags,
+deadline/schedule windows, and properties (like =REVIEW_COUNT=) — this is the
+tool for "show me something specific" that doesn't map to a standing agenda
+view.
 
-*Org-Kanban* — a board from your TODO states:
+*Org-Kanban* — a visual board built *from* your existing TODO states, not a
+separate tracking system:
 | Key     | Action                              |
-|---------+-------------------------------------|
+|---------+-----------------------------------------|
 | C-c o k | insert a kanban block at point      |
 
-=C-c C-c= on the block refreshes it; =M-x org-kanban/shift= moves a card (changes
-its TODO state).
+=C-c C-c= on the block refreshes it (re-scans the underlying headings);
+=M-x org-kanban/shift= moves a card between columns, which — because the board
+is generated from real TODO states — actually changes that heading's TODO
+state in the real file. Dragging a card on the board *is* cycling
+=C-c C-t= on the underlying heading; the board is a view, exactly like the
+agenda is a view.
 
 ▶ Do this now: =C-c o a → d= and read your dashboard. Then =C-c o q=, type a word
-that's in one of your tasks, and watch it filter live.
+that's in one of your tasks, and watch it filter live. Try =M-x org-ql-search=
+with =(and (todo "NEXT") (tags "work"))= against your own tags. Finally,
+=C-c o k= in a file with a few TODO items, then =M-x org-kanban/shift= one card
+and confirm the underlying heading's TODO keyword actually changed.
 
-* Lesson 13 — Links to the outside: images, URLs, transclusion, export (15 min)
-| Key     | Action                                   |
-|---------+------------------------------------------|
-| C-c o y | paste clipboard image into the note      |
-| C-c o l | paste a URL as =[[url][Page Title]]=      |
-| C-c o t | toggle transclusion (embed another node) |
-| C-c C-x C-v | toggle inline image preview          |
-| C-c C-e | export menu                              |
+* Lesson 15 — Links to the outside: URLs, transclusion, export (15 min)
+| Key          | Action                                   |
+|--------------+--------------------------------------------|
+| C-c o l      | paste a URL as =[[url][Page Title]]=      |
+| C-c o t      | toggle transclusion (embed another node) |
+| C-c C-x C-v  | toggle inline image preview               |
+| C-c C-e      | export menu                               |
+| C-c t a      | (inside org-mode) add a transclusion at point |
 
-*Transclusion:* embed live content from another node — edit the source, it
-updates everywhere. =C-c o t= to toggle the mode, then add a transclusion.
+*Org-cliplink* (=C-c o l=) grabs whatever URL is on your clipboard and inserts
+it as a properly-titled link by fetching the page title — faster than
+=C-c C-l= when the source is already something you copied from a browser.
 
-*Export:* =C-c C-e= → pick a backend. HTML (=h h=) and plain text work out of the
-box. PDF needs a LaTeX install (you don't have one yet) — for sharing, export to
-HTML or copy as Markdown instead.
+*Transclusion:* embed *live* content from another node — edit the source, it
+updates everywhere it's transcluded. =C-c o t= toggles transclusion mode
+globally in the buffer (so transclusions actually render instead of showing as
+plain links); =C-c t a= (bound specifically inside =org-mode-map=) adds a new
+transclusion at point. Use this for content that genuinely lives in one place
+but needs to appear in several — a shared glossary entry referenced from
+multiple project notes, for instance — instead of copy-pasting and having
+copies drift out of sync.
 
-▶ Do this now: copy a URL, =C-c o l= in a note. Take a screenshot, =C-c o y=.
-Then =C-c C-e h o= to export the note to HTML and open it in a browser.
+*Export:* =C-c C-e= → pick a backend. HTML (=h h=) and plain text work out of
+the box. PDF needs a LaTeX install (you don't have one yet) — for sharing,
+export to HTML or copy as Markdown instead.
 
-* Your 2-Week Ramp
-1. *Days 1–2:* Lessons 0–2. Live in headings + the agenda. Make 5 real tasks.
-2. *Days 3–4:* Lessons 3–4. Capture everything to inbox; refile to zero daily.
-3. *Days 5–7:* Lessons 5–6. Start your roam graph; add concept notes as you learn.
-4. *Days 8–9:* Lessons 7–8. Turn 3 things you learned into SRS review items.
-5. *Days 10–11:* Lessons 9–11. Clock your work; run a code block in a note.
-6. *Days 12–14:* Lessons 12–13. Make the dashboard your morning ritual; export one note.
+▶ Do this now: copy a URL, =C-c o l= in a note, confirm the page title got
+fetched. Then =C-c C-e h o= to export the note to HTML and open it in a
+browser. Finally, in two different notes, add a =C-c t a= transclusion of a
+third note, edit the source note, and confirm both transclusions update.
+
+* Lesson 16 — How the config fits together (10 min, read-only)
+No new keys here — this is the map so the previous 16 lessons stop feeling
+like 16 unrelated tools.
+
+Everything in this tutorial comes from *one* section of =init.el= (the Org
+section, roughly the middle third of the file). The layering, bottom to top:
+1. *Org core* — headings, TODO keywords, agenda-files, capture templates,
+   refile targets. Everything else depends on this layer existing.
+2. *Visual layer* — org-modern, org-appear, olivetti, doom-themes-org-config.
+   Purely cosmetic; could be deleted with zero effect on your data.
+3. *Query/view layer* — org-super-agenda, org-ql, org-kanban, the Dashboard
+   custom command. These all *read* core Org data and reshape how it's shown;
+   none of them store anything of their own.
+4. *Org-roam and its satellites* — org-roam itself, consult-org-roam (fuzzy
+   search), org-roam-ui (visual graph). Roam's SQLite database is a rebuildable
+   cache over the same plain files as everything else, per Lesson 7.
+5. *Custom Elisp glue* — the =my/roam-capture-concept=, =my/roam-log-interaction=,
+   =my/learn-review=, =my/learn-reviewed=, =my/learn-search= functions bound
+   under =C-c n=. These are the only parts of this whole system that are
+   bespoke code rather than
+   package configuration — if something in the SRS or people-tracking flow
+   ever behaves unexpectedly, this is where to look first, not in a package's
+   own source.
+
+Practical upshot: layers 2–4 are all optional relative to layer 1. If org-roam
+or org-ql ever broke or got removed, your plain TODO/agenda/capture/refile
+workflow (Lessons 3–6) would be completely unaffected, because nothing in
+that core layer depends on the layers built on top of it.
+
+* Your 3-Week Ramp
+1. *Days 1–3:* Lessons 0–3. Live in headings + TODO states. Make 5 real tasks.
+2. *Days 4–5:* Lesson 4. Make the Dashboard your daily driver; learn the agenda dispatcher.
+3. *Days 6–7:* Lessons 5–6. Capture everything to inbox; refile and archive to zero daily.
+4. *Days 8–11:* Lessons 7–8. Start your roam graph; add a concept note and a person node.
+5. *Days 12–13:* Lesson 9. Turn 3 things you learned into SRS review items.
+6. *Day 14:* Lesson 10. Add one book to reading.org.
+7. *Days 15–16:* Lesson 11. Clock your work; run one pomodoro.
+8. *Days 17–18:* Lessons 12–13. Build a table with a formula; run a code block in a note.
+9. *Days 19–20:* Lesson 14. Run an org-ql query against your own tags; try the kanban board.
+10. *Day 21:* Lessons 15–16. Export one note; read the "how it fits together" map again — it should click now.
 
 The one habit that makes it stick: *=C-c o a → d= every morning, capture to inbox
 all day, refile + archive once at night.* Everything else is detail.
 
 * Where to go deeper
 - Built-in manual: =C-h i= → "Org Mode" (the official, exhaustive reference)
-- Your cheatsheet: =~/.emacs.d/cheatsheet.org= (key lookup)
+- Your cheatsheet: =~/.emacs.d/cheatsheet.org= (key lookup + short how-to steps)
 - Discover keys live: press =C-c o= and wait — which-key shows every option
+- Read the config itself: the Org section of =init.el= — every setting named
+  in this tutorial (=org-habit-graph-column=, =org-refile-use-cache=, etc.) is
+  right there with its actual value, and the comments explain any that aren't
+  self-evident.
