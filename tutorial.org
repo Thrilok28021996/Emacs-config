@@ -609,26 +609,555 @@ or org-ql ever broke or got removed, your plain TODO/agenda/capture/refile
 workflow (Lessons 3–6) would be completely unaffected, because nothing in
 that core layer depends on the layers built on top of it.
 
-* Your 3-Week Ramp
-1. *Days 1–3:* Lessons 0–3. Live in headings + TODO states. Make 5 real tasks.
-2. *Days 4–5:* Lesson 4. Make the Dashboard your daily driver; learn the agenda dispatcher.
-3. *Days 6–7:* Lessons 5–6. Capture everything to inbox; refile and archive to zero daily.
-4. *Days 8–11:* Lessons 7–8. Start your roam graph; add a concept note and a person node.
-5. *Days 12–13:* Lesson 9. Turn 3 things you learned into SRS review items.
-6. *Day 14:* Lesson 10. Add one book to reading.org.
-7. *Days 15–16:* Lesson 11. Clock your work; run one pomodoro.
-8. *Days 17–18:* Lessons 12–13. Build a table with a formula; run a code block in a note.
-9. *Days 19–20:* Lesson 14. Run an org-ql query against your own tags; try the kanban board.
-10. *Day 21:* Lessons 15–16. Export one note; read the "how it fits together" map again — it should click now.
+* Lesson 17 — Search & Navigation (Consult, Avy, Expand-region) (20 min)
+These three packages handle "getting somewhere fast" — inside a buffer, across
+buffers, and across the whole project. Learning them removes almost all manual
+=C-f= / =C-b= navigation from your muscle memory.
 
-The one habit that makes it stick: *=C-c o a → d= every morning, capture to inbox
-all day, refile + archive once at night.* Everything else is detail.
+** Consult — search everywhere
+=consult= is a collection of enhanced built-in commands that feed results into
+the =vertico= minibuffer with live preview.
+
+| Key         | Action                                              |
+|-------------+-----------------------------------------------------|
+| C-s         | =consult-line= — live-search lines in current buffer |
+| C-c s s     | same as C-s (namespaced alias)                       |
+| C-c s r     | =consult-ripgrep= — grep across the whole project    |
+| C-c s i     | =consult-imenu= — jump to any function/heading       |
+| C-c s t     | =consult-todo= — list all TODO/FIXME/HACK comments   |
+| C-c f r     | =consult-recent-file= — pick from recently opened files |
+| C-c b b     | =consult-buffer= — switch buffer (with preview)      |
+| M-.         | preview result under cursor (=consult-preview-key=) |
+| <           | narrow results to a category (=consult-narrow-key=) |
+
+*How preview works:* as you move through candidates in the minibuffer, =M.=
+temporarily visits that file/line so you can read context without committing.
+Press =RET= to confirm, =C-g= to abort and return exactly where you started.
+
+*=consult-ripgrep= vs =project-find-regexp=:* ripgrep is faster and respects
+=.gitignore=; use =C-c s r= for code search and save =project-find-regexp= for
+when you need Emacs regex syntax specifically.
+
+*=xref= integration:* =consult-xref= is set as the display function for both
+=xref-find-references= and =xref-find-definitions=, so LSP cross-references
+(=C-c c d=, covered in Lesson 20) also open in the consult minibuffer.
+
+** Avy — jump to any visible character
+=avy= is faster than =isearch= when the target is visible on screen.
+
+| Key   | Action                                                       |
+|-------+--------------------------------------------------------------|
+| C-c j | =avy-goto-char-2= — type two chars, jump instantly anywhere  |
+
+Type two characters → avy overlays single-letter hints on every match currently
+on screen → press the hint letter → cursor jumps there. Zero intermediate steps.
+Works across windows. When the target is on screen, this is consistently faster
+than any other navigation method.
+
+** Expand-region — grow selection semantically
+| Key | Action                                          |
+|-----+-------------------------------------------------|
+| C-= | =er/expand-region= — expand selection by one unit |
+
+Each press expands the selection outward by one syntactic unit: word → symbol →
+string → expression → function body → file. Works across all major modes.
+Especially useful for "select this whole argument" or "select this block" without
+counting characters. Press =C-= repeatedly; the selection only grows, never
+shrinks (use =C-g= to abort the whole selection).
+
+▶ Do this now: open any code file. =C-s= and type part of a function name —
+watch candidates filter live. Press =M-= on one to preview, =C-g= to abort.
+Then =C-c j=, type the first two letters of any visible word, press its hint
+letter. Finally, put cursor inside a quoted string and press =C-= three times,
+watching what gets selected each time.
+
+* Lesson 18 — Completion in depth (Vertico, Orderless, Corfu, Embark) (20 min)
+Your config has two distinct completion systems that don't interfere: *Vertico*
+for the minibuffer (file paths, commands, headings) and *Corfu* for in-buffer
+code completion. Understanding each prevents the confusion of "why isn't
+Tab doing what I expect here."
+
+** Vertico + Orderless — minibuffer
+Vertico replaces the default completion list with a vertical, scrollable
+candidate list that responds to =orderless= filtering.
+
+| Key            | Action                            |
+|----------------+------------------------------------|
+| any minibuffer | type space-separated fragments     |
+| TAB / RET      | select candidate                   |
+| C-n / C-p      | move through candidates            |
+| DEL            | delete path component (in files)   |
+| C-x C-d        | =consult-dir= — jump to a directory |
+| C-x C-j        | (in vertico) jump into a file there |
+
+*Orderless matching:* type =org cap= to match "org-capture", =cap org= works
+too — fragment order doesn't matter. Separate fragments with spaces. This is
+why you never need to type exact prefixes in the minibuffer anymore.
+
+*Marginalia:* annotations appear to the right of each candidate automatically
+(docstrings for commands, file sizes for files, etc.) — that's =marginalia=,
+always on, no key needed.
+
+** Corfu — in-buffer code completion
+Corfu shows a popup of completions while you type in code buffers. It's
+triggered automatically after 2 characters with a 0.15s delay.
+
+| Key         | Action (inside the popup)          |
+|-------------+------------------------------------|
+| C-n / C-p   | move through candidates            |
+| TAB / RET   | insert selected candidate          |
+| C-g / ESC   | dismiss popup                      |
+| (auto)      | popup appears 0.15s after typing   |
+
+*RET is unbound in corfu-map:* deliberately. RET always inserts a newline, never
+confirms a completion — so you can press RET in the middle of typing without
+accidentally completing. Use TAB to complete explicitly.
+
+*Corfu-popupinfo:* after 0.5s hovering on a candidate, a secondary popup shows
+its full documentation. This pulls from LSP (when eglot is active) or from
+Elisp docstrings.
+
+*Cape* extends what corfu can complete: =cape-file= (file paths anywhere),
+=cape-keyword= (language keywords in prog buffers), =cape-dabbrev= (words from
+open buffers), =cape-elisp-symbol= (in Emacs Lisp). These are added to the
+completion pipeline silently — you don't invoke them directly.
+
+** Embark — act on any candidate
+Embark adds a "right-click menu" to any candidate in vertico or at point.
+
+| Key | Action                                           |
+|-----+--------------------------------------------------|
+| C-. | =embark-act= — open action menu on thing at point |
+
+Examples of what the action menu offers, depending on context:
+- On a *file candidate* in vertico: delete, rename, copy path, open in dired
+- On a *function name* at point: describe, find definition, xref
+- On a *URL* at point: browse, copy, org-store-link
+- On a *consult-ripgrep result*: open in =wgrep= to edit all matches at once
+
+*wgrep workflow:* =C-c s r= to ripgrep → =C-. → w= to enter wgrep mode →
+edit any match inline → =C-c C-c= to apply all edits to the real files. This
+is how you do a project-wide rename without a dedicated refactoring tool.
+
+▶ Do this now: =M-x= and start typing — notice orderless fragments working.
+Open a Python file, type a function name prefix, wait for corfu popup, navigate
+it with =C-n/C-p=, dismiss with =C-g=. Then =C-c s r= for a word, =C-.= on a
+result, press =o= to open it in another window.
+
+* Lesson 19 — Editor ergonomics (Symbol-overlay, vundo, helpful, which-key) (15 min)
+These four packages remove specific friction points: finding all occurrences of
+a symbol, navigating undo history, getting real documentation, and discovering
+keys without memorizing them.
+
+** Symbol-overlay — highlight and navigate occurrences
+| Key   | Action (in prog buffers)                           |
+|-------+----------------------------------------------------|
+| M-i   | highlight / unhighlight all occurrences of symbol at point |
+| M-n   | jump to next occurrence                             |
+| M-p   | jump to previous occurrence                         |
+| M-Q   | query-replace this symbol across the buffer         |
+| q     | (on a highlighted symbol) remove all highlights     |
+
+=symbol-overlay-mode= is on in all =prog-mode= buffers. Move the cursor onto
+any identifier and press =M-i= to highlight every occurrence. The highlights
+persist across the file so you can read occurrences far from where you started.
+=M-Q= is a scoped =query-replace= — it only touches that exact symbol, not
+partial matches inside longer words.
+
+*Difference from =C-c c r= (eglot-rename):* symbol-overlay is buffer-only and
+purely textual; eglot-rename asks the language server for every reference across
+the whole project and renames them semantically. Use symbol-overlay for quick
+local navigation; use eglot-rename for a real refactor.
+
+** vundo — visual undo tree
+| Key   | Action                            |
+|-------+-----------------------------------|
+| C-x u | open the visual undo tree (vundo) |
+
+Standard =C-z= undo is a linear sequence; once you undo and type something new,
+the "redone" history is lost. Vundo makes the history a *tree*: every undo
+branch is preserved and navigable. In the vundo buffer, =f/b= move forward/back
+through history, =l/h= move between branches. =q= closes it and leaves the
+buffer in whatever state you landed on. Especially useful after "I undid too
+much and now I can't find my edit."
+
+** Helpful — better help buffers
+| Key       | Action                                    |
+|-----------+-------------------------------------------|
+| C-c h f   | describe a function (with source + examples) |
+| C-c h v   | describe a variable (with current value)  |
+| C-c h k   | describe a key binding                    |
+| C-c h .   | describe whatever is at point             |
+
+=helpful= replaces =describe-function=, =describe-variable=, and =describe-key=
+with richer buffers that show the actual source code, cross-links, and usage
+examples. =C-c h .= is the most useful: point at any symbol in your =init.el=
+or any other buffer and get instant, rich documentation without leaving context.
+
+** Which-key — discover keys interactively
+| Key (example) | Action                                    |
+|---------------+-------------------------------------------|
+| C-c (pause)   | shows all bindings under C-c              |
+| C-c g (pause) | shows all bindings under C-c g            |
+
+=which-key= is always on with a 0.3s delay. Press any prefix key and pause —
+a popup lists every continuation available. This is how you explore unfamiliar
+keymaps without reading documentation. Combined with the cheatsheet, it means
+you almost never need to guess or look up a key cold.
+
+▶ Do this now: open a code file, put cursor on a variable name, =M-i= to
+highlight it, =M-n/M-p= to navigate occurrences. Then =C-x u= and in the vundo
+buffer make a few edits, undo with =f/b=, switch branches with =l/h=, and =q=
+to commit. Finally =C-c h .= on any function name and read the helpful buffer
+that opens.
+
+* Lesson 20 — Git with Magit + diff-hl (25 min)
+Magit is a full git porcelain inside Emacs. After a week with it, the command
+line feels slow by comparison — the staging/diff/commit/log workflow is faster
+because it's keyboard-driven with tab-expand-to-show-diff at every level.
+
+| Key       | Action                                        |
+|-----------+-----------------------------------------------|
+| C-c g g   | =magit-status= — the main Magit window         |
+| C-c g c   | commit                                        |
+| C-c g p   | push                                          |
+| C-c g u   | pull                                          |
+| C-c g f   | fetch                                         |
+| C-c g l   | log (current branch)                          |
+| C-c g d   | diff dwim (staged, unstaged, or HEAD diff)    |
+| C-c g b   | branch operations                             |
+| C-c g a   | blame (annotate every line with commit)       |
+| C-c g s   | stash                                         |
+| C-c g n   | jump to next hunk (diff-hl)                   |
+| C-c g N   | jump to previous hunk (diff-hl)               |
+
+*The Magit status buffer:* =C-c g g= opens the hub of everything. Sections show
+unstaged changes, staged changes, untracked files, recent commits. Inside that
+buffer:
+- =TAB= on any file or hunk → expand to show the diff
+- =s= on a hunk or file → stage it
+- =u= → unstage
+- =c c= → commit (opens commit message buffer; =C-c C-c= to finish)
+- =P p= → push
+- =F p= → pull
+- =q= → close
+
+*Staging hunks, not files:* the most powerful Magit habit. Expand a file with
+=TAB=, then navigate to individual diff hunks with =n/p=, and stage exactly
+the hunk you want with =s=. This is "atomic commits" without needing =git add
+-p= on the command line.
+
+*diff-hl:* thin colored bars in the left fringe show which lines are added
+(green), modified (yellow), or deleted (red) relative to HEAD, updated live as
+you type. =C-c g n/N= jumps between those fringe markers. =diff-hl-flydiff-mode=
+is on — the fringe updates after each buffer modification, not just on save.
+
+*magit-blame (=C-c g a=):* annotates every line with author + date + commit
+summary. Press =q= in the blame buffer to exit back to normal. Extremely useful
+for "who changed this line and why."
+
+▶ Do this now: =C-c g g= on any git repo you have open. =TAB= a modified file,
+=s= to stage a hunk, =c c= and write a message, =C-c C-c= to commit. Then
+=C-c g l= to see it in the log. Finally make a one-line edit in any tracked
+file and watch the diff-hl fringe bar appear before saving.
+
+* Lesson 21 — LSP with Eglot (built-in) (20 min)
+Eglot connects Emacs to a language server (LSP) for the language you're
+editing. The server provides type-aware completion, real-time errors, go-to-
+definition, references, rename, and code actions — all through a standard
+protocol, so the same Emacs UI works for Python, C++, TypeScript, etc.
+
+| Key       | Action                                              |
+|-----------+-----------------------------------------------------|
+| C-c c r   | rename symbol (project-wide, via LSP)               |
+| C-c c a   | code actions (fix import, extract variable, etc.)   |
+| C-c c i   | find implementations of a symbol                    |
+| C-c c d   | find all references (=xref-find-references=)        |
+| M-.       | go to definition (built-in xref, enhanced by eglot) |
+| M-,       | go back (xref pop stack)                            |
+| C-c e n   | jump to next Flymake error                          |
+| C-c e p   | jump to previous Flymake error                      |
+| C-c e l   | list all errors with consult (=consult-flymake=)    |
+
+*Eglot activates automatically* for Python, C, and C++ files via hooks in your
+config — you never run =M-x eglot= by hand. When it connects, the mode line
+shows the server name. It disconnects automatically when the last managed buffer
+is closed (=eglot-autoshutdown=t=).
+
+*Which server is used:* eglot picks the first available server for each
+language. For Python: =pyright= or =pylsp= (whichever is on PATH). For C/C++:
+=clangd=. Install them through your package manager or conda environment.
+
+*Inlay hints* (=eglot-inlay-hints-mode=) are on automatically in managed
+buffers — grey annotations appear inline showing inferred types, parameter
+names for positional arguments, etc. They're display-only; the file is
+unchanged.
+
+*Flymake* (section 9 in =init.el=) is the built-in error-display system that
+eglot feeds into. Errors and warnings appear as colored underlines; the right
+fringe shows indicators. =C-c e l= lists all of them via =consult-flymake= so
+you can jump to each one. =flymake-byte-compile= is intentionally disabled for
+=emacs-lisp-mode= (would be too noisy when editing =init.el=).
+
+*eglot-code-actions (=C-c c a=):* the most underused feature. Put cursor on
+an error, =C-c c a= — the server offers context-specific fixes ("add missing
+import", "add type annotation", "implement abstract method"). In Python with
+pyright this often resolves import errors in one keystroke.
+
+▶ Do this now: open a Python file in a conda environment (=C-c v a= to
+activate one — see Lesson 23). Eglot should connect automatically. Type an
+undefined function call, watch the red underline appear from Flymake, =C-c e n=
+to jump to it, =C-c c a= to see if a code action is available. Then =M-.= on
+a function you imported to jump to its definition, =M-,= to come back.
+
+* Lesson 22 — Debugging with Dape (25 min)
+Dape is a Debug Adapter Protocol (DAP) client — the same protocol VS Code uses.
+It works with any language that has a debug adapter installed (Python =debugpy=,
+C/C++ via =codelldb= or =lldb-vscode=, etc.).
+
+| Key       | Action                                       |
+|-----------+----------------------------------------------|
+| C-c c b   | toggle breakpoint on current line            |
+| C-c c B   | start a debug session (=dape=)               |
+
+Inside a Dape session (additional keys available in the dape buffer):
+| Key   | Action                      |
+|-------+-----------------------------|
+| n     | next (step over)            |
+| i     | step into                   |
+| o     | step out                    |
+| c     | continue                    |
+| r     | restart                     |
+| q     | quit session                |
+
+*Starting a session (=C-c c B=):* Dape prompts for a configuration. For Python
+with =debugpy= installed, type: =debugpy :program (buffer-file-name)= (Dape has
+tab-completion for the config keys). For C++, use the =codelldb= adapter.
+
+*Breakpoints:* =C-c c b= toggles a red dot in the fringe on the current line.
+=dape-breakpoint-global-mode= is on — breakpoints persist across files and
+sessions, displayed as fringe markers everywhere.
+
+*Layout:* =dape-buffer-window-arrangement= is ='right= — the debug panel
+(stack frames, local variables, watch expressions, console) opens in a vertical
+split to the right when a session starts, restores your previous layout on quit.
+
+*Python setup:* =pip install debugpy= in your conda env, then =C-c c B= →
+=debugpy :program (buffer-file-name)=. The session stops at your breakpoints
+and Emacs overlays show current variable values inline.
+
+▶ Do this now: open a Python script with a loop. =C-c c b= on a line inside the
+loop. =C-c c B= → =debugpy :program (buffer-file-name)= → RET. When it pauses,
+press =n= to step, =i= to step into a function. Check the Dape variables buffer
+for the current stack values. =q= when done.
+
+* Lesson 23 — Formatters, runners & Conda (15 min)
+** Apheleia — automatic formatting on save
+=apheleia-global-mode= is on. Every time you save a file, the appropriate
+formatter runs in the background and patches the buffer with only the changed
+lines (so the cursor doesn't jump).
+
+| Language          | Formatter used  |
+|-------------------+-----------------|
+| Python            | =ruff=          |
+| C / C++           | =clang-format=  |
+| JS / TS / TSX     | =prettier=      |
+| CSS / HTML / JSON | =prettier=      |
+| Markdown          | =prettier=      |
+| Shell             | =shfmt=         |
+| Emacs Lisp        | (disabled)      |
+
+Install the formatters through your system package manager or =pip=. If a
+formatter isn't on PATH, Apheleia silently skips it — no error, no crash.
+
+=C-c c f= forces an immediate format without saving (=apheleia-format-buffer=).
+
+** Running files directly
+| Key     | Action                                            |
+|---------+----------------------------------------------------|
+| C-c c p | run current Python file (opens =*compilation*=)   |
+| C-c c c | compile + run current C++ file with =g++ -std=c++17= |
+
+Both use the built-in =compile= command and open a =*compilation*= buffer where
+output streams live. =C-g= in the compilation buffer kills the process.
+
+The C++ runner compiles to =<filename>.out= in the same directory, then runs it
+immediately — so =C-c c c= is a one-key "build and run" for quick scripts.
+
+** Conda — Python environment management
+| Key     | Action                                         |
+|---------+------------------------------------------------|
+| C-c v a | =conda-env-activate= — pick and activate an env |
+| C-c v d | =conda-env-deactivate= — deactivate current env |
+
+=exec-path-from-shell= (loaded at startup for GUI Emacs) imports =CONDA_PREFIX=
+and =CONDA_DEFAULT_ENV= from your shell so Emacs sees the same base environment
+your terminal does. =C-c v a= then switches within Emacs for the current session.
+
+After activating a conda env, eglot will pick up that env's =pyright= /
+=pylsp=, and =C-c c p= will run with that env's Python — no manual PATH fiddling.
+
+▶ Do this now: =C-c v a= and activate a conda env. Open a Python file, make
+a trailing-space mess, save it — watch Apheleia's =ruff= clean it up. Then
+=C-c c p= to run the file and read the compilation buffer. For C++: make a
+simple =hello.cpp=, =C-c c c= to compile and run it in one step.
+
+* Lesson 24 — Windows, tabs & the mode line (15 min)
+** Window management
+| Key       | Action                                       |
+|-----------+----------------------------------------------|
+| C-c w h   | move to window on the left (windmove)        |
+| C-c w l   | move to window on the right                  |
+| C-c w k   | move to window above                         |
+| C-c w j   | move to window below                         |
+| C-c w H   | shrink window horizontally                   |
+| C-c w L   | enlarge window horizontally                  |
+| C-c w K   | shrink window vertically                     |
+| C-c w J   | enlarge window vertically                    |
+| C-c w =   | balance all windows equally                  |
+| C-c w f   | toggle fullscreen                            |
+| C-c w u   | undo window layout (winner-undo)             |
+| C-c w U   | redo window layout (winner-redo)             |
+| M-o       | =other-window= (cycle through windows)       |
+
+*Winner mode:* every time the window layout changes (split, close, resize),
+winner records it. =C-c w u= steps back through layouts — invaluable after
+something (magit, dape, org-agenda) opens extra windows and you want your
+previous layout back in one keystroke.
+
+** Tab-bar — workspace tabs
+Tab-bar is active with =tab-bar-show=1= (shows the tab bar only when more than
+one tab exists). Tabs are independent window layouts, not just buffers.
+
+| Key       | Action                              |
+|-----------+-------------------------------------|
+| C-x t 2   | new tab                             |
+| C-x t 0   | close current tab                   |
+| C-x t n   | next tab                            |
+| C-x t p   | previous tab                        |
+| C-x t r   | rename current tab                  |
+| C-x t t   | switch to tab by name               |
+
+Typical usage: one tab for "code", one for "org/notes", one for "magit". Each
+tab remembers its own window splits independently. New tabs always open
+=*scratch*= (=tab-bar-new-tab-choice="*scratch*"=).
+
+** The mode line (doom-modeline)
+Your mode line (the bar at the bottom of each window) shows, left to right:
+- Buffer state: =%= modified, =-= read-only
+- Branch name and diff summary (from diff-hl)
+- Buffer name + major mode icon (nerd-icons)
+- Current function name (which-function-mode)
+- LSP server name (when eglot is connected)
+- Flymake error/warning counts
+- Position and line number
+- Clock (when org-clock is running)
+
+=doom-modeline-icon=t= shows icons when in a GUI frame; in terminal mode the
+icons are suppressed automatically (checked per-frame via =after-make-frame-functions=).
+
+▶ Do this now: split your frame (=C-x 3=), move between windows with =C-c w h/l=,
+resize with =C-c w L=, then =C-c w u= to get back to one window. Create two tabs
+with =C-x t 2=, rename one with =C-x t r=, switch between them with =C-x t n/p=.
+
+* Lesson 25 — AI assistant (gptel + LM Studio) (15 min)
+=gptel= connects to a locally running LM Studio instance serving the model
+=gemma-4-e4b= on =localhost:1234=. All inference is local — no cloud API key,
+no data leaving your machine.
+
+| Key       | Action                                          |
+|-----------+-------------------------------------------------|
+| C-c a c   | open a new gptel chat buffer                    |
+| C-c a s   | send region or buffer to the model              |
+| C-c a r   | rewrite selected region (AI rewrite in place)   |
+| C-c a m   | =gptel-menu= — configure model/params           |
+
+*How the chat buffer works:* =C-c a c= opens a =*gptel*= buffer in org-mode
+(=gptel-default-mode='org-mode=). Type your prompt under a heading, =C-c a s=
+sends it, the response streams in below. The conversation accumulates in that
+buffer — every send includes the full context above it, so you can have a
+multi-turn conversation.
+
+*Rewrite (=C-c a r=):* select a region of prose or code, =C-c a r=, type an
+instruction ("make this more concise", "convert to list comprehension"), and the
+selected region is replaced with the model's output. Works in any buffer.
+
+*Send (=C-c a s=):* without a selection, sends the whole buffer as context.
+With a selection, sends only that region. Useful for "explain this function" —
+select the function, =C-c a s=.
+
+*gptel-menu (=C-c a m=):* a transient popup to change the model (if you have
+multiple loaded in LM Studio), adjust temperature, toggle streaming, etc.
+
+*LM Studio prerequisite:* LM Studio must be running with a model loaded and the
+local server enabled on port 1234. Start it from LM Studio's app before using
+any =C-c a= keys.
+
+▶ Do this now: make sure LM Studio is running with a model loaded. =C-c a c=
+to open the chat buffer. Type a question under the default heading, =C-c a s=
+to send, watch the response stream in. Then select a paragraph of text anywhere,
+=C-c a r= → "make this more concise" → RET.
+
+* Lesson 26 — Markdown (5 min)
+=markdown-mode= activates automatically for =.md= and =.markdown= files.
+
+| Key         | Action                                        |
+|-------------+-----------------------------------------------|
+| C-c C-e     | export / preview (via pandoc)                 |
+| C-c C-o     | open link at point                            |
+| C-c C-l     | insert a link                                 |
+| TAB         | fold/unfold section (like Org headings)       |
+| C-c C-n/p   | next/previous heading                         |
+
+*Configuration highlights:*
+- =markdown-command= is =pandoc= — export and preview require pandoc installed
+- =markdown-fontify-code-blocks-natively=t= — fenced code blocks (=```python=)
+  are syntax-highlighted with their real language's font-lock rules
+- =markdown-header-scaling=t= — heading levels have proportional text sizes
+- =markdown-hide-urls=t= — long URL text is hidden; =C-c C-o= still opens them
+- =olivetti-mode= and =visual-line-mode= are on automatically (same as org-mode)
+  so Markdown files get the same centered, soft-wrapped writing experience
+
+*Pandoc:* install with =brew install pandoc=. Without it, =C-c C-e= fails
+silently; all other features still work.
+
+▶ Do this now: open or create a =README.md=. Notice the code block highlighting
+and Olivetti centering. =C-c C-l= to insert a link to a URL. If pandoc is
+installed, =C-c C-e= to preview.
+
+* Your Full Learning Ramp (updated)
+** Phase 1 — Org core (days 1–21)
+1. *Days 1–3:* Lessons 0–3. Headings, TODO states, folding.
+2. *Days 4–5:* Lesson 4. Dashboard as daily driver.
+3. *Days 6–7:* Lessons 5–6. Capture to inbox, refile, archive.
+4. *Days 8–11:* Lessons 7–8. Roam graph + person nodes.
+5. *Days 12–13:* Lesson 9. SRS review items.
+6. *Day 14:* Lesson 10. Reading notes.
+7. *Days 15–16:* Lesson 11. Clock + pomodoro.
+8. *Days 17–18:* Lessons 12–13. Tables + Babel code blocks.
+9. *Days 19–20:* Lesson 14. Org-ql + kanban.
+10. *Day 21:* Lessons 15–16. Transclusion, export, architecture map.
+
+The one habit that makes Phase 1 stick: *=C-c o a → d= every morning, capture
+to inbox all day, refile + archive once at night.*
+
+** Phase 2 — Editor & dev layer (days 22–35)
+11. *Days 22–23:* Lesson 17. Replace =C-f= with Consult + Avy for all navigation.
+12. *Days 24–25:* Lesson 18. Understand the two completion systems (vertico vs corfu). Learn the wgrep workflow.
+13. *Day 26:* Lesson 19. Symbol-overlay + vundo + helpful daily.
+14. *Days 27–28:* Lesson 20. Magit as your only git UI.
+15. *Days 29–30:* Lesson 21. Eglot — go-to-definition, rename, code actions.
+16. *Days 31–32:* Lesson 22. Dape — set one breakpoint and step through it.
+17. *Days 33–34:* Lesson 23. Conda env workflow + apheleia on save.
+18. *Day 35:* Lessons 24–26. Window/tab habits, AI chat, Markdown.
 
 * Where to go deeper
-- Built-in manual: =C-h i= → "Org Mode" (the official, exhaustive reference)
-- Your cheatsheet: =~/.emacs.d/cheatsheet.org= (key lookup + short how-to steps)
-- Discover keys live: press =C-c o= and wait — which-key shows every option
-- Read the config itself: the Org section of =init.el= — every setting named
-  in this tutorial (=org-habit-graph-column=, =org-refile-use-cache=, etc.) is
-  right there with its actual value, and the comments explain any that aren't
-  self-evident.
+- *Built-in manual:* =C-h i= → "Org Mode" (exhaustive reference for Lessons 0–16)
+- *Your cheatsheet:* =~/.emacs.d/cheatsheet.org= (quick key lookup)
+- *Discover keys live:* press any prefix (=C-c g=, =C-c c=, etc.) and pause —
+  which-key lists everything available under it
+- *Package docs:* =C-c h f= on any package function (=magit-status=, =consult-line=,
+  etc.) opens the helpful buffer with the full docstring and source
+- *The config itself:* =~/.emacs.d/init.el= — every feature in this tutorial
+  corresponds to a =use-package= block there; the comments explain non-obvious
+  settings, and the section numbers match the lesson structure here

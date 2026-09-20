@@ -7,10 +7,14 @@
 ;; macOS: some native modules drag in a second glib, and the objc runtime
 ;; prints a duplicate-class warning straight to stderr — over the tty in -nw.
 ;; No env var silences it; repoint this process's stderr to a log instead.
-(when (and (eq system-type 'darwin)
-           (not noninteractive)
-           (fboundp 'redirect-debugging-output))
-  (redirect-debugging-output "/tmp/emacs-stderr.log"))
+(when (eq system-type 'darwin)
+  (when (and (not noninteractive)
+             (fboundp 'redirect-debugging-output))
+    (redirect-debugging-output "/tmp/emacs-stderr.log"))
+  ;; Fix native-comp "invalid version number in -mmacosx-version-min" error
+  ;; by explicitly overriding the deployment target to match the current OS.
+  (let ((mac-version (string-trim (shell-command-to-string "sw_vers -productVersion"))))
+    (setenv "MACOSX_DEPLOYMENT_TARGET" mac-version)))
 
 ;;; ─────────────────────────────────────────────
 ;;; 1. PACKAGE BOOTSTRAP
@@ -84,6 +88,21 @@
 ;;; 4. KEYBINDINGS
 ;;; ─────────────────────────────────────────────
 
+;; Silence native-compiler: these built-ins live in autoloaded files not yet
+;; require'd at compile time — declare-function tells AOT they're real.
+(declare-function winner-undo                        "winner")
+(declare-function winner-redo                        "winner")
+(declare-function electric-pair-conservative-inhibit "elec-pair")
+
+;; Silence native-compiler: my/roam-* are defun'd inside org-roam's :config
+;; (deferred until org-roam loads) — nil file arg = "trust me, defined here".
+(declare-function my/roam--template         nil)
+(declare-function my/roam-capture           nil)
+(declare-function my/roam-capture-concept   nil)
+(declare-function my/roam-capture-question  nil)
+(declare-function my/roam-capture-person    nil)
+(declare-function my/roam-log-interaction   nil)
+
 ;; Redo — Emacs 28+ builtin undo-redo
 (global-set-key (kbd "C-?") #'undo-redo)
 
@@ -142,10 +161,12 @@
 (global-set-key (kbd "C-c n W") (lambda () (interactive) (org-capture nil "W")))
 (global-set-key (kbd "C-c n t") (lambda () (interactive) (org-capture nil "t")))
 (global-set-key (kbd "C-c n p") (lambda () (interactive) (org-capture nil "p")))
-(global-set-key (kbd "C-c n k") #'my/roam-capture-concept)
-(global-set-key (kbd "C-c n q") #'my/roam-capture-question)
-(global-set-key (kbd "C-c n P") #'my/roam-capture-person)
-(global-set-key (kbd "C-c n x") #'my/roam-log-interaction)
+;; Roam-specific captures: deferred until org-roam loads (functions defined in its :config)
+(with-eval-after-load 'org-roam
+  (global-set-key (kbd "C-c n k") #'my/roam-capture-concept)
+  (global-set-key (kbd "C-c n q") #'my/roam-capture-question)
+  (global-set-key (kbd "C-c n P") #'my/roam-capture-person)
+  (global-set-key (kbd "C-c n x") #'my/roam-log-interaction))
 (global-set-key (kbd "C-c n a") #'my/learn-review)
 (global-set-key (kbd "C-c n d") #'my/learn-reviewed)
 (global-set-key (kbd "C-c n s") #'my/learn-search)
@@ -204,6 +225,8 @@
 (global-set-key (kbd "C-c a s") #'gptel-send)
 (global-set-key (kbd "C-c a r") #'gptel-rewrite)
 (global-set-key (kbd "C-c a m") #'gptel-menu)
+(global-set-key (kbd "C-c a a") #'gptel-add)             ; add context
+(global-set-key (kbd "C-c a x") #'gptel-context-remove-all) ; clear context
 
 ;; ── Help (h) ──────────────────────────────────
 (global-set-key (kbd "C-c h k") #'helpful-key)
@@ -233,10 +256,13 @@
   (vertico-cycle t)
   (vertico-count 15)
   (vertico-resize nil)
+  (vertico-multiform-categories
+   '((file (vertico-sort-function . vertico-sort-directories-first))))
   :config
   (add-hook 'rfn-eshadow-update-overlay-hook #'vertico-directory-tidy)
   (add-hook 'minibuffer-setup-hook #'vertico-repeat-save)
-  (keymap-set vertico-map "DEL" #'vertico-directory-delete-char))
+  (keymap-set vertico-map "DEL" #'vertico-directory-delete-char)
+  (vertico-multiform-mode 1))
 
 (use-package orderless
   :custom
@@ -247,7 +273,9 @@
                                    (eglot-capf (styles orderless))))
   (orderless-component-separator #'orderless-escapable-split-on-space))
 
-(use-package marginalia :init (marginalia-mode 1))
+(use-package marginalia
+  :bind (:map minibuffer-local-map ("M-A" . marginalia-cycle))
+  :init (marginalia-mode 1))
 
 (use-package consult
   :bind ("C-s" . consult-line)
@@ -259,12 +287,18 @@
   (consult-async-refresh-delay 0.15)
   (consult-async-input-throttle 0.2)
   (consult-async-input-debounce 0.1)
+  (consult-grep-max-columns 500)
   :config
+  (when (boundp 'consult-preview-allowed-hooks)
+    (add-to-list 'consult-preview-allowed-hooks 'hl-todo-mode-hook))
   (setq xref-show-xrefs-function       #'consult-xref
         xref-show-definitions-function #'consult-xref))
 
 (use-package corfu
-  :init (global-corfu-mode)
+  :init
+  (global-corfu-mode)
+  (corfu-popupinfo-mode 1)   ; show doc popup automatically
+  (corfu-history-mode 1)     ; rank by recency (auto-saves via savehist)
   :custom
   (corfu-cycle t)
   (corfu-auto t)
@@ -273,20 +307,24 @@
   (corfu-quit-at-boundary 'separator)
   (corfu-quit-no-match 'separator)
   (corfu-preview-current nil)
+  (corfu-popupinfo-delay '(0.5 . 0.2))
+  ;; Emacs 30+: disable Ispell capf in text modes (use cape-dict instead)
+  (text-mode-ispell-word-completion nil)
   :bind (:map corfu-map
-         ("C-n"      . corfu-next)
-         ("C-p"      . corfu-previous)
-         ("<tab>"    . corfu-insert)
-         ("TAB"      . corfu-insert)
-         ("<escape>" . corfu-quit)
-         ("C-g"      . corfu-quit))
+              ("C-n"      . corfu-next)
+              ("C-p"      . corfu-previous)
+              ("<tab>"    . corfu-insert)
+              ("TAB"      . corfu-insert)
+              ("<escape>" . corfu-quit)
+              ("C-g"      . corfu-quit)
+              ;; popupinfo scrolling
+              ("C-j"      . corfu-popupinfo-scroll-down)
+              ("C-k"      . corfu-popupinfo-scroll-up)
+              ("M-h"      . corfu-popupinfo-toggle))
   :config
   (keymap-unset corfu-map "RET")
-  (corfu-popupinfo-mode 1)
-  (setq corfu-popupinfo-delay '(0.5 . 0.2))
-  (corfu-history-mode 1)
-  (require 'savehist)
-  (add-to-list 'savehist-additional-variables 'corfu-history))
+  (with-eval-after-load 'savehist
+    (add-to-list 'savehist-additional-variables 'corfu-history)))
 
 (use-package cape
   :init
@@ -298,11 +336,17 @@
               (add-hook 'completion-at-point-functions #'cape-dabbrev nil t)))
   (add-hook 'emacs-lisp-mode-hook
             (lambda ()
-              (add-hook 'completion-at-point-functions #'cape-elisp-symbol nil t))))
+              (add-hook 'completion-at-point-functions #'cape-elisp-symbol nil t)))
+  (with-eval-after-load 'eglot
+    (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)))
 
 (use-package embark
   :vc (:url "https://github.com/oantolin/embark" :rev :newest)
-  :bind ("C-." . embark-act)
+  :bind (("C-."   . embark-act)
+         ("M-."   . embark-dwim)
+         ("C-h B" . embark-bindings))
+  :init
+  (setq prefix-help-command #'embark-prefix-help-command)
   :config
   (add-to-list 'display-buffer-alist
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
@@ -343,13 +387,19 @@
   (doom-modeline-icon t)
   (doom-modeline-major-mode-icon t)
   (doom-modeline-which-function t)
+  (doom-modeline-bar-width 4)
+  (doom-modeline-lsp-icon t)
+  (doom-modeline-minor-modes nil)
+  (doom-modeline-enable-word-count nil)
+  (doom-modeline-buffer-file-name-style 'truncate-upto-project)
+  (doom-modeline-window-width-limit 85)
   :config
   (which-function-mode 1)
   (add-hook 'after-make-frame-functions
             (lambda (f) (with-selected-frame f
                           (setq doom-modeline-icon (display-graphic-p))))))
 
-(use-package nerd-icons :defer t)
+(use-package nerd-icons)
 
 ;;; ─────────────────────────────────────────────
 ;;; 7. EDITING
@@ -364,7 +414,11 @@
 (use-package rainbow-delimiters :hook (prog-mode . rainbow-delimiters-mode))
 
 (use-package yasnippet
-  :hook (prog-mode . yas-minor-mode)
+  :hook ((prog-mode . yas-minor-mode)
+         (text-mode . yas-minor-mode)
+         (org-mode  . yas-minor-mode))
+  :custom
+  (yas-snippet-dirs (list (expand-file-name "snippets" user-emacs-directory)))
   :config (yas-reload-all))
 (use-package yasnippet-snippets :after yasnippet)
 
@@ -381,8 +435,8 @@
   :vc (:url "https://github.com/mickeynp/ligature.el" :rev :newest)
   :config
   (ligature-set-ligatures 'prog-mode
-    '("->" "=>" "!=" ">=" "<=" "==" "===" "!==" "::" "..."
-      "++" "--" "||" "&&" "??" ":=" "<-" "<>" "<<" ">>" "<=>" "/**" "/*" "*/"))
+                          '("->" "=>" "!=" ">=" "<=" "==" "===" "!==" "::" "..."
+                            "++" "--" "||" "&&" "??" ":=" "<-" "<>" "<<" ">>" "<=>" "/**" "/*" "*/"))
   (when (display-graphic-p) (global-ligature-mode t)))
 
 (use-package hl-todo
@@ -395,10 +449,10 @@
 (use-package symbol-overlay
   :hook (prog-mode . symbol-overlay-mode)
   :bind (:map symbol-overlay-mode-map
-         ("M-i" . symbol-overlay-put)
-         ("M-n" . symbol-overlay-jump-next)
-         ("M-p" . symbol-overlay-jump-prev)
-         ("M-Q" . symbol-overlay-query-replace))
+              ("M-i" . symbol-overlay-put)
+              ("M-n" . symbol-overlay-jump-next)
+              ("M-p" . symbol-overlay-jump-prev)
+              ("M-Q" . symbol-overlay-query-replace))
   :config
   ;; transient map (active on a highlighted symbol): q removes all highlights
   (define-key symbol-overlay-map (kbd "q") #'symbol-overlay-remove-all))
@@ -409,18 +463,25 @@
 
 (use-package eglot
   :ensure nil
-  :hook ((python-mode       . eglot-ensure)
-         (python-ts-mode    . eglot-ensure)
-         (c-mode            . eglot-ensure)
-         (c++-mode          . eglot-ensure)
-         (c-ts-mode         . eglot-ensure)
-         (c++-ts-mode       . eglot-ensure)
+  :hook ((python-mode        . eglot-ensure)
+         (python-ts-mode     . eglot-ensure)
+         (c-mode             . eglot-ensure)
+         (c++-mode           . eglot-ensure)
+         (c-ts-mode          . eglot-ensure)
+         (c++-ts-mode        . eglot-ensure)
          (eglot-managed-mode . eglot-inlay-hints-mode))
   :custom
   (eglot-events-buffer-config '(:size 0))
   (eglot-autoshutdown t)
   (eglot-sync-connect 1)
-  (eglot-extend-to-xref t))
+  (eglot-extend-to-xref t)
+  ;; Emacs 30+: show LSP progress in the echo area
+  (eglot-report-progress t)
+  :config
+  ;; Python: tell basedpyright/pylsp to not duplicate what ruff already reports
+  (setq-default eglot-workspace-configuration
+                '(:basedpyright (:analysis (:typeCheckingMode "standard"
+                                                              :diagnosticMode "workspace")))))
 
 ;;; ─────────────────────────────────────────────
 ;;; 9. FLYMAKE (built-in)
@@ -442,6 +503,7 @@
 ;;; ─────────────────────────────────────────────
 
 (use-package treesit-auto
+  :demand t
   :custom
   (treesit-auto-install 'prompt)
   (treesit-font-lock-level 4)
@@ -474,20 +536,34 @@
 
 (use-package magit
   :commands (magit-status magit-commit magit-push magit-pull magit-fetch
-             magit-branch magit-log-current magit-diff-dwim magit-stage
-             magit-unstage magit-blame magit-rebase magit-merge magit-stash
-             magit-project-status)
+                          magit-branch magit-log-current magit-diff-dwim magit-stage
+                          magit-unstage magit-blame magit-rebase magit-merge magit-stash
+                          magit-project-status)
   :custom
   (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
   (magit-save-repository-buffers 'dontask)
   (magit-diff-refine-hunk 'all)
   (magit-revision-insert-related-refs nil)
-  (transient-default-level 5))
+  (transient-default-level 5)
+  (magit-format-file-function #'magit-format-file-nerd-icons)
+  (magit-diff-use-indicator-faces t)
+  (magit-refresh-status-buffer nil))
 
 (use-package diff-hl
   :hook ((after-init         . global-diff-hl-mode)
          (magit-post-refresh . diff-hl-magit-post-refresh))
   :config (diff-hl-flydiff-mode 1))
+
+;; Load the native terminal only when requested, not during startup.
+(use-package vterm
+  :commands (vterm vterm-other-window)
+  :bind (("C-c t t" . vterm)
+         ("C-c t o" . vterm-other-window))
+  :custom
+  (vterm-max-scrollback 10000)
+  (vterm-kill-buffer-on-exit t)
+  (vterm-module-cmake-args "-DUSE_SYSTEM_LIBVTERM=no")
+  (vterm-copy-mode-remove-fake-newlines t))
 
 (use-package restart-emacs :commands restart-emacs)
 
@@ -499,11 +575,18 @@
   :custom
   (dape-buffer-window-arrangement 'right)
   :config
-  (dape-breakpoint-global-mode 1))
+  (dape-breakpoint-global-mode 1)
+  ;; Show info buffers automatically on dape session start
+  (add-hook 'dape-on-start-hooks
+            (lambda () (save-excursion (dape-info) (dape-repl)))))
 
 (use-package helpful
-  :commands (helpful-callable helpful-variable helpful-key helpful-at-point)
+  :commands (helpful-callable helpful-variable helpful-key helpful-at-point helpful-command)
+  :custom
+  (helpful-set-variable-function #'setopt)
   :bind
+  ("C-h x"                   . helpful-command)
+
   ([remap describe-function] . helpful-callable)
   ([remap describe-variable] . helpful-variable)
   ([remap describe-key]      . helpful-key))
@@ -600,7 +683,7 @@
         `(;; Shared
           ("i" "Inbox"   entry (file+headline ,(concat my/garden-dir "inbox.org") "Tasks")
            ,my/task-capture-body)
-          ("j" "Journal" entry (file+datetree ,(concat my/garden-dir "journal.org"))
+          ("j" "Journal" entry (file+olp+datetree ,(concat my/garden-dir "journal.org"))
            "* %U\n** Worked On\n%?\n** Notes\n\n** Reading Insight\n\n** Momentum: /10\n"
            :empty-lines 1)
           ("v" "Review"  entry (file+headline ,(concat my/garden-dir "reviews.org") "NEW Items")
@@ -626,22 +709,24 @@
   (org-super-agenda-mode)
   (setq org-super-agenda-groups
         '((:name "Overdue"
-           :deadline past
-           :scheduled past)
+                 :deadline past
+                 :scheduled past)
           (:name "Today"
-           :time-grid t
-           :scheduled today
-           :deadline today)
+                 :time-grid t
+                 :scheduled today
+                 :deadline today)
           (:name "Next Actions"
-           :todo "NEXT")
+                 :todo "NEXT")
+          (:name "Habits"
+                 :habit t)
           (:name "Learning"
-           :todo ("NEW" "LEARNING" "REVIEW" "APPLY"))
+                 :todo ("NEW" "LEARNING" "REVIEW" "APPLY"))
           (:name "Work"
-           :file-path "work/")
+                 :file-path "work/")
           (:name "Personal"
-           :file-path "personal/")
+                 :file-path "personal/")
           (:name "Inbox"
-           :file-path "inbox\\.org")
+                 :file-path "inbox\\.org")
           (:discard (:anything t)))))
 
 (use-package org-ql
@@ -704,7 +789,7 @@
   (defun my/roam-log-interaction ()
     (interactive)
     (let* ((node (org-roam-node-read nil
-                   (lambda (n) (member "person" (org-roam-node-tags n)))))
+                                     (lambda (n) (member "person" (org-roam-node-tags n)))))
            (file (org-roam-node-file node)))
       (find-file file)
       (goto-char (point-min))
@@ -732,7 +817,18 @@
   :hook ((org-mode            . org-modern-mode)
          (org-agenda-finalize . org-modern-agenda))
   :custom
-  (org-modern-star '("◉" "○" "◈" "◇" "✦")))
+  (org-modern-star '("◉" "○" "◈" "◇" "✦"))
+  (org-modern-cycle-stars t)
+  (org-modern-hide-stars 'leading)
+  (org-modern-label-border 0.3)
+  (org-modern-table t)
+  (org-modern-table-vertical 1)
+  (org-modern-table-horizontal 0.2))
+
+(with-eval-after-load 'org-modern
+  (set-face-attribute 'org-modern-habit nil
+                      :foreground "#98be65"
+                      :background nil))
 
 (use-package org-pomodoro
   :after org
@@ -747,7 +843,7 @@
 (use-package org-transclusion
   :after org
   :bind (:map org-mode-map
-         ("C-c t a" . org-transclusion-add)))
+              ("C-c t a" . org-transclusion-add)))
 
 (use-package org-cliplink :after org)
 
@@ -812,12 +908,14 @@
 (use-package apheleia
   :config
   (apheleia-global-mode 1)
-  (setf (alist-get 'python-mode        apheleia-mode-alist) 'ruff)
-  (setf (alist-get 'python-ts-mode     apheleia-mode-alist) 'ruff)
+  (setf (alist-get 'python-mode        apheleia-mode-alist) '(ruff-isort ruff))
+  (setf (alist-get 'python-ts-mode     apheleia-mode-alist) '(ruff-isort ruff))
   (setf (alist-get 'c-mode             apheleia-mode-alist) 'clang-format)
   (setf (alist-get 'c++-mode           apheleia-mode-alist) 'clang-format)
   (setf (alist-get 'c-ts-mode          apheleia-mode-alist) 'clang-format)
   (setf (alist-get 'c++-ts-mode        apheleia-mode-alist) 'clang-format)
+  (setf (alist-get 'prettier apheleia-formatters) '("prettierd" filepath))
+  (setf (alist-get 'mhtml-mode         apheleia-mode-alist) 'prettier)
   (setf (alist-get 'js-mode            apheleia-mode-alist) 'prettier)
   (setf (alist-get 'js-ts-mode         apheleia-mode-alist) 'prettier)
   (setf (alist-get 'typescript-mode    apheleia-mode-alist) 'prettier)
@@ -930,13 +1028,27 @@
         (gptel-make-openai "lmstudio"
           :host     "localhost:1234"
           :protocol "http"
+          :endpoint "/v1/chat/completions"
+          :key      "not-needed"   ; LM Studio doesn't require an API key
           :models   '(gemma-4-e4b)
           :stream   t)
         gptel-model        'gemma-4-e4b
-        gptel-default-mode 'org-mode))
+        gptel-default-mode 'org-mode
+        gptel-system-message "You are a helpful assistant living in Emacs. Respond concisely."
+        gptel-temperature 0.7
+        gptel-include-reasoning nil)
+  (gptel-highlight-mode 1))
 
 ;;; ─────────────────────────────────────────────
-;;; 22. CUSTOM FILE
+;;; 22. PACKAGE UPDATES
+;;; ─────────────────────────────────────────────
+;; Handled from the terminal via emacs-sync.sh:
+;;   ./emacs-sync.sh sync -u   (install + upgrade + purge + snapshot)
+;;   ./emacs-sync.sh check     (dry-run status check)
+;;   ./emacs-sync.sh doctor    (verify external tools)
+
+;;; ─────────────────────────────────────────────
+;;; 23. CUSTOM FILE
 ;;; ─────────────────────────────────────────────
 
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
