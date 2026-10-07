@@ -103,8 +103,13 @@
 (declare-function my/roam-capture-person    nil)
 (declare-function my/roam-log-interaction   nil)
 
-;; Redo — Emacs 28+ builtin undo-redo
-(global-set-key (kbd "C-?") #'undo-redo)
+;; Undo / Redo — terminal-safe bindings
+;; C-? sends DEL in terminal (-nw) → use C-x C-/ instead which reliably reaches Emacs.
+;; C-/ is the built-in undo; C-x C-/ is redo.
+(global-set-key (kbd "C-x C-/") #'undo-redo)
+;; Also bind on C-c z for quick redo (mnemonic: z = undo in many editors, Z = redo)
+(global-set-key (kbd "C-c z") #'undo-redo)
+
 
 (global-set-key (kbd "M-o") #'other-window)
 
@@ -167,9 +172,7 @@
   (global-set-key (kbd "C-c n q") #'my/roam-capture-question)
   (global-set-key (kbd "C-c n P") #'my/roam-capture-person)
   (global-set-key (kbd "C-c n x") #'my/roam-log-interaction))
-(global-set-key (kbd "C-c n a") #'my/learn-review)
-(global-set-key (kbd "C-c n d") #'my/learn-reviewed)
-(global-set-key (kbd "C-c n s") #'my/learn-search)
+
 
 ;; ── Org (o) ───────────────────────────────────
 (global-set-key (kbd "C-c o a") #'org-agenda)
@@ -444,7 +447,10 @@
   :hook (prog-mode . hl-todo-mode))
 
 (use-package expand-region
-  :bind ("C-=" . er/expand-region))
+  ;; C-= is not reliably sent by terminal emulators (-nw), so use C-c = instead.
+  ;; Avoids shadowing M-= (count-words-region) and M-- (negative-argument).
+  :bind (("C-c =" . er/expand-region)
+         ("C-c -" . er/contract-region)))
 
 (use-package symbol-overlay
   :hook (prog-mode . symbol-overlay-mode)
@@ -554,16 +560,6 @@
          (magit-post-refresh . diff-hl-magit-post-refresh))
   :config (diff-hl-flydiff-mode 1))
 
-;; Load the native terminal only when requested, not during startup.
-(use-package vterm
-  :commands (vterm vterm-other-window)
-  :bind (("C-c t t" . vterm)
-         ("C-c t o" . vterm-other-window))
-  :custom
-  (vterm-max-scrollback 10000)
-  (vterm-kill-buffer-on-exit t)
-  (vterm-module-cmake-args "-DUSE_SYSTEM_LIBVTERM=no")
-  (vterm-copy-mode-remove-fake-newlines t))
 
 (use-package restart-emacs :commands restart-emacs)
 
@@ -612,19 +608,7 @@
   (org-startup-indented     t)
   (org-hide-emphasis-markers t)
   (org-return-follows-link  t)
-  (org-agenda-files         (append
-                             (list (concat my/garden-dir   "inbox.org")
-                                   (concat my/garden-dir   "journal.org")
-                                   (concat my/garden-dir   "reading.org")
-                                   (concat my/garden-dir   "reviews.org")
-                                   (concat my/work-dir     "tasks.org")
-                                   (concat my/work-dir     "projects.org")
-                                   (concat my/personal-dir "tasks.org")
-                                   (concat my/personal-dir "projects.org"))
-                             (when (file-directory-p my/work-projects-dir)
-                               (directory-files my/work-projects-dir t "\\.org$"))
-                             (when (file-directory-p my/personal-projects-dir)
-                               (directory-files my/personal-projects-dir t "\\.org$"))))
+  (org-agenda-files         nil)   ; add files via C-c [ or setq org-agenda-files
   (org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
   (org-confirm-babel-evaluate nil)
   (org-src-preserve-indentation t)
@@ -655,26 +639,16 @@
         org-refile-allow-creating-parent-nodes 'confirm)
 
   (setq org-todo-keywords
-        '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
-          (sequence "NEW(N)" "LEARNING(l)" "REVIEW(r)" "APPLY(a)" "|" "MASTERED(m)" "DROPPED(x)")))
-
-  (setq org-todo-keyword-faces
-        '(("NEW"      . (:foreground "#ff6c6b" :weight bold))
-          ("LEARNING" . (:foreground "#ecbe7b" :weight bold))
-          ("REVIEW"   . (:foreground "#51afef" :weight bold))
-          ("APPLY"    . (:foreground "#c678dd" :weight bold))
-          ("MASTERED" . (:foreground "#98be65" :weight bold))
-          ("DROPPED"  . (:foreground "#5B6268" :weight bold))))
+        '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")))
 
   ;; Archive completed items to <file>_archive in the same dir → keeps agenda files lean
   (setq org-archive-location "%s_archive::* Archived")
 
-  ;; Daily dashboard: agenda + next actions + items due for review (C-c o a → d)
+  ;; Daily dashboard: agenda + next actions (C-c o a → d)
   (setq org-agenda-custom-commands
         '(("d" "Dashboard"
            ((agenda "" ((org-agenda-span 'day)))
-            (todo "NEXT" ((org-agenda-overriding-header "Next Actions")))
-            (todo "REVIEW" ((org-agenda-overriding-header "Due for Review")))))))
+            (todo "NEXT" ((org-agenda-overriding-header "Next Actions")))))))
 
   (defvar my/task-capture-body    "* TODO %?\n  %U\n  %a")
   (defvar my/project-capture-body "* NEW %^{Project} %^g\n:PROPERTIES:\n:CREATED: %U\n:END:\n\n** Goal\n%?\n\n** Tasks\n- [ ] \n\n** Outcome\n")
@@ -686,9 +660,7 @@
           ("j" "Journal" entry (file+olp+datetree ,(concat my/garden-dir "journal.org"))
            "* %U\n** Worked On\n%?\n** Notes\n\n** Reading Insight\n\n** Momentum: /10\n"
            :empty-lines 1)
-          ("v" "Review"  entry (file+headline ,(concat my/garden-dir "reviews.org") "NEW Items")
-           "* REVIEW %^{What to review}\nSCHEDULED: %^t\n:PROPERTIES:\n:REVIEW_COUNT: 0\n:CREATED: %U\n:END:\n%?"
-           :empty-lines 1)
+
           ("r" "Reading" entry (file+headline ,(concat my/garden-dir "reading.org") "Reading")
            "* %^{Book/Resource}\n:PROPERTIES:\n:START_FROM: %^{Start from page}\n:CREATED: %U\n:END:\n** Insights\n%?"
            :empty-lines 1)
@@ -719,8 +691,6 @@
                  :todo "NEXT")
           (:name "Habits"
                  :habit t)
-          (:name "Learning"
-                 :todo ("NEW" "LEARNING" "REVIEW" "APPLY"))
           (:name "Work"
                  :file-path "work/")
           (:name "Personal"
@@ -992,29 +962,6 @@
             (buffer-string)))))
 (global-auto-revert-mode 1)
 (setq global-auto-revert-non-file-buffers t)
-
-;;; ─────────────────────────────────────────────
-;;; 20. WORKFLOW FUNCTIONS
-;;; ─────────────────────────────────────────────
-
-(defun my/learn-review ()
-  (interactive)
-  (let ((org-agenda-files (list (concat my/garden-dir "reviews.org"))))
-    (org-agenda nil "a")))
-
-(defun my/learn-reviewed ()
-  (interactive)
-  (let* ((count (string-to-number (or (org-entry-get nil "REVIEW_COUNT") "0")))
-         (next  (1+ count))
-         (days  (or (nth count '(1 3 7 14 30 60)) 90)))
-    (org-entry-put nil "REVIEW_COUNT" (number-to-string next))
-    (org-schedule nil (format "+%dd" days))
-    (when (>= next 6) (org-todo "MASTERED"))
-    (message "Review %d done. Next in %d days." next days)))
-
-(defun my/learn-search ()
-  (interactive)
-  (consult-ripgrep my/garden-dir nil))
 
 ;;; ─────────────────────────────────────────────
 ;;; 21. AI ASSISTANT (gptel + LM Studio)
