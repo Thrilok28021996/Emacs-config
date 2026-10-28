@@ -139,36 +139,39 @@ cat > "$TMP/prelude.el" <<'EOF'
 
 ;; Compile one trivial file and report the truth, including the exact clang error.
 (defun sync--native-check ()
-  (let* ((src (expand-file-name "sync-native-probe.el" temporary-file-directory))
-         (out (expand-file-name "sync-native-probe.eln" temporary-file-directory)))
-    (ignore-errors (delete-file out))
-    (with-temp-file src
-      (insert ";;; probe -*- lexical-binding: t; -*-\n(defun sync-probe () 1)\n(provide 'sync-probe)\n"))
-    (let ((res (condition-case err
-                   (progn (native-compile src out) :ok)
-                 (error (error-message-string err)))))
-      (if (and (eq res :ok) (file-exists-p out))
-          (princ "  ✓ native comp works (probe file compiled)\n")
-        (sync--fail "native comp BROKEN: %s (MACOSX_DEPLOYMENT_TARGET=%S)"
-                    (car (split-string (format "%s" res) "\n")) (getenv "MACOSX_DEPLOYMENT_TARGET"))))))
+  (if (not (featurep 'native-compile))
+      (princ "  - native comp not enabled in this Emacs build (skipped)\n")
+    (let* ((src (expand-file-name "sync-native-probe.el" temporary-file-directory))
+           (out (expand-file-name "sync-native-probe.eln" temporary-file-directory)))
+      (ignore-errors (delete-file out))
+      (with-temp-file src
+        (insert ";;; probe -*- lexical-binding: t; -*-\n(defun sync-probe () 1)\n(provide 'sync-probe)\n"))
+      (let ((res (condition-case err
+                     (progn (native-compile src out) :ok)
+                   (error (error-message-string err)))))
+        (if (and (eq res :ok) (file-exists-p out))
+            (princ "  ✓ native comp works (probe file compiled)\n")
+          (sync--fail "native comp BROKEN: %s (MACOSX_DEPLOYMENT_TARGET=%S)"
+                      (car (split-string (format "%s" res) "\n")) (getenv "MACOSX_DEPLOYMENT_TARGET")))))))
 
 (defun sync--eln-count ()
-  (let ((cache (car native-comp-eln-load-path)))
+  (let ((cache (and (boundp 'native-comp-eln-load-path) (car native-comp-eln-load-path))))
     (if (and cache (file-exists-p cache))
         (length (directory-files-recursively cache "\\\\.eln\\\\'"))
       0)))
 
 (defun sync--tmp-count ()
-  (let ((cache (car native-comp-eln-load-path)))
+  (let ((cache (and (boundp 'native-comp-eln-load-path) (car native-comp-eln-load-path))))
     (if (and cache (file-exists-p cache))
         (length (directory-files-recursively cache "\\\\.eln\\\\.tmp\\\\'"))
       0)))
 
 (defun sync--debris ()
-  (let ((tmp (sync--tmp-count)))
+  (let ((tmp (sync--tmp-count))
+        (cache (and (boundp 'native-comp-eln-load-path) (car native-comp-eln-load-path))))
     (when (> tmp 0)
       (princ (format "  ! %d stale .eln.tmp files in %s (failed compiles)\n"
-                     tmp (car native-comp-eln-load-path))))))
+                     tmp cache)))))
 EOF
 
 # prologue every generated step needs: honour SYNC_DIR, wire the failure sink
@@ -343,25 +346,28 @@ cmd_purge() {
 cmd_build() {
   head1 "native-compiling the package tree"
   emit_plan '
-(require (quote comp))
-(defun sync--queued ()
-  ;; comp--async-runnings returns a COUNT, not a boolean: 0 is truthy in Elisp.
-  (+ (if (fboundp (quote comp--async-runnings)) (comp--async-runnings) 0)
-     (if (boundp (quote comp-files-queue)) (length comp-files-queue) 0)))
-(let* ((dir (expand-file-name "elpa/" user-emacs-directory))
-       (before (sync--eln-count))
-       (waited 0)
-       (hit-cap nil))
-  (princ (format "  cache: %s\n  .eln before: %d\n" (car native-comp-eln-load-path) before))
-  (native-compile-async dir t)
-  (princ (format "  queued jobs: %d\n" (sync--queued)))
-  (while (and (< waited sync--max-wait) (> (sync--queued) 0))
-    (sleep-for 1) (setq waited (1+ waited)))
-  (when (and (> (sync--queued) 0) (>= waited sync--max-wait))
-    (setq hit-cap t))
-  (let ((after (sync--eln-count)))
-    (princ (format "  .eln after : %d  (%+d, waited %ds%s)\n" after (- after before) waited
-                   (if hit-cap " — HIT THE WAIT CAP, compilation may still be running" "")))))
+(if (not (featurep (quote native-compile)))
+    (princ "  - native compilation not supported in this Emacs build (skipped)\n")
+  (require (quote comp))
+  (defun sync--queued ()
+    ;; comp--async-runnings returns a COUNT, not a boolean: 0 is truthy in Elisp.
+    (+ (if (fboundp (quote comp--async-runnings)) (comp--async-runnings) 0)
+       (if (boundp (quote comp-files-queue)) (length comp-files-queue) 0)))
+  (let* ((dir (expand-file-name "elpa/" user-emacs-directory))
+         (cache (and (boundp (quote native-comp-eln-load-path)) (car native-comp-eln-load-path)))
+         (before (sync--eln-count))
+         (waited 0)
+         (hit-cap nil))
+    (princ (format "  cache: %s\n  .eln before: %d\n" cache before))
+    (native-compile-async dir t)
+    (princ (format "  queued jobs: %d\n" (sync--queued)))
+    (while (and (< waited sync--max-wait) (> (sync--queued) 0))
+      (sleep-for 1) (setq waited (1+ waited)))
+    (when (and (> (sync--queued) 0) (>= waited sync--max-wait))
+      (setq hit-cap t))
+    (let ((after (sync--eln-count)))
+      (princ (format "  .eln after : %d  (%+d, waited %ds%s)\n" after (- after before) waited
+                     (if hit-cap " — HIT THE WAIT CAP, compilation may still be running" ""))))))
 (princ "\n── verification ──\n")
 (sync--native-check)
 (sync--debris)

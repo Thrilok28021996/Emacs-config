@@ -163,6 +163,8 @@ Rule: =q= dismisses read-only/special buffers. =C-c b k= removes a file buffer f
 | C-?         | redo                            |
 | C-x u       | visual undo tree (vundo)        |
 | M-;         | comment / uncomment             |
+| M-<up>      | move line or region up          |
+| M-<down>    | move line or region down        |
 | TAB         | indent line                     |
 | C-c i r     | indent region right             |
 | C-c i l     | indent region left              |
@@ -218,6 +220,7 @@ Tip: =M-i= then =M-n/M-p= to navigate all uses of a variable/function without a 
 | C-c c a     | code actions (eglot)            |
 | C-c c i     | find implementation (eglot)     |
 | C-c c d     | find references (xref)          |
+| C-c c h     | toggle inlay hints (eglot)      |
 | C-c c f     | format buffer (apheleia)        |
 | C-c c p     | run python file                 |
 | C-c c c     | compile C++                     |
@@ -241,6 +244,7 @@ Tip: =M-i= then =M-n/M-p= to navigate all uses of a variable/function without a 
 | C-c e l     | list all errors (consult)       |
 | C-c e n     | next error                      |
 | C-c e p     | prev error                      |
+| C-c e b     | buffer diagnostics list         |
 
 * Git (C-c g)
 | Key         | Action                          |
@@ -255,8 +259,14 @@ Tip: =M-i= then =M-n/M-p= to navigate all uses of a variable/function without a 
 | C-c g b     | branch                          |
 | C-c g a     | blame (annotate)                |
 | C-c g s     | stash                           |
+| C-c g h     | show hunk inline (diff-hl)      |
 | C-c g n     | next hunk (diff-hl)             |
 | C-c g N     | prev hunk (diff-hl)             |
+
+* Theme (C-c t)
+| Key         | Action                          |
+|-------------+---------------------------------|
+| C-c t t     | toggle dark/light theme         |
 
 ** Inside Magit Status Buffer
 | Key   | Action                          |
@@ -321,7 +331,6 @@ Tip: clock-in/out against any heading to track time. =C-c o R= inserts a report 
 |-------------+---------------------------------|
 | C-c n i     | inbox (shared)                  |
 | C-c n j     | journal entry                   |
-| C-c n v     | review item (SRS)               |
 | C-c n r     | reading note                    |
 | C-c n w     | work task                       |
 | C-c n W     | work project                    |
@@ -331,9 +340,6 @@ Tip: clock-in/out against any heading to track time. =C-c o R= inserts a report 
 | C-c n q     | new question node (roam)        |
 | C-c n P     | new person node                 |
 | C-c n x     | log interaction with person     |
-| C-c n a     | review agenda (SRS)             |
-| C-c n d     | mark item reviewed              |
-| C-c n s     | search garden                   |
 
 ** Tables
 *** Create

@@ -46,28 +46,56 @@
   (exec-path-from-shell-initialize))
 
 ;;; ─────────────────────────────────────────────
-;;; 3. UI
+;;; 3. UI & PERFORMANCE
 ;;; ─────────────────────────────────────────────
 
 (setq inhibit-startup-message t)
 
-;; *scratch* in lisp-interaction fires every prog-mode hook at startup —
-;; fundamental-mode skips that; M-x lisp-interaction-mode when needed
+;; *scratch* in fundamental-mode skips prog-mode startup hooks
 (setq initial-major-mode 'fundamental-mode)
-;; inhibit-startup-echo-area-message only works as a literal (setq ... "username")
-;; in the init file — override the printer instead, stays portable
 (advice-add 'display-startup-echo-area-message :override #'ignore)
+
+;; Modern, minimal scratch buffer launcher
+(defun my/scratch-banner ()
+  (concat
+   ";;; ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+   ";;;  GNU Emacs " emacs-version "  •  " (format-time-string "%A, %d %B %Y") "\n"
+   ";;; ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+   ";;;\n"
+   ";;;  [C-c p p]  Projects           [C-c f r]  Recent files\n"
+   ";;;  [C-c o a]  Org Agenda         [C-c o r]  Roam Zettelkasten\n"
+   ";;;  [C-c g g]  Magit Status       [C-c a c]  GPTel AI Assistant\n"
+   ";;;  [C-c t t]  Toggle Dark/Light  [M-o]      Switch Window\n"
+   ";;;  [M-up/dn]  Move Line / Block  [C-c c h]  Toggle Inlay Hints\n"
+   ";;;\n\n"))
+(setq initial-scratch-message (my/scratch-banner))
 
 (setq display-line-numbers-type t)
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
 (add-hook 'text-mode-hook #'display-line-numbers-mode)
 
+;; 1MB subprocess buffer (default is 4KB) — massive throughput boost for eglot & ripgrep
+(setq read-process-output-max (* 1024 1024))
+
+;; Fast, stutter-free rendering on macOS
+(setq fast-but-imprecise-scrolling t
+      auto-window-vscroll nil
+      redisplay-skip-fontification-on-input t)
+
+;; Silky trackpad pixel scrolling — enable unconditionally so daemon +
+;; emacsclient -c gets it too (harmless in terminal: no wheel events there)
 (pixel-scroll-precision-mode 1)
+(setq pixel-scroll-precision-interpolate-page t
+      pixel-scroll-precision-use-momentum t)
 
 (defun my/set-font ()
   (cond
    ((find-font (font-spec :name "Victor Mono"))
     (set-face-attribute 'default nil :font "Victor Mono-18"))
+   ((find-font (font-spec :name "VictorMono Nerd Font"))
+    (set-face-attribute 'default nil :font "VictorMono Nerd Font-18"))
+   ((find-font (font-spec :name "VictorMono NF"))
+    (set-face-attribute 'default nil :font "VictorMono NF-18"))
    ((find-font (font-spec :name "Menlo"))
     (set-face-attribute 'default nil :font "Menlo-12"))))
 
@@ -94,14 +122,8 @@
 (declare-function winner-redo                        "winner")
 (declare-function electric-pair-conservative-inhibit "elec-pair")
 
-;; Silence native-compiler: my/roam-* are defun'd inside org-roam's :config
-;; (deferred until org-roam loads) — nil file arg = "trust me, defined here".
-(declare-function my/roam--template         nil)
-(declare-function my/roam-capture           nil)
-(declare-function my/roam-capture-concept   nil)
-(declare-function my/roam-capture-question  nil)
-(declare-function my/roam-capture-person    nil)
-(declare-function my/roam-log-interaction   nil)
+;; Silence native-compiler: my/toggle-theme is defun'd inside doom-themes :config
+(declare-function my/toggle-theme nil)
 
 ;; Undo / Redo — terminal-safe bindings
 ;; C-? sends DEL in terminal (-nw) → use C-x C-/ instead which reliably reaches Emacs.
@@ -110,8 +132,55 @@
 ;; Also bind on C-c z for quick redo (mnemonic: z = undo in many editors, Z = redo)
 (global-set-key (kbd "C-c z") #'undo-redo)
 
-
 (global-set-key (kbd "M-o") #'other-window)
+
+;; ── Navigation Pulse (tactile visual feedback) ─
+(require 'pulse)
+(defun my/pulse-momentary-line (&rest _)
+  "Briefly pulse the current line with a subtle highlight."
+  (pulse-momentary-highlight-one-line (point) 'highlight))
+
+(dolist (cmd '(other-window
+               windmove-left windmove-right windmove-up windmove-down
+               consult-line consult-ripgrep
+               xref-find-definitions xref-find-references
+               avy-goto-char-2))
+  (advice-add cmd :after #'my/pulse-momentary-line))
+
+;; ── Line & Region Moving (M-up / M-down) ──────
+(defun my/move-line-up ()
+  "Move current line or active region up."
+  (interactive)
+  (if (use-region-p)
+      (let ((start (region-beginning))
+            (end (region-end)))
+        (let ((text (delete-and-extract-region start end)))
+          (forward-line -1)
+          (let ((new-start (point)))
+            (insert text)
+            (set-mark new-start)
+            (setq deactivate-mark nil))))
+    (transpose-lines 1)
+    (forward-line -2)))
+
+(defun my/move-line-down ()
+  "Move current line or active region down."
+  (interactive)
+  (if (use-region-p)
+      (let ((start (region-beginning))
+            (end (region-end)))
+        (let ((text (delete-and-extract-region start end)))
+          (forward-line 1)
+          (let ((new-start (point)))
+            (insert text)
+            (set-mark new-start)
+            (setq deactivate-mark nil))))
+    (forward-line 1)
+    (transpose-lines 1)
+    (forward-line -1)))
+
+(global-set-key (kbd "M-<up>")   #'my/move-line-up)
+(global-set-key (kbd "M-<down>") #'my/move-line-down)
 
 (global-set-key (kbd "C-c i r") #'indent-rigidly-right-to-tab-stop)
 (global-set-key (kbd "C-c i l") #'indent-rigidly-left-to-tab-stop)
@@ -126,6 +195,7 @@
 (global-set-key (kbd "C-c c a") #'eglot-code-actions)
 (global-set-key (kbd "C-c c i") #'eglot-find-implementation)
 (global-set-key (kbd "C-c c d") #'xref-find-references)
+(global-set-key (kbd "C-c c h") #'eglot-inlay-hints-mode)
 (global-set-key (kbd "C-c c f") #'apheleia-format-buffer)
 (global-set-key (kbd "C-c c p") #'my/python-run-current-file)
 (global-set-key (kbd "C-c c c") #'my/cpp-compile-run-current-file)
@@ -136,6 +206,7 @@
 (global-set-key (kbd "C-c e l") #'consult-flymake)
 (global-set-key (kbd "C-c e n") #'flymake-goto-next-error)
 (global-set-key (kbd "C-c e p") #'flymake-goto-prev-error)
+(global-set-key (kbd "C-c e b") #'flymake-show-buffer-diagnostics)
 
 ;; ── Files (f) ─────────────────────────────────
 (global-set-key (kbd "C-c f r") #'consult-recent-file)
@@ -151,27 +222,93 @@
 (global-set-key (kbd "C-c g b") #'magit-branch)
 (global-set-key (kbd "C-c g a") #'magit-blame)
 (global-set-key (kbd "C-c g s") #'magit-stash)
+(global-set-key (kbd "C-c g h") #'diff-hl-show-hunk)
 (global-set-key (kbd "C-c g n") #'diff-hl-next-hunk)
 (global-set-key (kbd "C-c g N") #'diff-hl-previous-hunk)
+
+;; ── Theme (t) ─────────────────────────────────
+(global-set-key (kbd "C-c t t") #'my/toggle-theme)
 
 ;; ── Jump (j) ──────────────────────────────────
 (global-set-key (kbd "C-c j") #'avy-goto-char-2)
 
 ;; ── Notes (n): capture shortcuts ──────────────
-(global-set-key (kbd "C-c n i") (lambda () (interactive) (org-capture nil "i")))
-(global-set-key (kbd "C-c n j") (lambda () (interactive) (org-capture nil "j")))
-(global-set-key (kbd "C-c n v") (lambda () (interactive) (org-capture nil "v")))
-(global-set-key (kbd "C-c n r") (lambda () (interactive) (org-capture nil "r")))
-(global-set-key (kbd "C-c n w") (lambda () (interactive) (org-capture nil "w")))
-(global-set-key (kbd "C-c n W") (lambda () (interactive) (org-capture nil "W")))
-(global-set-key (kbd "C-c n t") (lambda () (interactive) (org-capture nil "t")))
-(global-set-key (kbd "C-c n p") (lambda () (interactive) (org-capture nil "p")))
-;; Roam-specific captures: deferred until org-roam loads (functions defined in its :config)
-(with-eval-after-load 'org-roam
-  (global-set-key (kbd "C-c n k") #'my/roam-capture-concept)
-  (global-set-key (kbd "C-c n q") #'my/roam-capture-question)
-  (global-set-key (kbd "C-c n P") #'my/roam-capture-person)
-  (global-set-key (kbd "C-c n x") #'my/roam-log-interaction))
+(defun my/capture-inbox ()
+  "Quick capture into inbox."
+  (interactive) (org-capture nil "i"))
+(defun my/capture-journal ()
+  "Capture into daily journal."
+  (interactive) (org-capture nil "j"))
+(defun my/capture-reading ()
+  "Capture a book or reading resource."
+  (interactive) (org-capture nil "r"))
+(defun my/capture-work-task ()
+  "Capture a work task."
+  (interactive) (org-capture nil "w"))
+(defun my/capture-work-project ()
+  "Capture a work project."
+  (interactive) (org-capture nil "W"))
+(defun my/capture-personal-task ()
+  "Capture a personal task."
+  (interactive) (org-capture nil "t"))
+(defun my/capture-personal-project ()
+  "Capture a personal project."
+  (interactive) (org-capture nil "p"))
+
+(global-set-key (kbd "C-c n i") #'my/capture-inbox)
+(global-set-key (kbd "C-c n j") #'my/capture-journal)
+(global-set-key (kbd "C-c n r") #'my/capture-reading)
+(global-set-key (kbd "C-c n w") #'my/capture-work-task)
+(global-set-key (kbd "C-c n W") #'my/capture-work-project)
+(global-set-key (kbd "C-c n t") #'my/capture-personal-task)
+(global-set-key (kbd "C-c n p") #'my/capture-personal-project)
+
+(defun my/roam--template (key)
+  (cl-find key org-roam-capture-templates :key #'car :test #'string=))
+
+(defun my/roam-capture (key prompt)
+  (require 'org-roam)
+  (org-roam-capture- :node (org-roam-node-create
+                            :title (read-string prompt))
+                     :templates (list (my/roam--template key))))
+
+(defun my/roam-capture-concept ()
+  "Capture an org-roam concept."
+  (interactive)
+  (require 'org-roam)
+  (my/roam-capture "c" "Concept: "))
+
+(defun my/roam-capture-question ()
+  "Capture an org-roam question."
+  (interactive)
+  (require 'org-roam)
+  (my/roam-capture "q" "Question topic: "))
+
+(defun my/roam-capture-person ()
+  "Capture an org-roam person."
+  (interactive)
+  (require 'org-roam)
+  (my/roam-capture "P" "Person name: "))
+
+(defun my/roam-log-interaction ()
+  "Log an interaction with an org-roam person."
+  (interactive)
+  (require 'org-roam)
+  (let* ((node (org-roam-node-read nil
+                                   (lambda (n) (member "person" (org-roam-node-tags n)))))
+         (file (org-roam-node-file node)))
+    (find-file file)
+    (goto-char (point-min))
+    (if (search-forward "* Interactions" nil t)
+        (progn
+          (org-end-of-subtree)
+          (insert "\n** " (format-time-string "[%Y-%m-%d %a]") "\n"))
+      (error "No Interactions heading in %s" file))))
+
+(global-set-key (kbd "C-c n k") #'my/roam-capture-concept)
+(global-set-key (kbd "C-c n q") #'my/roam-capture-question)
+(global-set-key (kbd "C-c n P") #'my/roam-capture-person)
+(global-set-key (kbd "C-c n x") #'my/roam-log-interaction)
 
 
 ;; ── Org (o) ───────────────────────────────────
@@ -381,7 +518,19 @@
         doom-themes-enable-italic t)
   (load-theme 'doom-one t)
   (doom-themes-visual-bell-config)
-  (doom-themes-org-config))
+  (doom-themes-org-config)
+
+  (defun my/toggle-theme ()
+    "Toggle between doom-one (dark) and doom-one-light (light)."
+    (interactive)
+    (if (custom-theme-enabled-p 'doom-one)
+        (progn
+          (disable-theme 'doom-one)
+          (load-theme 'doom-one-light t)
+          (message "Switched to doom-one-light (Day Mode)"))
+      (disable-theme 'doom-one-light)
+      (load-theme 'doom-one t)
+      (message "Switched to doom-one (Night Mode)"))))
 
 (use-package doom-modeline
   :hook (after-init . doom-modeline-mode)
@@ -469,6 +618,7 @@
 
 (use-package eglot
   :ensure nil
+  :commands (eglot eglot-ensure eglot-rename eglot-code-actions eglot-find-implementation eglot-inlay-hints-mode)
   :hook ((python-mode        . eglot-ensure)
          (python-ts-mode     . eglot-ensure)
          (c-mode             . eglot-ensure)
@@ -495,6 +645,7 @@
 
 (use-package flymake
   :ensure nil
+  :commands (flymake-mode flymake-goto-next-error flymake-goto-prev-error flymake-show-buffer-diagnostics)
   :hook (prog-mode . flymake-mode)
   :custom (flymake-fringe-indicator-position 'right-fringe)
   :config
@@ -556,6 +707,7 @@
   (magit-refresh-status-buffer nil))
 
 (use-package diff-hl
+  :commands (diff-hl-next-hunk diff-hl-previous-hunk diff-hl-show-hunk global-diff-hl-mode)
   :hook ((after-init         . global-diff-hl-mode)
          (magit-post-refresh . diff-hl-magit-post-refresh))
   :config (diff-hl-flydiff-mode 1))
@@ -599,6 +751,7 @@
 
 (use-package org
   :ensure nil
+  :commands (org-mode org-agenda org-capture org-clock-in org-clock-out org-clock-report org-set-effort org-archive-subtree)
   :hook (org-mode . visual-line-mode)
   :custom
   (org-directory            "~/Documents/garden/")
@@ -737,37 +890,7 @@
                          "#+TITLE: ${title}\n#+CREATED: %U\n")
       :unnarrowed t)))
   :config
-  (org-roam-db-autosync-mode)
-
-  (defun my/roam--template (key)
-    (cl-find key org-roam-capture-templates :key #'car :test #'string=))
-
-  (defun my/roam-capture (key prompt)
-    (org-roam-capture- :node (org-roam-node-create
-                              :title (read-string prompt))
-                       :templates (list (my/roam--template key))))
-
-  (defun my/roam-capture-concept ()
-    (interactive) (my/roam-capture "c" "Concept: "))
-
-  (defun my/roam-capture-question ()
-    (interactive) (my/roam-capture "q" "Question topic: "))
-
-  (defun my/roam-capture-person ()
-    (interactive) (my/roam-capture "P" "Person name: "))
-
-  (defun my/roam-log-interaction ()
-    (interactive)
-    (let* ((node (org-roam-node-read nil
-                                     (lambda (n) (member "person" (org-roam-node-tags n)))))
-           (file (org-roam-node-file node)))
-      (find-file file)
-      (goto-char (point-min))
-      (if (search-forward "* Interactions" nil t)
-          (progn
-            (org-end-of-subtree)
-            (insert "\n** " (format-time-string "[%Y-%m-%d %a]") "\n"))
-        (error "No Interactions heading in %s" file)))))
+  (org-roam-db-autosync-mode))
 
 (use-package consult-org-roam
   :after org-roam
@@ -823,12 +946,14 @@
 
 (use-package markdown-mode
   :mode ("\\.md\\'" "\\.markdown\\'")
-  :hook (markdown-mode . visual-line-mode)
+  :hook ((markdown-mode . visual-line-mode)
+         (markdown-mode . (lambda () (setq tab-width 2))))
   :custom
   (markdown-command "pandoc")
   (markdown-fontify-code-blocks-natively t)
   (markdown-header-scaling t)
-  (markdown-hide-urls t))
+  (markdown-hide-urls t)
+  (markdown-list-indent-width 2))
 
 ;;; ─────────────────────────────────────────────
 ;;; 15. WRITING
@@ -837,7 +962,15 @@
 (use-package olivetti
   :hook ((org-mode      . olivetti-mode)
          (markdown-mode . olivetti-mode))
-  :custom (olivetti-body-width 90))
+  :custom (olivetti-body-width 90)
+  :config
+  ;; Olivetti's built-in margin scroll bindings use the literal symbol
+  ;; 'mouse-wheel-down-event instead of its value, so they never match real
+  ;; events on Emacs 31+.  Patch the keymap with the actual wheel events so
+  ;; trackpad scrolling works over the wide centering margins.
+  (dolist (area '(left-margin right-margin))
+    (dolist (ev '(wheel-down wheel-up mouse-4 mouse-5))
+      (define-key olivetti-mode-map (vector area ev) #'pixel-scroll-precision))))
 
 ;;; ─────────────────────────────────────────────
 ;;; 16. PYTHON / CONDA
@@ -923,8 +1056,17 @@
 (savehist-mode 1)
 (winner-mode 1)
 
+;; Default 2-space indentation across all modes
 (setq-default indent-tabs-mode nil
-              tab-width 4)
+              tab-width 2
+              standard-indent 2
+              c-basic-offset 2
+              c-ts-mode-indent-offset 2
+              sh-basic-offset 2
+              js-indent-level 2
+              typescript-indent-level 2
+              css-indent-offset 2
+              python-indent-offset 2)
 
 (setq use-short-answers     t
       scroll-conservatively 101
@@ -946,6 +1088,14 @@
 (show-paren-mode 1)
 (delete-selection-mode 1)
 (global-so-long-mode 1)
+
+(use-package dired
+  :ensure nil
+  :custom
+  (dired-kill-when-opening-new-buffer t)
+  (dired-recursive-copies 'always)
+  (dired-recursive-deletes 'always)
+  (dired-dwim-target t))
 
 ;; Sync kill ring with macOS clipboard in terminal mode
 (unless (display-graphic-p)
@@ -969,7 +1119,7 @@
 
 (use-package gptel
   :vc (:url "https://github.com/karthink/gptel" :rev :newest)
-  :commands (gptel gptel-send gptel-rewrite gptel-menu)
+  :commands (gptel gptel-send gptel-rewrite gptel-menu gptel-add gptel-context-remove-all)
   :config
   (setq gptel-backend
         (gptel-make-openai "lmstudio"
