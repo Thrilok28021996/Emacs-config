@@ -62,7 +62,7 @@
    ";;;  GNU Emacs " emacs-version "  •  " (format-time-string "%A, %d %B %Y") "\n"
    ";;; ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
    ";;;\n"
-   ";;;  [C-c p p]  Projects           [C-c f r]  Recent files\n"
+   ";;;  [C-x p p]  Projects           [C-c f r]  Recent files\n"
    ";;;  [C-c o a]  Org Agenda         [C-c o r]  Roam Zettelkasten\n"
    ";;;  [C-c g g]  Magit Status       [C-c a c]  GPTel AI Assistant\n"
    ";;;  [C-c t t]  Toggle Dark/Light  [M-o]      Switch Window\n"
@@ -82,6 +82,15 @@
       auto-window-vscroll nil
       redisplay-skip-fontification-on-input t)
 
+;; Garbage Collector Magic Hack — raise GC threshold during activity, collect on idle
+(use-package gcmh
+  :demand t
+  :config
+  (setq gcmh-idle-delay 'auto
+        gcmh-auto-idle-delay-factor 10
+        gcmh-high-cons-threshold (* 128 1024 1024))
+  (gcmh-mode 1))
+
 ;; Silky trackpad pixel scrolling — enable unconditionally so daemon +
 ;; emacsclient -c gets it too (harmless in terminal: no wheel events there)
 (pixel-scroll-precision-mode 1)
@@ -91,13 +100,13 @@
 (defun my/set-font ()
   (cond
    ((find-font (font-spec :name "Victor Mono"))
-    (set-face-attribute 'default nil :font "Victor Mono-18"))
+    (set-face-attribute 'default nil :font "Victor Mono-24"))
    ((find-font (font-spec :name "VictorMono Nerd Font"))
-    (set-face-attribute 'default nil :font "VictorMono Nerd Font-18"))
+    (set-face-attribute 'default nil :font "VictorMono Nerd Font-24"))
    ((find-font (font-spec :name "VictorMono NF"))
-    (set-face-attribute 'default nil :font "VictorMono NF-18"))
+    (set-face-attribute 'default nil :font "VictorMono NF-24"))
    ((find-font (font-spec :name "Menlo"))
-    (set-face-attribute 'default nil :font "Menlo-12"))))
+    (set-face-attribute 'default nil :font "Menlo-16"))))
 
 (unless (daemonp) (my/set-font))
 (add-hook 'after-make-frame-functions
@@ -186,15 +195,16 @@
 (global-set-key (kbd "C-c i l") #'indent-rigidly-left-to-tab-stop)
 
 ;; ── Buffers (b) ──────────────────────────────
+;; Remap built-in switch-to-buffer so C-x b invokes consult-buffer everywhere
+(global-set-key [remap switch-to-buffer] #'consult-buffer)
 (global-set-key (kbd "C-c b b")   #'consult-buffer)
-(global-set-key (kbd "C-c b k")   #'kill-current-buffer)
 (global-set-key (kbd "C-c b TAB") #'mode-line-other-buffer)
 
 ;; ── Code (c): LSP + format + compile ─────────
 (global-set-key (kbd "C-c c r") #'eglot-rename)
 (global-set-key (kbd "C-c c a") #'eglot-code-actions)
 (global-set-key (kbd "C-c c i") #'eglot-find-implementation)
-(global-set-key (kbd "C-c c d") #'xref-find-references)
+(global-set-key (kbd "C-c c d") #'xref-find-references)  ; also on built-in M-?
 (global-set-key (kbd "C-c c h") #'eglot-inlay-hints-mode)
 (global-set-key (kbd "C-c c f") #'apheleia-format-buffer)
 (global-set-key (kbd "C-c c p") #'my/python-run-current-file)
@@ -202,10 +212,12 @@
 (global-set-key (kbd "C-c c b") #'dape-breakpoint-toggle)
 (global-set-key (kbd "C-c c B") #'dape)
 
-;; ── Errors (e): flymake ───────────────────────
+;; ── Errors (e): flymake (built-in M-g map + C-c e shortcuts) ──
+(global-set-key (kbd "M-g f")   #'consult-flymake)
+(global-set-key (kbd "M-g b")   #'flymake-show-buffer-diagnostics)
 (global-set-key (kbd "C-c e l") #'consult-flymake)
-(global-set-key (kbd "C-c e n") #'flymake-goto-next-error)
-(global-set-key (kbd "C-c e p") #'flymake-goto-prev-error)
+(global-set-key (kbd "C-c e n") #'flymake-goto-next-error)  ; built-in M-g n
+(global-set-key (kbd "C-c e p") #'flymake-goto-prev-error)  ; built-in M-g p
 (global-set-key (kbd "C-c e b") #'flymake-show-buffer-diagnostics)
 
 ;; ── Files (f) ─────────────────────────────────
@@ -328,15 +340,20 @@
 (global-set-key (kbd "C-c o k") #'org-kanban/initialize)
 (global-set-key (kbd "C-c o A") #'org-archive-subtree)
 
-;; ── Projects (p) ──────────────────────────────
-(global-set-key (kbd "C-c p p") #'project-switch-project)
-(global-set-key (kbd "C-c p f") #'project-find-file)
-(global-set-key (kbd "C-c p b") #'project-switch-to-buffer)
-(global-set-key (kbd "C-c p k") #'project-kill-buffers)
-(global-set-key (kbd "C-c p s") #'project-eshell)
-(global-set-key (kbd "C-c p c") #'project-compile)
+;; ── Projects (p): built-in C-x p map + C-c p alias ────────
+;; Emacs 28+ built-in project-prefix-map provides:
+;; C-x p p: switch-project    C-x p f: find-file
+;; C-x p b: switch-to-buffer  C-x p k: kill-buffers
+;; C-x p e: eshell            C-x p c: compile
+(define-key ctl-x-map "p" project-prefix-map)
+(global-set-key (kbd "C-c p") project-prefix-map)
 
-;; ── Search (s) ────────────────────────────────
+;; ── Search (s): built-in M-s search-map + consult ─────────
+;; C-s remains standard isearch-forward!
+(global-set-key (kbd "M-s l") #'consult-line)
+(global-set-key (kbd "M-s r") #'consult-ripgrep)
+(global-set-key (kbd "M-s i") #'consult-imenu)
+(global-set-key (kbd "M-s t") #'consult-todo)
 (global-set-key (kbd "C-c s s") #'consult-line)
 (global-set-key (kbd "C-c s r") #'consult-ripgrep)
 (global-set-key (kbd "C-c s i") #'consult-imenu)
@@ -368,14 +385,13 @@
 (global-set-key (kbd "C-c a a") #'gptel-add)             ; add context
 (global-set-key (kbd "C-c a x") #'gptel-context-remove-all) ; clear context
 
-;; ── Help (h) ──────────────────────────────────
-(global-set-key (kbd "C-c h k") #'helpful-key)
-(global-set-key (kbd "C-c h f") #'helpful-callable)
-(global-set-key (kbd "C-c h v") #'helpful-variable)
-(global-set-key (kbd "C-c h .") #'helpful-at-point)
+;; ── Help: Helpful remapped on built-in C-h (see section 12) ──
+;; C-h f: helpful-callable   C-h v: helpful-variable
+;; C-h k: helpful-key        C-h x: helpful-command
+;; C-h .: helpful-at-point
 
 ;; ── Quit (q) ──────────────────────────────────
-(global-set-key (kbd "C-c q q") #'save-buffers-kill-terminal)
+;; Built-in C-x C-c exits; C-c q r restarts
 (global-set-key (kbd "C-c q r") #'restart-emacs)
 
 ;; which-key — built-in since Emacs 30
@@ -418,7 +434,6 @@
   :init (marginalia-mode 1))
 
 (use-package consult
-  :bind ("C-s" . consult-line)
   :custom
   (consult-preview-key "M-.")
   (consult-narrow-key "<")
@@ -483,7 +498,7 @@
 (use-package embark
   :vc (:url "https://github.com/oantolin/embark" :rev :newest)
   :bind (("C-."   . embark-act)
-         ("M-."   . embark-dwim)
+         ("C-c ." . embark-dwim)
          ("C-h B" . embark-bindings))
   :init
   (setq prefix-help-command #'embark-prefix-help-command)
@@ -576,12 +591,14 @@
 
 (use-package ws-butler :hook (prog-mode . ws-butler-mode))
 
-(use-package highlight-indent-guides
-  :hook (prog-mode . highlight-indent-guides-mode)
+(use-package indent-bars
+  :hook (prog-mode . indent-bars-mode)
   :custom
-  (highlight-indent-guides-method 'character)
-  (highlight-indent-guides-character ?|)
-  (highlight-indent-guides-responsive 'top))
+  (indent-bars-treesit-support t)
+  (indent-bars-no-descend-string t)
+  (indent-bars-prefer-character (not (display-graphic-p)))
+  (indent-bars-color-by-depth nil)
+  (indent-bars-highlight-current-depth '(:blend 0.5)))
 
 (use-package ligature
   :vc (:url "https://github.com/mickeynp/ligature.el" :rev :newest)
@@ -638,6 +655,14 @@
   (setq-default eglot-workspace-configuration
                 '(:basedpyright (:analysis (:typeCheckingMode "standard"
                                                               :diagnosticMode "workspace")))))
+
+;; eglot-booster: converts JSON-RPC to elisp bytecode via emacs-lsp-booster
+(use-package eglot-booster
+  :vc (:url "https://github.com/jdtsmith/eglot-booster" :rev :newest)
+  :after eglot
+  :config
+  (when (executable-find "emacs-lsp-booster")
+    (eglot-booster-mode 1)))
 
 ;;; ─────────────────────────────────────────────
 ;;; 9. FLYMAKE (built-in)
@@ -734,6 +759,7 @@
   (helpful-set-variable-function #'setopt)
   :bind
   ("C-h x"                   . helpful-command)
+  ("C-h ."                   . helpful-at-point)
 
   ([remap describe-function] . helpful-callable)
   ([remap describe-variable] . helpful-variable)
@@ -1003,6 +1029,13 @@
                        (shell-quote-argument src)
                        (shell-quote-argument exe)
                        (shell-quote-argument exe))))))
+
+;; Modern, fast terminal emulator (alternative to vterm/eshell)
+(use-package eat
+  :commands (eat eat-other-window)
+  :custom
+  (eat-kill-buffer-on-exit t)
+  (eat-enable-yank-to-terminal t))
 
 ;;; ─────────────────────────────────────────────
 ;;; 18. FORMATTERS

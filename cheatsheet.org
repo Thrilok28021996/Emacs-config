@@ -40,13 +40,13 @@
 Tip: xref jumps, isearch, and avy all set the mark automatically — =C-u C-SPC= acts as a back button after any of them.
 
 ** Search
-| Key       | Action                          |
-|-----------+---------------------------------|
-| C-s       | search buffer (consult-line)    |
-| C-c s s   | search buffer                   |
-| C-c s r   | ripgrep project                 |
-| C-c s i   | jump to symbol (imenu)          |
-| C-c s t   | search TODO comments            |
+| Key                 | Action                              |
+|---------------------+-------------------------------------|
+| C-s                 | standard incremental search (isearch) |
+| M-s l (or C-c s s)  | search buffer lines (consult-line) |
+| M-s r (or C-c s r)  | ripgrep project (consult-ripgrep)   |
+| M-s i (or C-c s i)  | jump to symbol (consult-imenu)      |
+| M-s t (or C-c s t)  | search TODO comments (consult-todo) |
 
 Tip: =C-s= shows ="3 of 12"= match count automatically (=isearch-lazy-count=).
 
@@ -97,18 +97,18 @@ Tip: =C-s= shows ="3 of 12"= match count automatically (=isearch-lazy-count=).
 
 * Buffers
 ** Switch
-| Key           | Action                          |
-|---------------+---------------------------------|
-| C-c b b       | switch buffer (consult)         |
-| C-c b TAB     | switch to last buffer           |
-| C-x b         | switch buffer (native)          |
-| C-x C-b       | list all buffers                |
+| Key                 | Action                                      |
+|---------------------+---------------------------------------------|
+| C-x b               | switch buffer (consult-buffer with preview) |
+| C-c b b             | switch buffer (consult)                     |
+| C-c b TAB           | switch to last buffer                       |
+| C-x C-b             | list all buffers                            |
 
 ** Kill (remove buffer from memory)
-| Key           | Action                          |
-|---------------+---------------------------------|
-| C-c b k       | kill current buffer             |
-| C-x k         | kill buffer — prompts which one |
+| Key                 | Action                                      |
+|---------------------+---------------------------------------------|
+| C-x k               | kill current buffer (native)                |
+| C-c b k             | kill current buffer                         |
 
 ** Quit (close window/pane, buffer stays alive)
 | Key           | Action                          |
@@ -158,10 +158,10 @@ Rule: =q= dismisses read-only/special buffers. =C-c b k= removes a file buffer f
 | M-d         | delete word forward             |
 | DEL         | delete char backward            |
 | M-DEL       | delete word backward            |
-| C-k         | kill (cut) to end of line       |
-| C-/         | undo                            |
-| C-?         | redo                            |
-| C-x u       | visual undo tree (vundo)        |
+| C-k                 | kill (cut) to end of line       |
+| C-/                 | undo                            |
+| C-x C-/ (or C-c z)  | redo (terminal-safe undo-redo)  |
+| C-x u               | visual undo tree (vundo)        |
 | M-;         | comment / uncomment             |
 | M-<up>      | move line or region up          |
 | M-<down>    | move line or region down        |
@@ -238,13 +238,13 @@ Tip: =M-i= then =M-n/M-p= to navigate all uses of a variable/function without a 
 | q       | quit compilation window             |
 | C-x `   | jump to next error in source        |
 
-* Errors (C-c e)
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-c e l     | list all errors (consult)       |
-| C-c e n     | next error                      |
-| C-c e p     | prev error                      |
-| C-c e b     | buffer diagnostics list         |
+* Errors & Diagnostics (M-g or C-c e)
+| Key                 | Action                          |
+|---------------------+---------------------------------|
+| M-g f (or C-c e l)  | list all diagnostics (consult)  |
+| M-g n (or C-c e n)  | next diagnostic error           |
+| M-g p (or C-c e p)  | prev diagnostic error           |
+| M-g b (or C-c e b)  | buffer diagnostics list         |
 
 * Git (C-c g)
 | Key         | Action                          |
@@ -290,15 +290,15 @@ Tip: =M-i= then =M-n/M-p= to navigate all uses of a variable/function without a 
 | q     | quit magit                      |
 | TAB   | expand / collapse section       |
 
-* Projects (C-c p)
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-c p p     | switch project                  |
-| C-c p f     | find file in project            |
-| C-c p b     | project buffer                  |
-| C-c p k     | kill project buffers            |
-| C-c p s     | project eshell                  |
-| C-c p c     | compile project                 |
+* Projects (C-x p or C-c p)
+| Key                 | Action                          |
+|---------------------+---------------------------------|
+| C-x p p (or C-c p p)| switch project                  |
+| C-x p f (or C-c p f)| find file in project            |
+| C-x p b (or C-c p b)| project buffer                  |
+| C-x p k (or C-c p k)| kill project buffers            |
+| C-x p e (or C-c p s)| project eshell                  |
+| C-x p c (or C-c p c)| compile project                 |
 
 * Org Mode (C-c o)
 ** Org commands
@@ -563,9 +563,10 @@ The board is a live view of headings — editing the underlying TODO state and r
 - =orderless= — fuzzy: type words in any order
 
 ** Embark (act on any candidate)
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-.         | embark-act — open action menu   |
+| Key         | Action                                  |
+|-------------+-----------------------------------------|
+| C-.         | embark-act — open action menu           |
+| C-c .       | embark-dwim — contextual default action |
 
 Works anywhere: minibuffer candidates, =corfu= completions, region, symbol at point.
 Examples: on a file candidate → open, delete, rename; on a symbol → describe, find-refs.
@@ -578,44 +579,48 @@ Tip: =C-.= in =consult-ripgrep= results → =e= → enter =wgrep= mode to edit a
 | C-c v a     | activate conda env              |
 | C-c v d     | deactivate conda env            |
 
-* Help & Discovery (C-c h)
+* Help & Discovery (C-h)
 | Key         | Action                          |
 |-------------+---------------------------------|
 | M-x         | command palette (all commands)  |
-| C-c h k     | describe key                    |
-| C-c h f     | describe function               |
-| C-c h v     | describe variable               |
-| C-c h .     | describe thing at point         |
+| C-h k       | describe key (helpful)          |
+| C-h f       | describe function (helpful)     |
+| C-h v       | describe variable (helpful)     |
+| C-h .       | describe thing at point         |
+| C-h x       | describe command                |
 | C-h m       | describe current major mode     |
 | C-h b       | list all active keybindings     |
 
-Tip: press =C-c= and wait 0.3s — which-key shows all options.
+Tip: press =C-c= or =C-h= and wait 0.3s — which-key shows all options.
 
-* Quit (C-c q)
+* Quit
 | Key         | Action                          |
 |-------------+---------------------------------|
-| C-c q q     | quit emacs                      |
+| C-x C-c     | quit emacs (built-in)           |
 | C-c q r     | restart emacs                   |
 
 * Prefix Map at a Glance
-| Prefix  | Domain           |
-|---------+------------------|
-| C-c b   | Buffers          |
-| C-c c   | Code / LSP / Debug |
-| C-c e   | Errors           |
-| C-c f   | Files            |
-| C-c g   | Git              |
-| C-c j   | Jump (avy)       |
-| C-c n   | Notes/capture    |
-| C-c o   | Org / Roam       |
-| C-c p   | Projects         |
-| C-c s   | Search           |
-| C-c v   | Virtual env      |
-| C-c w   | Windows / Tabs   |
-| C-c a   | AI               |
-| C-c h   | Help             |
-| C-c q   | Quit             |
-| C-x t   | Tab bar          |
+| Prefix    | Domain           |
+|-----------+------------------|
+| C-x b     | Switch Buffer    |
+| C-x p     | Projects (built-in) |
+| C-h       | Help (helpful)   |
+| M-s       | Search (consult) |
+| M-g       | Goto / Errors    |
+| C-c b     | Buffers          |
+| C-c c     | Code / LSP / Debug |
+| C-c e     | Errors           |
+| C-c f     | Files            |
+| C-c g     | Git              |
+| C-c j     | Jump (avy)       |
+| C-c n     | Notes/capture    |
+| C-c o     | Org / Roam       |
+| C-c p     | Projects (alias) |
+| C-c s     | Search (alias)   |
+| C-c v     | Virtual env      |
+| C-c w     | Windows / Tabs   |
+| C-c a     | AI               |
+| C-x t     | Tab bar          |
 
 * Workflow — Daily Use
 1. Start day: =C-c o a= → check agenda

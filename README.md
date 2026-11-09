@@ -197,20 +197,25 @@ prefix (e.g. `C-c g`) and wait — **which-key** shows the rest.
 | Key | Action |
 |-----|--------|
 | `M-o` | other window |
-| `C-s` | search line (consult-line) |
+| `C-s` | native incremental search (isearch-forward) |
+| `M-s l` / `C-c s s` | search line (consult-line) |
 | `C-.` | embark act on candidate |
+| `C-c .` | embark dwim (contextual action) |
+| `M-.` | native find definition (xref / eglot) |
+| `M-,` | native jump back from definition |
+| `M-?` | native find references |
 | `C-=` | expand region |
 | `C-x u` | visual undo tree (vundo) |
-| `C-?` | redo (undo-redo) |
+| `C-x C-/` / `C-c z` | redo (terminal-safe undo-redo) |
 | `C-x C-d` | jump to directory (consult-dir) |
 | `C-c i r` / `C-c i l` | indent region right / left |
 
-### Buffers (`C-c b`)
+### Buffers (`C-x b` / `C-c b`)
 
 | Key | Action |
 |-----|--------|
-| `C-c b b` | switch buffer |
-| `C-c b k` | kill current buffer |
+| `C-x b` (or `C-c b b`) | switch buffer (consult-buffer with live preview) |
+| `C-x k` | kill current buffer |
 | `C-c b TAB` | last buffer |
 
 ### Code (`C-c c`)
@@ -220,7 +225,7 @@ prefix (e.g. `C-c g`) and wait — **which-key** shows the rest.
 | `C-c c r` | rename symbol (eglot) |
 | `C-c c a` | code action (eglot) |
 | `C-c c i` | find implementation |
-| `C-c c d` | find references |
+| `C-c c d` / `M-?` | find references |
 | `C-c c f` | format buffer (apheleia) |
 | `C-c c p` | run current Python file |
 | `C-c c c` | compile & run current C++ file |
@@ -229,22 +234,23 @@ prefix (e.g. `C-c g`) and wait — **which-key** shows the rest.
 
 Native xref also works everywhere: `M-.` definition, `M-,` back, `M-?` references.
 
-### Errors (`C-c e`)
+### Errors (`M-g` / `C-c e`)
 
 | Key | Action |
 |-----|--------|
-| `C-c e l` | list errors (consult-flymake) |
-| `C-c e n` / `C-c e p` | next / previous error |
+| `M-g f` / `C-c e l` | list diagnostics (consult-flymake) |
+| `M-g n` / `M-g p` | next / previous diagnostic (built-in goto-map) |
+| `M-g b` / `C-c e b` | show buffer diagnostics |
 
-### Files & Search
+### Files & Search (`M-s` / `C-c s`)
 
 | Key | Action |
 |-----|--------|
 | `C-c f r` | recent files |
-| `C-c s s` | search lines in buffer |
-| `C-c s r` | search project (ripgrep) |
-| `C-c s i` | jump to symbol (imenu) |
-| `C-c s t` | jump to TODO |
+| `M-s l` / `C-c s s` | search lines in buffer (consult-line) |
+| `M-s r` / `C-c s r` | search project (consult-ripgrep) |
+| `M-s i` / `C-c s i` | jump to symbol in buffer (consult-imenu) |
+| `M-s t` / `C-c s t` | jump to TODO comment (consult-todo) |
 
 ### Git (`C-c g`)
 
@@ -262,16 +268,16 @@ Native xref also works everywhere: `M-.` definition, `M-,` back, `M-?` reference
 | `C-c g s` | stash |
 | `C-c g n` / `C-c g N` | next / previous hunk |
 
-### Projects (`C-c p`)
+### Projects (`C-x p` / `C-c p`)
 
 | Key | Action |
 |-----|--------|
-| `C-c p p` | switch project |
-| `C-c p f` | find file in project |
-| `C-c p b` | switch project buffer |
-| `C-c p k` | kill project buffers |
-| `C-c p s` | project eshell |
-| `C-c p c` | compile in project |
+| `C-x p p` (or `C-c p p`) | switch project |
+| `C-x p f` (or `C-c p f`) | find file in project |
+| `C-x p b` (or `C-c p b`) | switch project buffer |
+| `C-x p k` (or `C-c p k`) | kill project buffers |
+| `C-x p e` (or `C-c p s`) | project eshell |
+| `C-x p c` (or `C-c p c`) | compile in project |
 
 ### Windows (`C-c w`)
 
@@ -337,12 +343,14 @@ Native splits: `C-x 2` (below), `C-x 3` (right), `C-x 0` (close), `C-x 1` (only)
 |-----|--------|
 | `C-c v a` / `C-c v d` | activate / deactivate conda env |
 
-### Help (`C-c h`) & Quit (`C-c q`)
+### Help (`C-h`) & Quit
 
 | Key | Action |
 |-----|--------|
-| `C-c h k` / `C-c h f` / `C-c h v` / `C-c h .` | describe key / function / variable / at-point |
-| `C-c q q` / `C-c q r` | quit / restart emacs |
+| `C-h k` / `C-h f` / `C-h v` / `C-h .` | describe key / function / variable / symbol at point (helpful) |
+| `C-h x` | describe command (helpful-command) |
+| `C-x C-c` | quit Emacs (built-in) |
+| `C-c q r` | restart Emacs |
 | `C-c j` | jump to char (avy) |
 
 ### Inside Magit

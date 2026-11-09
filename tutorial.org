@@ -618,17 +618,17 @@ buffers, and across the whole project. Learning them removes almost all manual
 =consult= is a collection of enhanced built-in commands that feed results into
 the =vertico= minibuffer with live preview.
 
-| Key         | Action                                              |
-|-------------+-----------------------------------------------------|
-| C-s         | =consult-line= — live-search lines in current buffer |
-| C-c s s     | same as C-s (namespaced alias)                       |
-| C-c s r     | =consult-ripgrep= — grep across the whole project    |
-| C-c s i     | =consult-imenu= — jump to any function/heading       |
-| C-c s t     | =consult-todo= — list all TODO/FIXME/HACK comments   |
-| C-c f r     | =consult-recent-file= — pick from recently opened files |
-| C-c b b     | =consult-buffer= — switch buffer (with preview)      |
-| M-.         | preview result under cursor (=consult-preview-key=) |
-| <           | narrow results to a category (=consult-narrow-key=) |
+| Key                 | Action                                              |
+|---------------------+-----------------------------------------------------|
+| C-s                 | standard incremental search (=isearch-forward=)    |
+| M-s l (or C-c s s)  | =consult-line= — live-search lines in current buffer |
+| M-s r (or C-c s r)  | =consult-ripgrep= — grep across the whole project    |
+| M-s i (or C-c s i)  | =consult-imenu= — jump to any function/heading       |
+| M-s t (or C-c s t)  | =consult-todo= — list all TODO/FIXME/HACK comments   |
+| C-c f r             | =consult-recent-file= — pick from recently opened files |
+| C-x b               | =consult-buffer= — switch buffer (remapped with live preview; also C-c b b) |
+| M-.                 | preview result under cursor (=consult-preview-key=) |
+| <                   | narrow results to a category (=consult-narrow-key=) |
 
 *How preview works:* as you move through candidates in the minibuffer, =M.=
 temporarily visits that file/line so you can read context without committing.
@@ -725,9 +725,10 @@ completion pipeline silently — you don't invoke them directly.
 ** Embark — act on any candidate
 Embark adds a "right-click menu" to any candidate in vertico or at point.
 
-| Key | Action                                           |
-|-----+--------------------------------------------------|
-| C-. | =embark-act= — open action menu on thing at point |
+| Key   | Action                                            |
+|-------+---------------------------------------------------|
+| C-.   | =embark-act= — open action menu on thing at point  |
+| C-c . | =embark-dwim= — do the default action for thing at point |
 
 Examples of what the action menu offers, depending on context:
 - On a *file candidate* in vertico: delete, rename, copy path, open in dired
@@ -784,14 +785,15 @@ much and now I can't find my edit."
 ** Helpful — better help buffers
 | Key       | Action                                    |
 |-----------+-------------------------------------------|
-| C-c h f   | describe a function (with source + examples) |
-| C-c h v   | describe a variable (with current value)  |
-| C-c h k   | describe a key binding                    |
-| C-c h .   | describe whatever is at point             |
+| C-h f     | describe a function (with source + examples) |
+| C-h v     | describe a variable (with current value)  |
+| C-h k     | describe a key binding                    |
+| C-h .     | describe whatever is at point             |
+| C-h x     | describe an interactive command           |
 
-=helpful= replaces =describe-function=, =describe-variable=, and =describe-key=
+=helpful= replaces standard =describe-function=, =describe-variable=, and =describe-key=
 with richer buffers that show the actual source code, cross-links, and usage
-examples. =C-c h .= is the most useful: point at any symbol in your =init.el=
+examples. =C-h .= is the most useful: point at any symbol in your =init.el=
 or any other buffer and get instant, rich documentation without leaving context.
 
 ** Which-key — discover keys interactively
