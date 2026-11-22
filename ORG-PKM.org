@@ -208,6 +208,68 @@ this stage landed, and the old idle timer that pointed Org-roam at
   and changes no knowledge file
 - a plain heading does not acquire an ID unless asked
 
+* Dashboards
+
+Two different things, and keeping them apart is what stops the dashboards from
+turning into a second copy of your tasks.
+
+** Generated blocks (the dashboard files)
+
+=dashboards/home.org=, =projects.org= and =learning.org= contain dynamic blocks
+that are *computed* from the project, learning and reference files. Refresh with
+=C-c k b= or =C-c C-c= on a block.
+
+| Block                | What it produces                                        |
+|----------------------+---------------------------------------------------------|
+| =my-tasks=           | a list from any org-ql query                            |
+| =project-health=     | one table row per project: state counts, open, overdue, has-NEXT |
+| =learning-progress=  | one row per subject: open, done, percentage, has-NEXT    |
+
+Nothing in those files is typed by hand. An empty section says "Nothing here."
+rather than showing a stale line from last month.
+
+** Agenda views (the time-based page)
+
+| Key       | Dashboard | Contents                                  |
+|-----------+-----------+-------------------------------------------|
+| =C-c k D= | Home      | today's schedule, next actions, doing, waiting, review |
+| =C-c k P= | Projects  | open project tasks grouped by state        |
+| =C-c k L= | Learning  | open learning tasks, revision, next actions |
+| =C-c k q= | Search    | interactive org-ql query                   |
+
+The home view groups with =org-super-agenda= by overdue / today / soon. The
+project and learning views group by state and are restricted to their own
+directories through =org-agenda-files=, so a learning task never appears on the
+project page.
+
+** Why org-ql is not used as an agenda block
+
+`org-ql-block' cannot be used inside =org-agenda-custom-commands= on Emacs 31.
+Org's =org-agenda-run-series= accepts only agenda/agenda*/alltodo/stuck/search/
+tags/tags-todo/todo and rejects anything else with "Invalid type in command
+series". That was tested, not assumed. So org-ql does the querying for the
+generated blocks and for =C-c k q=, and the agenda views use Org's own command
+types with org-super-agenda grouping.
+
+** Queries that are known to work
+
+| Query                                        | Means                          |
+|----------------------------------------------+--------------------------------|
+| =(and (not (done)) (deadline :to today))=     | overdue                        |
+| =(and (todo "NEXT") (not (done)))=            | next actions                   |
+| =(and (not (done)) (deadline 14))=            | deadline within 14 days        |
+| =(and (path "notes/projects") (todo "WAITING"))= | waiting, project files only |
+
+Relative strings like ="+2w"= are *not* accepted in =:to= — org-ql parses them
+with =parse-time-string= and fails with a =fixnump= error. Use a day count.
+
+** Width
+
+Generated tables are narrow because they hold numbers, not links:
+=projects.org= renders at 106 characters, the other two at 87. That fits a
+120-column terminal. The task lists hold one link per line, so a long task title
+is a long line — same trade-off as the kanban boards.
+
 * Capture templates
 
 | Key | Target                                        |
@@ -246,8 +308,8 @@ refusal to overwrite, agenda discovery without config edits, capture target
 resolution, and the generated help buffer. It creates a fixture project and
 deletes it again.
 
-Last measured: =CONFIG_OK=, 57/57 checks (22 stage 1, 14 stage 2, 21 stage 3),
-=load-seconds= 0.113.
+Last measured: =CONFIG_OK=, 78/78 checks (22 stage 1, 14 stage 2,
+21 stage 3, 21 stage 4), =load-seconds= 0.138.
 
 * Terminal limits
 
@@ -263,7 +325,7 @@ repetition (=org-fc=) are out of scope by decision, not by accident.
 | 1 Foundation                   | Done, verified                  |
 | 2 Kanban                       | Done, verified                  |
 | 3 Org-roam                     | Done, verified                  |
-| 4 Dashboards                   | Not started                     |
+| 4 Dashboards                   | Done, verified                  |
 | 5 Reading (EPUB)               | Not started                     |
 | 6 Reliability / docs           | Not started                     |
 | Flashcards, PDF annotation     | Out of scope                    |

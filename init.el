@@ -151,6 +151,8 @@
                    "conda-[0-9]*" "dash-[0-9]*" "s-[0-9]*" "f-[0-9]*"
                    "org-kanban-[0-9]*"
                    "simple-httpd-[0-9]*" "websocket-[0-9]*" "org-roam-ui-[0-9]*"
+                   "org-ql-[0-9]*" "org-super-agenda-[0-9]*"
+                   "ov-[0-9]*" "ts-[0-9]*" "ht-[0-9]*"
                    "pythonic-[0-9]*"))
   (my/add-elpa-package pattern))
 
@@ -395,7 +397,7 @@
 (let ((my/lisp-dir (expand-file-name "lisp/" user-emacs-directory)))
   (when (file-directory-p my/lisp-dir)
     (add-to-list 'load-path my/lisp-dir)
-    (dolist (module '(my-org-pkm my-kanban my-roam my-help))
+    (dolist (module '(my-org-pkm my-kanban my-roam my-dashboards my-help))
       (require module nil t))))
 
 ;;; init.el ends here

@@ -34,6 +34,22 @@ garden at `~/Documents/garden` stays untouched and is not migrated.
 Kanban, org-roam, dashboard content, `nov.el`, `org-fc`, git remote,
 migration from garden.
 
+## Stage 4 deliverables
+
+- `lisp/my-dashboards.el` — three generated block types (`my-tasks`,
+  `project-health`, `learning-progress`) driven by org-ql queries, and three
+  agenda dashboards (`C-c k D/P/L`) grouped with org-super-agenda.
+- Dashboard files carry the blocks; content is computed at refresh, never typed.
+- `my/refresh-dblocks-in-file` / `my/refresh-all-dblocks` in `my-org-pkm.el`
+  replace the kanban-only refresher; `C-c k b` refreshes everything.
+- `lisp/tests/stage4-check.el` — 21 headless checks: table counts against
+  fixtures, overdue detection, missing-NEXT detection, progress percentages,
+  and all three agenda dashboards building with the right contents.
+
+Deferred load: org-ql and org-super-agenda are required on first use, not at
+startup (0.178s -> 0.138s). Measured table width: 106 chars for the project
+health table, 87 for the others.
+
 ## Stage 3 deliverables
 
 - `lisp/my-roam.el` — Org-roam against `~/knowledge/`, index at

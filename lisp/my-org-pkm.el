@@ -18,6 +18,7 @@
 (require 'org-clock)
 (require 'org-id)
 (require 'subr-x)
+(require 'cl-lib)
 
 ;;;; Layout
 
@@ -137,6 +138,42 @@ created project file appear without any configuration change."
       org-startup-with-latex-preview nil)
 
 (setq org-agenda-files (my/knowledge-agenda-files))
+
+;;;; Refreshing generated blocks
+
+(defvar my/dblock-types '("kanban" "my-tasks" "project-health" "learning-progress")
+  "Dynamic block names this configuration knows how to regenerate.")
+
+(defun my/refresh-dblocks-in-file (file)
+  "Regenerate every known dynamic block in FILE and save it.
+Returns the number of blocks updated.  Unknown block names are left alone:
+`org-dblock-update' would error on a block with no writer."
+  (with-current-buffer (find-file-noselect file)
+    (let ((count 0)
+          (pattern (format "^#\\+BEGIN: \\(%s\\)\\_>"
+                           (regexp-opt my/dblock-types))))
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward pattern nil t)
+          (goto-char (match-beginning 0))
+          (org-dblock-update)
+          (cl-incf count)
+          (when (re-search-forward "^#\\+END:" nil t)
+            (forward-line 1))))
+      (when (> count 0) (save-buffer))
+      (set-buffer-modified-p nil)
+      count)))
+
+(defun my/refresh-all-dblocks ()
+  "Regenerate the boards and dashboards over the whole knowledge tree."
+  (interactive)
+  (let ((files (append (my/knowledge-actionable-files)
+                       (my/knowledge-files-in "dashboards")))
+        (blocks 0))
+    (dolist (file files)
+      (cl-incf blocks (my/refresh-dblocks-in-file file)))
+    (message "Refreshed %d generated block(s) across %d file(s)"
+             blocks (length files))))
 
 ;;;; Creating files from templates
 

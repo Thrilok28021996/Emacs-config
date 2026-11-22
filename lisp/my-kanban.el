@@ -130,21 +130,8 @@ in memory would make the board and the file disagree after a restart."
 (advice-add 'org-kanban//move-subtree :after #'my/kanban--persist-source)
 
 (defun my/kanban-refresh-file (file)
-  "Regenerate every kanban block in FILE and save it.  Returns the count."
-  (with-current-buffer (find-file-noselect file)
-    (let ((count 0))
-      (save-excursion
-        (goto-char (point-min))
-        (while (re-search-forward "^#\\+BEGIN: kanban" nil t)
-          (goto-char (match-beginning 0))
-          (org-dblock-update)
-          (cl-incf count)
-          ;; Resume after the block we just rewrote.
-          (when (re-search-forward "^#\\+END:" nil t)
-            (forward-line 1))))
-      (when (> count 0) (save-buffer))
-      (set-buffer-modified-p nil)
-      count)))
+  "Regenerate every generated block in FILE and save it.  Returns the count."
+  (my/refresh-dblocks-in-file file))
 
 (defun my/kanban-refresh-buffer ()
   "Regenerate the kanban blocks in the current buffer."
@@ -155,15 +142,9 @@ in memory would make the board and the file disagree after a restart."
              (my/kanban-refresh-file file) (file-name-nondirectory file))))
 
 (defun my/kanban-update-all ()
-  "Regenerate every board: per-project, per-subject, and the dashboards."
+  "Regenerate every board and dashboard block."
   (interactive)
-  (let ((files (append (my/knowledge-actionable-files)
-                       (my/knowledge-files-in "dashboards")))
-        (blocks 0))
-    (dolist (file files)
-      (cl-incf blocks (my/kanban-refresh-file file)))
-    (message "Refreshed %d kanban block(s) across %d file(s)"
-             blocks (length files))))
+  (my/refresh-all-dblocks))
 
 (defun my/kanban-insert-board ()
   "Append a Board section with a kanban block to the current file.
