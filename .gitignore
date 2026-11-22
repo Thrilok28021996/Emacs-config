@@ -43,3 +43,6 @@ robustness-backups/
 autosaves/
 snippets/
 dist/
+
+# Debug output redirected to a file on darwin
+emacs-stderr.log

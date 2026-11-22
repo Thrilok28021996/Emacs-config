@@ -1,4 +1,4 @@
-;;; early-init.el --- Pre-package GC + UI suppression + startup optimizations -*- lexical-binding: t; -*-
+;;; early-init.el --- Pre-package startup optimizations for Emacs 31 -*- lexical-binding: t; -*-
 
 ;; Suppress file-name handlers during startup to avoid regex matching on every loaded file
 (defvar my/file-name-handler-alist-backup file-name-handler-alist)

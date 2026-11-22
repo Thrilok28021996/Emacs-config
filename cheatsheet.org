@@ -1,643 +1,430 @@
-#+TITLE: Emacs Cheatsheet (Pure Emacs)
+#+TITLE: Emacs cheatsheet
 #+AUTHOR: Thrilok
 #+STARTUP: overview
 
-* Movement
-** Character / Word
-| Key       | Action                        |
-|-----------+-------------------------------|
-| C-f / C-b | char forward / backward       |
-| M-f / M-b | word forward / backward       |
-| C-a / C-e | line start / end              |
-| M-m       | first non-whitespace on line  |
-| C-n / C-p | line down / up                |
-| M-a / M-e | sentence start / end          |
-| C-v / M-v | page down / up                |
-| M-< / M-> | file start / end              |
-| C-l       | recenter (cycle top/mid/bot)  |
+The key reference for this configuration. Every binding here was checked
+against the running keymaps; the master table at the bottom is *generated* from
+them, so it cannot drift.
 
-** Mark & Region (Emacs selection model)
-| Key       | Action                          |
-|-----------+---------------------------------|
-| C-SPC     | set mark (start of selection)   |
-| C-x C-x   | swap point and mark             |
-| C-w       | cut (kill) region               |
-| M-w       | copy region                     |
-| C-y       | paste (yank)                    |
-| M-y       | cycle through kill ring         |
-| C-x h     | select all (mark whole buffer)  |
+Refresh that table after changing keys: =C-c k b= (or =C-c C-c= on the block).
+Open the live version any time with =C-c ?=.
 
-** Jump
-| Key       | Action                                              |
-|-----------+-----------------------------------------------------|
-| C-c j     | avy jump (2-char)                                   |
-| M-.       | go to definition (xref)                             |
-| M-,       | jump back (xref)                                    |
-| M-?       | find references (xref)                              |
-| C-u C-SPC | pop local mark ring (back button within buffer)     |
-| C-x C-SPC | pop global mark (back button across buffers)        |
+Architecture and reasoning: =ORG-PKM.org= (=C-c k H=).
+Evidence that it all works: =VERIFICATION.org=.
+Gates: =./emacs-sync.sh verify=.
 
-Tip: xref jumps, isearch, and avy all set the mark automatically — =C-u C-SPC= acts as a back button after any of them.
+* The knowledge layer (C-c k) — start here
 
-** Search
-| Key       | Action                          |
-|-----------+---------------------------------|
-| C-s       | search buffer (consult-line)    |
-| C-c s s   | search buffer                   |
-| C-c s r   | ripgrep project                 |
-| C-c s i   | jump to symbol (imenu)          |
-| C-c s t   | search TODO comments            |
+This is what the configuration exists for. ~/knowledge/ holds the notes; Emacs
+is the only editor expected to understand them.
 
-Tip: =C-s= shows ="3 of 12"= match count automatically (=isearch-lazy-count=).
+** Making things
 
-** Isearch (built-in incremental search)
-| Key       | Action                              |
-|-----------+-------------------------------------|
-| C-s       | start forward isearch               |
-| C-r       | start backward isearch              |
-| C-s       | next match (while searching)        |
-| C-r       | previous match (while searching)    |
-| M-s .     | search symbol at point              |
-| C-s C-w   | extend search to word at point      |
-| RET       | stop, stay at match                 |
-| C-g       | cancel, return to start             |
-| M-s o     | occur — list all matches in buffer  |
+| Key       | Does                                              |
+|-----------+---------------------------------------------------|
+| =C-c k p= | new project: prompts a name, writes =notes/projects/<name>.org= with an ID, the workflow line, a Tasks section and a kanban block |
+| =C-c k l= | new learning subject: same, in =notes/learning/=   |
+| =C-c k n= | new permanent note: prompts for the area (artificial-intelligence, software-engineering, business, economics, productivity) then the title |
+| =C-c k r= | new source note in =notes/references/=             |
 
-*** wgrep — edit ripgrep results
-1. =C-c s r= → run ripgrep
-2. =C-.= → =e= to enter wgrep mode (all matches become editable)
-3. Edit any line directly
-4. =C-c C-c= → write all changes back to their files
-5. =C-c C-k= → abort without saving
-   
-* Files
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-x C-f     | find / open file                |
-| C-x C-d     | jump to directory (consult-dir) |
-| C-x C-j     | jump to file in dir (minibuffer)|
-| C-c f r     | recent files                    |
-| C-x C-s     | save file                       |
-| C-x C-w     | save as                         |
+Every created file refuses to overwrite an existing one, which is the point:
+a typo in the name never destroys a file.
 
-** Dired (file manager)
-| Key   | Action                          |
-|-------+---------------------------------|
-| C-x d | open dired                      |
-| RET   | open file or enter directory    |
-| ^     | go up one directory             |
-| d     | mark for deletion               |
-| x     | execute deletions               |
-| R     | rename file                     |
-| C     | copy file                       |
-| +     | create directory                |
-| m     | mark file                       |
-| u     | unmark file                     |
-| q     | quit dired                      |
+** Capturing
 
-* Buffers
-** Switch
-| Key           | Action                          |
-|---------------+---------------------------------|
-| C-c b b       | switch buffer (consult)         |
-| C-c b TAB     | switch to last buffer           |
-| C-x b         | switch buffer (native)          |
-| C-x C-b       | list all buffers                |
+| Key       | Does                                              |
+|-----------+---------------------------------------------------|
+| =C-c k i= | capture straight into =inbox.org= under Tasks      |
+| =C-c k t= | capture menu: =i= inbox, =t= task in a project, =l= task in a subject, =j= journal, =n= someday idea, =r= source |
 
-** Kill (remove buffer from memory)
-| Key           | Action                          |
-|---------------+---------------------------------|
-| C-c b k       | kill current buffer             |
-| C-x k         | kill buffer — prompts which one |
+=t= and =l= prompt for the target file, so capture never needs you to know a
+path. The journal writes into a weekly date tree in =notes/daily/journal.org=.
 
-** Quit (close window/pane, buffer stays alive)
-| Key           | Action                          |
-|---------------+---------------------------------|
-| C-x 0         | close this window               |
-| C-x 1         | close all other windows         |
-| q             | quit special buffers (magit, help, dired, agenda) |
+** Working
 
-Rule: =q= dismisses read-only/special buffers. =C-c b k= removes a file buffer from memory.
+| Key       | Does                                              |
+|-----------+---------------------------------------------------|
+| =C-c k a= | agenda over the knowledge tree                    |
+| =C-c k D= | home dashboard: today, next, doing, waiting, review |
+| =C-c k P= | projects dashboard, grouped by state              |
+| =C-c k L= | learning dashboard                                |
+| =C-c k d= | open the home dashboard *file*                    |
+| =C-c k B= | consolidated kanban in =dashboards/projects.org=  |
+| =C-c k b= | regenerate every board, dashboard block and doc key table |
+| =C-c k q= | ad-hoc org-ql query                               |
 
-* Windows
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-x 2       | split window below              |
-| C-x 3       | split window right              |
-| C-x 0       | close this window               |
-| C-x 1       | keep only this window           |
-| C-x o       | other window (cycle)            |
-| M-o         | other window (fast cycle)       |
-| C-c w h     | move to left window             |
-| C-c w l     | move to right window            |
-| C-c w k     | move to window above            |
-| C-c w j     | move to window below            |
-| C-c w H     | shrink window horizontally      |
-| C-c w L     | enlarge window horizontally     |
-| C-c w K     | shrink window vertically        |
-| C-c w J     | enlarge window vertically       |
-| C-c w u     | undo window layout (winner)     |
-| C-c w U     | redo window layout (winner)     |
-| C-c w =     | balance windows                 |
-| C-c w f     | fullscreen toggle               |
+** Linking and backlinks
 
-** Tabs (tab-bar)
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-x t 2     | new tab                         |
-| C-x t 0     | close current tab               |
-| C-x t o     | next tab                        |
-| C-x t RET   | switch tab by name              |
-| C-x t r     | rename tab                      |
+| Key       | Does                                              |
+|-----------+---------------------------------------------------|
+| =C-c k f= | find a node, or create it                         |
+| =C-c k v= | toggle the backlinks panel for this note          |
+| =C-c k s= | re-index Org-roam and report node/link counts     |
+| =C-c k g= | knowledge graph in your browser (org-roam-ui)     |
+| =C-c o i= | insert a link to a node at point                  |
+| =C-c n k= | roam capture (older binding, still works)         |
 
-* Editing
-** Basic
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-d         | delete char forward             |
-| M-d         | delete word forward             |
-| DEL         | delete char backward            |
-| M-DEL       | delete word backward            |
-| C-k         | kill (cut) to end of line       |
-| C-/         | undo                            |
-| C-?         | redo                            |
-| C-x u       | visual undo tree (vundo)        |
-| M-;         | comment / uncomment             |
-| M-<up>      | move line or region up          |
-| M-<down>    | move line or region down        |
-| TAB         | indent line                     |
-| C-c i r     | indent region right             |
-| C-c i l     | indent region left              |
-| C-x TAB     | indent rigidly (then ←/→ keys)  |
-| C-=         | expand selection (expand-region)|
-| M-q         | fill/wrap paragraph             |
+** Reading
 
-** Symbol Overlay (prog-mode — highlight all occurrences)
-| Key | Action                              |
-|-----+-------------------------------------|
-| M-i | highlight symbol at point           |
-| M-n | jump to next occurrence             |
-| M-p | jump to previous occurrence         |
-| M-Q | query-replace highlighted symbol    |
-| q   | remove all highlights               |
+| Key       | Does                                              |
+|-----------+---------------------------------------------------|
+| =C-c k A= | attach a file to this note — copied into =attachments/<id>/= |
+| =C-c k o= | open the first attachment of this note            |
+| =C-c k S= | set STATUS: unread / reading / done / abandoned   |
+| =C-c k R= | open the reading queue (=notes/references/tracking.org=) |
 
-Tip: =M-i= then =M-n/M-p= to navigate all uses of a variable/function without a full search.
+An =.epub= opens in =nov-mode= and renders as text, so reading works in a
+terminal. Inside a book: =n= / =p= next/previous document, =TAB= next link.
 
-** Yasnippet (prog-mode)
-| Key     | Action                              |
-|---------+-------------------------------------|
-| TAB     | expand snippet trigger              |
-| M-x yas-insert-snippet | pick snippet by name  |
+** Documentation
 
-** Keyboard Macros
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-x (       | start recording macro           |
-| C-x )       | stop recording macro            |
-| C-x e       | execute last macro              |
-| C-x C-k r   | apply macro to region lines     |
+| Key       | Does                                              |
+|-----------+---------------------------------------------------|
+| =C-c k H= | this system's architecture document (=ORG-PKM.org=) |
+| =C-c ?=   | every =C-c= binding, live, grouped by prefix       |
 
-** Registers (named clipboard slots)
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-x r s R   | save region to register R       |
-| C-x r i R   | insert register R               |
-| C-x r SPC R | save point to register R        |
-| C-x r j R   | jump to register R              |
+* The workflow: eight states
 
-** Rectangle (column editing)
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-x r k     | kill rectangle                  |
-| C-x r y     | yank rectangle                  |
-| C-x r t     | replace rectangle with string   |
-| C-x r o     | open rectangle (insert spaces)  |
+=BACKLOG(b) TODO(t) NEXT(n) DOING(o) WAITING(w) REVIEW(r) | DONE(d) CANCELLED(c)=
 
-* Code (C-c c)
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-c c r     | rename symbol (eglot)           |
-| C-c c a     | code actions (eglot)            |
-| C-c c i     | find implementation (eglot)     |
-| C-c c d     | find references (xref)          |
-| C-c c h     | toggle inlay hints (eglot)      |
-| C-c c f     | format buffer (apheleia)        |
-| C-c c p     | run python file                 |
-| C-c c c     | compile C++                     |
-| C-c c b     | toggle breakpoint (dape)        |
-| C-c c B     | start debug session (dape)      |
-| M-.         | go to definition                |
-| M-,         | jump back                       |
-| C-h .       | show docs (eldoc) at point      |
+=C-c C-t= then the letter jumps straight to that state. =S-right= / =S-left= on
+a heading cycles without the menu.
 
-** Compilation Buffer
-| Key     | Action                              |
-|---------+-------------------------------------|
-| g       | recompile                           |
-| n / p   | next / prev error line              |
-| q       | quit compilation window             |
-| C-x `   | jump to next error in source        |
+| State   | Means                                                    |
+|---------+----------------------------------------------------------|
+| BACKLOG | captured, not committed to. Never appears on a dashboard   |
+| TODO    | committed, unscheduled                                     |
+| NEXT    | the next physical action; a project with none is flagged   |
+| DOING   | in progress now                                            |
+| WAITING | blocked on someone else — and it blocks its subtasks       |
+| REVIEW  | finished, needs a second look                              |
+| DONE    | terminal; writes a =CLOSED:= timestamp in the =LOGBOOK=     |
+| CANCELLED | terminal, off every board                                |
 
-* Errors (C-c e)
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-c e l     | list all errors (consult)       |
-| C-c e n     | next error                      |
-| C-c e p     | prev error                      |
-| C-c e b     | buffer diagnostics list         |
+Recurring items use plain repeaters (=+1w=, =.+1d=, =++1m=). Dependencies use
+parent/child plus the =ORDERED= property; =org-depend= is not used because
+Emacs 31 no longer ships Org's contrib directory.
 
-* Git (C-c g)
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-c g g     | magit status                    |
-| C-c g c     | commit                          |
-| C-c g p     | push                            |
-| C-c g u     | pull (update)                   |
-| C-c g f     | fetch                           |
-| C-c g l     | log                             |
-| C-c g d     | diff                            |
-| C-c g b     | branch                          |
-| C-c g a     | blame (annotate)                |
-| C-c g s     | stash                           |
-| C-c g h     | show hunk inline (diff-hl)      |
-| C-c g n     | next hunk (diff-hl)             |
-| C-c g N     | prev hunk (diff-hl)             |
+** Kanban
 
-* Theme (C-c t)
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-c t t     | toggle dark/light theme         |
+Boards are dynamic blocks, four of them: one per project, one per subject, plus
+the consolidated ones in =dashboards/projects.org= and =dashboards/learning.org=.
 
-** Inside Magit Status Buffer
-| Key   | Action                          |
-|-------+---------------------------------|
-| s     | stage file / hunk at point      |
-| u     | unstage                         |
-| S     | stage all                       |
-| U     | unstage all                     |
-| c c   | commit                          |
-| P p   | push to remote                  |
-| F p   | pull from remote                |
-| l l   | log current branch              |
-| b b   | checkout branch                 |
-| b c   | create and checkout branch      |
-| d d   | diff working tree               |
-| z z   | stash                           |
-| z p   | pop stash                       |
-| r r   | rebase interactively            |
-| t t   | create tag                      |
-| ?     | show all magit keys             |
-| q     | quit magit                      |
-| TAB   | expand / collapse section       |
+Point on a row, press =C-c k m=, then:
 
-* Projects (C-c p)
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-c p p     | switch project                  |
-| C-c p f     | find file in project            |
-| C-c p b     | project buffer                  |
-| C-c p k     | kill project buffers            |
-| C-c p s     | project eshell                  |
-| C-c p c     | compile project                 |
+| Key       | Does                                    |
+|-----------+-----------------------------------------|
+| =a= / =h= | move the task back one state            |
+| =d= / =l= | move the task forward one state         |
+| =w= / =k= | move the row up                         |
+| =s= / =j= | move the row down                       |
 
-* Org Mode (C-c o)
-** Org commands
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-c o a     | open agenda                     |
-| C-c o c     | org capture                     |
-| C-c o r     | roam find node                  |
-| C-c o i     | roam insert link                |
-| C-c o s     | roam search                     |
-| C-c o u     | roam graph UI                   |
-| C-c o l     | paste URL as link               |
-| C-c o t     | transclusion toggle             |
-| C-c o q     | org-ql find (query agenda)      |
-| C-c o k     | org-kanban board (insert)       |
-| C-c o A     | archive subtree                 |
+The row is a link, not a copy: moving it runs =org-todo= on the heading in the
+task's own file and saves that file. =CANCELLED= is not a column. A board is as
+wide as its links — see =ORG-PKM.org= for the =:range= knob if seven columns
+overflow your terminal.
 
-** Org Clock (C-c o)
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-c o I     | clock in (start timer)          |
-| C-c o O     | clock out (stop timer)          |
-| C-c o R     | clock report (table)            |
-| C-c o e     | set effort estimate             |
+* Org core
 
-Tip: clock-in/out against any heading to track time. =C-c o R= inserts a report table at point.
+** Structure and editing
 
-** Capture shortcuts (C-c n)
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-c n i     | inbox (shared)                  |
-| C-c n j     | journal entry                   |
-| C-c n r     | reading note                    |
-| C-c n w     | work task                       |
-| C-c n W     | work project                    |
-| C-c n t     | personal task                   |
-| C-c n p     | personal project                |
-| C-c n k     | new concept node (roam)         |
-| C-c n q     | new question node (roam)        |
-| C-c n P     | new person node                 |
-| C-c n x     | log interaction with person     |
+| Key             | Does                                  |
+|-----------------+---------------------------------------|
+| =TAB= / =S-TAB= | fold / unfold subtree                 |
+| =M-left/right=  | promote / demote heading              |
+| =M-up/down=     | move subtree; with a region, move the line |
+| =C-c C-s=       | schedule                              |
+| =C-c C-d=       | deadline                              |
+| =C-c C-w=       | refile                                |
+| =C-c C-x C-a=   | archive subtree                       |
+| =C-c C-l=       | insert or edit a link                 |
+| =C-c C-o=       | open the link at point                |
+| =C-c C-t=       | set TODO state                        |
+
+=org-return-follows-link= is on, so RET on a link follows it.
+=org-enforce-todo-dependencies= is on: a parent with open children refuses to
+be marked DONE and tells you why.
+
+** Agenda
+
+| Key       | Does                                              |
+|-----------+---------------------------------------------------|
+| =C-c o a= | agenda dispatcher                                  |
+| =C-c k a= | dispatcher, with the knowledge files reloaded first |
+| =C-c k D=, =C-c k P=, =C-c k L= | the three dashboards                           |
+
+Inside =*Org Agenda*=: =t= set state, =s= schedule, =d= deadline, =r= refile,
+=f= / =b= next/previous span, =g= refresh, =q= quit.
+=org-agenda-window-setup= is =current-window=, so =q= puts you back exactly
+where you were.
+
+** Clocking
+
+| Key       | Does                    |
+|-----------+--------------------------|
+| =C-c o I= | clock in                |
+| =C-c o O= | clock out               |
+| =C-c o R= | clock report table      |
+
+Clocks persist across restarts, and the mode line shows today's total.
 
 ** Tables
-*** Create
-| Method                          | How                                      |
-|---------------------------------+------------------------------------------|
-| Type directly                   | start line with =|=, press TAB           |
-| Convert region                  | select text, =C-c |=                     |
-| Insert hline (header separator) | =C-c -= after first row                  |
 
-Example:
-#+begin_example
-| Name  | Area  |    ← type, press TAB
-|-------+-------|    ← C-c -
-| Alice | Tech  |    ← keep tabbing
-#+end_example
+| Key           | Does                        |
+|---------------+------------------------------|
+| =TAB=         | next cell, create rows as needed |
+| =M-left/right= | move the column            |
+| =C-c -= | hline below / above       |
+| =C-c C-c=     | align, or update the dynamic block at point |
 
-*** Navigate & Edit
-| Key           | Action                          |
-|---------------+---------------------------------|
-| TAB           | next cell (new row at end)      |
-| S-TAB         | prev cell                       |
-| RET           | next row, same column           |
-| C-c C-c       | realign table                   |
-| C-c -         | insert hline below              |
-| C-c ^         | sort column                     |
-| M-← / M-→    | move column left / right        |
-| M-↑ / M-↓    | move row up / down              |
-| M-S-← / M-S-→ | delete / insert column         |
-| M-S-↑ / M-S-↓ | delete / insert row            |
+* Coding
 
-** Navigation inside org buffers
-| Key           | Action                      |
-|---------------+-----------------------------|
-| TAB           | cycle heading visibility    |
-| S-TAB         | cycle all headings          |
-| M-RET         | new heading at same level   |
-| M-LEFT        | promote heading             |
-| M-RIGHT       | demote heading              |
-| M-UP          | move subtree up             |
-| M-DOWN        | move subtree down           |
-| C-c C-n       | next heading                |
-| C-c C-p       | previous heading            |
-| C-c C-f       | next heading same level     |
-| C-c C-b       | prev heading same level     |
-| C-c C-t       | cycle TODO state            |
-| C-c C-s       | schedule                    |
-| C-c C-d       | deadline                    |
-| C-c C-w       | refile heading              |
-| C-c C-l       | insert link                 |
-| C-c C-o       | open link                   |
-| C-c C-e       | export                      |
-| C-c C-x C-v   | toggle inline images        |
+The coding half of this configuration is built-in only and untouched by the Org
+layer. Startup is ~0.15 s.
 
-** Agenda buffer
-| Key | Action                    |
-|-----+---------------------------|
-| t   | cycle TODO                |
-| s   | schedule                  |
-| d   | set deadline              |
-| r   | refile                    |
-| q   | quit                      |
+** Completion and navigation (built-in)
 
-** How to Use Each System
+| Key             | Does                                        |
+|-----------------+----------------------------------------------|
+| =TAB= in minibuffer | complete; =fido-vertical-mode= shows a vertical list |
+| =C-x b=         | switch buffer                                |
+| =C-c b b=       | switch buffer                                |
+| =C-c f r=       | recent files                                 |
+| =C-c s s=       | incremental search                           |
+| =C-c s i=       | imenu: jump to a definition or heading       |
+| =M-o=           | other window                                 |
+| =C-c w h=, =C-c w j=, =C-c w k=, =C-c w l= | move to the window left/down/up/right        |
+| =C-c w u= / =C-c w U= | undo / redo window layout              |
+| =C-c w ==       | balance windows                              |
+| =C-x t=         | tab bar: =2= new tab, =1= close, =0= close all |
+| =C-x C-/= or =C-c z= | redo (undo is =C-/)                     |
+| =M-<up>= / =M-<down>= | move the line or region up/down        |
 
-*** Agenda
-The agenda pulls TODO/scheduled items from all files in =org-agenda-files=.
+Completion previews appear while typing in code (=completion-preview-mode=),
+the built-in alternative to a completion popup; prose buffers deliberately do
+not get them.
 
-1. =C-c o a= → open agenda (day view by default)
-2. Navigate days with =f= (forward) / =b= (backward)
-3. On any item: =t= cycle state, =s= schedule, =d= deadline, =r= refile, =q= quit
-4. Press =v w= for week view, =v m= for month view
+** Projects and compiling (C-c c)
 
-Tip: agenda shows only items with a date or active TODO. Undated TODOs live in =C-x b tasks.org=.
+| Key       | Does                                  |
+|-----------+---------------------------------------|
+| =C-c c c= | compile                               |
+| =C-c c p= | run the current Python file with python3 |
+| =C-c c r= | eglot rename symbol                   |
+| =C-c c a= | eglot code actions                    |
+| =C-c c f= | eglot format buffer                   |
+| =C-c c i= | eglot find implementation             |
+| =C-c c h= | toggle inlay hints                    |
+| =C-c c d= | xref find references                  |
 
-Dashboard view: =C-c o a= → =d= → combined day agenda + Next Actions + Due for Review (=org-agenda-custom-commands=).
+Project commands are under =C-c p= or =C-x p=: =p= switch project, =f= find
+file, =g= find regexp, =c= compile, =e= eshell, =s= shell, =D= dired.
 
-*** Archiving (keep agenda files lean)
-Completed/dead items pile up in active files and slow agenda + refile. Archive them out.
+** Diagnostics (C-c e)
 
-1. On any heading → =C-c o A= (org-archive-subtree)
-2. Item moves to =<file>_archive= in the same directory, under an =* Archived= heading
-3. Archive files are not in =org-agenda-files=, so they drop out of agenda/refile but stay searchable on disk
+| Key       | Does                        |
+|-----------+------------------------------|
+| =C-c e n= | next error                  |
+| =C-c e p= | previous error              |
+| =C-c e b= | list buffer diagnostics     |
 
-Tip: archive DONE/MASTERED/DROPPED items periodically — they're done, they don't need to be in your active views.
+=M-g n= / =M-g p= do the same thing globally. =eglot= starts automatically in
+Python and C/C++ buffers, and =flymake= runs in every =prog-mode= buffer.
 
-*** Capture → Refile
-Capture = quick drop into inbox. Refile = move to the right place later.
+** Git (C-c g) — Magit
 
-1. =C-c o c= (or shortcut) → pick template → write → =C-c C-c= to save
-2. Items land in their target file (inbox, tasks, journal, etc.)
-3. To refile: open the item, =C-c C-w= → pick destination heading
-4. Refile targets = all files in =org-agenda-files= up to 3 levels deep
+| Key       | Does                    |
+|-----------+--------------------------|
+| =C-c g g= | status                  |
+| =C-c g c= | commit                  |
+| =C-c g p= | push                    |
+| =C-c g u= | pull                    |
+| =C-c g f= | fetch                   |
+| =C-c g l= | log                     |
+| =C-c g d= | diff                    |
+| =C-c g b= | branch                  |
+| =C-c g a= | blame                   |
+| =C-c g s= | stash                   |
+| =C-c M-g= | file dispatch           |
 
-*** Org-Roam (knowledge graph)
-Each note is a node. Nodes link to each other — backlinks show what points at the current node.
+Only Magit's autoloads load at startup; the rest loads on first use.
 
-| Action                     | Key / Command          |
-|----------------------------+------------------------|
-| Find or create a node      | =C-c o r=              |
-| Insert a link to a node    | =C-c o i=              |
-| New concept node           | =C-c n k=              |
-| New question node          | =C-c n q=              |
-| New person node            | =C-c n P=              |
-| See backlinks (what links here) | =M-x org-roam-buffer-toggle= |
-| Search all nodes           | =C-c o s=              |
+** Python environments (C-c v)
 
-Workflow: write a note → link related nodes with =C-c o i= → backlinks panel shows connections automatically.
+| Key       | Does                    |
+|-----------+--------------------------|
+| =C-c v a= | activate a conda env    |
+| =C-c v d= | deactivate              |
 
-*** Roam UI (visual graph)
-Launches a browser-based interactive graph of all your nodes.
+** Look and feel
 
-1. =C-c o u= → opens browser tab with live graph
-2. Click any node to open it in Emacs
-3. Graph updates on save (=org-roam-ui-update-on-save t=)
-4. Theme syncs with doom-one automatically
+| Key       | Does                    |
+|-----------+--------------------------|
+| =C-c t t= | toggle dark/light theme |
 
-*** People (relationship tracking)
-1. =C-c n P= → create person node (name, where they post, area: career/tech/drawing)
-2. Fill in =* Who=, =* Find Them= (handle/link), =* Follow-up= (next action)
-3. After any exchange → =C-c n x= → pick person → type what happened
-4. =C-c o r= to find anyone by name
-5. Follow-up checkboxes stay visible in the file — check when done with =C-c C-c=
+*treesit* grammars are enabled for Python, C, C++, JS, JSON, CSS, TypeScript and
+Bash when the grammar is installed; otherwise the classic mode stays.
 
-*** Spaced Repetition (SRS)
-1. Capture with =C-c n v=
-2. Item gets REVIEW state + scheduled date
-3. On review day: =C-c n a= → open review agenda
-4. After recall: =C-c n d= → schedules next interval
+* Housekeeping
 
-Intervals: 1 → 3 → 7 → 14 → 30 → 60 days → MASTERED
+| Key       | Does                                        |
+|-----------+----------------------------------------|
+| =C-h k=   | what does this key do                       |
+| =C-h f= / =C-h v= | describe function / variable        |
+| =C-h e=   | recent messages                              |
+| =C-c ?=   | every C-c binding, generated                 |
+| =C-x C-c= | quit                                         |
 
-*** Pomodoro
-Work in focused 25-minute blocks, tracked per org heading.
+Autosave on idle and auto-revert are on: files changed on disk by another tool
+reload and files you edit are saved without asking.
 
-1. Go to any task heading in an org file
-2. =M-x org-pomodoro= → starts 25-min timer, logs time to the heading
-3. Bell rings at end → short break auto-starts
-4. Clock time visible in agenda and modeline
+* Daily workflow
 
-*** Transclusion
-Include live content from another node — changes in source reflect everywhere it's transcluded.
+1. =C-c k D= — today, next actions, what is in progress, what is waiting.
+2. Capture whatever interrupts you: =C-c k i= (inbox) or =C-c k t=.
+3. Work a task: open its project file, or move it on =C-c k B=.
+4. Learn something: =C-c k t= → =l= → subject; note the reusable idea with =C-c k n= and link it with =C-c k f=.
+5. Read: =C-c k R= to see the queue, =C-c k A= to attach a book, =C-c k S= to move its status.
+6. End of day: =C-c k t= → =j=.
+7. Weekly: =C-c k b= to rebuild every board and dashboard, then read =C-c k d=.
 
-| Key     | Action                          |
-|---------+---------------------------------|
-| C-c o t | toggle transclusion mode        |
-| C-c t a | add transclusion at point       |
+* Files
 
-1. =C-c o t= → toggle transclusion mode in current buffer
-2. =C-c t a= (org-mode only) → add a transclusion at point — prompts for source node
-3. Content appears inline; edit the source file to update it everywhere
-4. Toggle off with =C-c o t= to see raw =#+transclude= links
+| Path                                          | What it is                        |
+|-----------------------------------------------+-----------------------------------|
+| =~/knowledge/inbox.org=                       | unsorted capture                  |
+| =~/knowledge/notes/projects/<name>.org=       | one project, with its board       |
+| =~/knowledge/notes/learning/<name>.org=       | one learning subject              |
+| =~/knowledge/notes/knowledge/<area>/<note>.org= | permanent notes, one idea each  |
+| =~/knowledge/notes/references/…=              | one note per source, plus =tracking.org= |
+| =~/knowledge/notes/daily/journal.org=         | journal date tree                 |
+| =~/knowledge/dashboards/…=                    | generated dashboards              |
+| =~/knowledge/attachments/<id>/=               | org-attach store                  |
+| =~/knowledge/templates/=                      | skeletons                         |
+| =~/knowledge/bin/backup.sh=                   | commit + archive the whole repo   |
+| =~/.emacs.d/init.el=                          | config; loads =lisp/*.el= at the end |
+| =~/.emacs.d/lisp/my-*.el=                     | the six knowledge-system modules  |
+| =~/.emacs.d/cheatsheet.org=                   | this file                         |
+| =~/.emacs.d/tutorial.org=                     | the guided course                 |
+| =~/.emacs.d/ORG-PKM.org=                      | architecture                      |
+| =~/.emacs.d/VERIFICATION.org=                 | what is proven, and what is not   |
+| =~/.emacs.d/org-roam.db=                      | rebuildable index                 |
 
-*** Paste URL as Link (org-cliplink)
-1. Copy a URL to clipboard
-2. =C-c o l= → fetches page title, inserts =[[url][Page Title]]= at point
+=~/Documents/garden/= is the older Markdown note base: untouched, unread by
+anything here.
 
-*** Org-Babel (run code in notes)
-Execute code blocks inside org files. Results insert below the block.
+* When it looks broken
 
-1. In any org file, create a block: =<s TAB= → expands to =#+begin_src=
-2. Specify language: =#+begin_src python=
-3. =C-c C-c= inside the block → runs it, inserts =#+RESULTS:= below
-4. Supported: python, shell, emacs-lisp (configured in your setup)
+| Symptom | Check |
+|---|---|
+| Emacs will not start | =emacs --batch -l ~/.emacs.d/init.el --eval '(princ "ok")'= |
+| a key does nothing | =C-c ?= — absent means unbound; present means =C-h k= it |
+| board is empty | the board derives columns from the files it scans; an empty tree has none |
+| board is too wide | =:range (TODO . REVIEW)= on the =#+BEGIN: kanban= line |
+| dashboard says "Nothing here" | the query is right and nothing matches; check the block's =:query= |
+| roam finds nothing | =C-c k s=; the index is disposable, not precious |
 
-*** Super Agenda (agenda grouping)
-=org-super-agenda-mode= is active — groups agenda items by category automatically.
-No extra keys needed; configure grouping in =org-super-agenda-groups= if you want custom sections.
+* Every C-c binding, generated
 
-*** Org-QL (query language for agenda views)
-Build custom agenda views with a query language — sharper than the date-based agenda.
+Refreshed by =C-c k b=. If a binding is missing here, it is missing from the
+configuration too — this table is built from the live keymaps, not typed.
 
-1. =C-c o q= (org-ql-find) → live-filter headings across =org-agenda-files= by text
-2. =M-x org-ql-search= → prompt for a query, e.g. =(and (todo "NEXT") (tags "work"))=
-3. =M-x org-ql-view= → pick from saved/preset views
-4. Results open in an agenda-like buffer (same keys: =t=, =s=, =d=, =q=)
+#+BEGIN: my-keys
+| Key | Command | What it does |
+|---+---+---|
+| =C-c ?= | =my/help-bindings= | Show every C-c binding in the live global map, grouped by prefix |
+| =C-c M-g= | =magit-file-dispatch= |  |
+| =C-c b b= | =switch-to-buffer= | Display buffer BUFFER-OR-NAME in the selected window |
+| =C-c c a= | =eglot-code-actions= | Find LSP code actions of type ACTION-KIND between BEG and END |
+| =C-c c c= | =compile= | Compile the program including the current buffer |
+| =C-c c d= | =xref-find-references= | Find references to the identifier at point |
+| =C-c c f= | =eglot-format-buffer= | Format contents of current buffer. |
+| =C-c c h= | =eglot-inlay-hints-mode= | Minor mode for annotating buffers with LSP server’s inlay hints |
+| =C-c c i= | =eglot-find-implementation= | Find implementation for SYM, the identifier at point. |
+| =C-c c p= | =my/python-run-current-file= | Run the current Python file with python3. |
+| =C-c c r= | =eglot-rename= | Rename the current symbol to NEWNAME |
+| =C-c e b= | =flymake-show-buffer-diagnostics= | Show listing of Flymake diagnostics for current buffer |
+| =C-c e n= | =flymake-goto-next-error= | Go to Nth next Flymake diagnostic that matches FILTER |
+| =C-c e p= | =flymake-goto-prev-error= | Go to Nth previous Flymake diagnostic that matches FILTER |
+| =C-c f r= | =recentf-open-files= | Show a dialog to open a recent file |
+| =C-c g a= | =magit-blame= |  |
+| =C-c g b= | =magit-branch= |  |
+| =C-c g c= | =magit-commit= |  |
+| =C-c g d= | =magit-diff-dwim= | Show changes for the thing at point |
+| =C-c g f= | =magit-fetch= |  |
+| =C-c g g= | =magit-status= | Show the status of the current Git repository in a buffer |
+| =C-c g l= | =magit-log-current= |  |
+| =C-c g p= | =magit-push= |  |
+| =C-c g s= | =magit-stash= |  |
+| =C-c g u= | =magit-pull= |  |
+| =C-c i l= | =indent-rigidly-left-to-tab-stop= | Indent all lines between BEG and END leftward to a tab stop |
+| =C-c i r= | =indent-rigidly-right-to-tab-stop= | Indent all lines between BEG and END rightward to a tab stop |
+| =C-c k A= | =my/reading-attach= | Attach FILE to the current Org entry and report where it went |
+| =C-c k B= | =my/kanban-open-overview= | Open the dashboard holding the consolidated project board. |
+| =C-c k D= | =my/dashboard-home= | Home dashboard: today, next actions, waiting and review. |
+| =C-c k H= | =my/help-open-doc= | Open the ORG-PKM document that explains the knowledge system. |
+| =C-c k L= | =my/dashboard-learning= | Learning dashboard: every open learning task, grouped by state. |
+| =C-c k P= | =my/dashboard-projects= | Projects dashboard: every open project task, grouped by state. |
+| =C-c k R= | =my/reading-open-tracker= | Open the reading tracker. |
+| =C-c k S= | =my/reading-set-status= | Set the STATUS property of the entry at point and timestamp the change. |
+| =C-c k a= | =my/open-kb-agenda= | Open the agenda over the knowledge system. |
+| =C-c k b= | =my/kanban-update-all= | Regenerate every board and dashboard block. |
+| =C-c k d= | =my/open-home-dashboard= | Open the home dashboard. |
+| =C-c k f= | =my/roam-find-node= | Jump to a node of the knowledge tree. |
+| =C-c k g= | =my/roam-open-ui= | Open the Org-roam graph in a browser, if org-roam-ui is installed. |
+| =C-c k i= | =my/capture-inbox= | Capture an item into the inbox. |
+| =C-c k l= | =my/new-learning-subject= | Create a learning subject file called NAME under notes/learning. |
+| =C-c k m= | =my/kanban-move= | Move the kanban row at point, then read one more key for the direction |
+| =C-c k n= | =my/new-knowledge-note= | Create a permanent note called NAME inside AREA of notes/knowledge. |
+| =C-c k o= | =my/reading-open-attachment= | Open the first file attached to the current entry. |
+| =C-c k p= | =my/new-project= | Create a project file called NAME under notes/projects. |
+| =C-c k q= | =my/dashboard-search= | Ask for an org-ql query and show the results. |
+| =C-c k r= | =my/new-reference= | Create a source note called NAME under notes/references. |
+| =C-c k s= | =my/roam-sync= | Re-index the knowledge tree and report what is in the index. |
+| =C-c k t= | =org-capture= | Capture something |
+| =C-c k v= | =my/roam-toggle-buffer= | Show or hide the backlinks buffer for the current note. |
+| =C-c n k= | =org-roam-capture= | Launches an ‘org-capture’ process for a new or existing node |
+| =C-c o I= | =org-clock-in= | Start the clock on the current item |
+| =C-c o O= | =org-clock-out= | Stop the currently running clock |
+| =C-c o R= | =org-clock-report= | Update or create a table containing a report about clocked time |
+| =C-c o a= | =org-agenda= | Dispatch agenda commands to collect entries to the agenda buffer |
+| =C-c o c= | =org-capture= | Capture something |
+| =C-c o i= | =org-roam-node-insert= | Find an Org-roam node and insert (where the point is) an "id:" link to it |
+| =C-c o r= | =org-roam-node-find= | Find and open an Org-roam node by its title or alias |
+| =C-c p != | =project-shell-command= | Run ‘shell-command’ in the current project’s root directory. |
+| =C-c p &= | =project-async-shell-command= | Run ‘async-shell-command’ in the current project’s root directory. |
+| =C-c p C-b= | =project-list-buffers= | Display a list of project buffers |
+| =C-c p C-x s= | =project-save-some-buffers= | Like ‘save-some-buffers’, but only for this project’s buffers |
+| =C-c p D= | =project-dired= | Start Dired in the current project’s root. |
+| =C-c p F= | =project-or-external-find-file= | Visit a file (with completion) in the current project or external roots |
+| =C-c p G= | =project-or-external-find-regexp= | Find all matches for REGEXP in the project roots or external roots |
+| =C-c p b= | =project-switch-to-buffer= | Display buffer BUFFER-OR-NAME in the selected window |
+| =C-c p c= | =project-compile= | Run ‘compile’ in the project root. |
+| =C-c p d= | =project-find-dir= | Start Dired in a directory inside the current project |
+| =C-c p e= | =project-eshell= | Start Eshell in the current project’s root directory |
+| =C-c p f= | =project-find-file= | Visit a file (with completion) in the current project |
+| =C-c p g= | =project-find-regexp= | Find all matches for REGEXP in the current project’s roots |
+| =C-c p k= | =project-kill-buffers= | Kill the buffers belonging to the current project |
+| =C-c p o= | =project-any-command= | Run the next command in the current project |
+| =C-c p p= | =project-switch-project= | "Switch" to another project by running an Emacs command |
+| =C-c p r= | =project-query-replace-regexp= | Query-replace REGEXP in all the files of the project |
+| =C-c p s= | =project-shell= | Start an inferior shell in the current project’s root directory |
+| =C-c p v= | =project-vc-dir= | Run VC-Dir in the current project’s root. |
+| =C-c p x= | =project-execute-extended-command= | Execute an extended command in project root. |
+| =C-c s i= | =imenu= | Jump to a place in the buffer chosen using a buffer menu or mouse menu |
+| =C-c s s= | =isearch-forward= | Do incremental search forward |
+| =C-c t t= | =my/toggle-theme= | Toggle between the preferred Doom theme and a light fallback. |
+| =C-c v a= | =conda-env-activate= | Switch to environment NAME, prompting if called interactively |
+| =C-c v d= | =conda-env-deactivate= | Deactivate the current conda env. |
+| =C-c w == | =balance-windows= | Balance the sizes of windows shown on the selected frame |
+| =C-c w U= | =winner-redo= | Cancel the current sequence of ‘winner-undo’ commands |
+| =C-c w h= | =windmove-left= | Select the window to the left of the current one |
+| =C-c w j= | =windmove-down= | Select the window below the current one |
+| =C-c w k= | =windmove-up= | Select the window above the current one |
+| =C-c w l= | =windmove-right= | Select the window to the right of the current one |
+| =C-c w u= | =winner-undo= | Switch back to an earlier window configuration saved by Winner mode |
+| =C-c z= | =undo-redo= | Undo the last ARG undos, i.e., redo the last ARG changes |
 
-Example queries: =(todo "NEXT")=, =(deadline :to today)=, =(and (tags "urgent") (not (done)))=.
+92 bindings under C-c. Generated from the live keymaps.
 
-*** Org-Kanban (kanban board from TODO states)
-Renders a kanban table whose columns are your TODO keywords; cards move by shifting state.
-
-1. In an org file, place point where you want the board
-2. =C-c o k= (org-kanban/initialize) → inserts a =#+BEGIN: kanban= dynamic block
-3. =C-c C-c= on the block → refresh after TODO states change
-4. On a card: =M-x org-kanban/shift= → move it left/right (changes the heading's TODO state)
-
-The board is a live view of headings — editing the underlying TODO state and refreshing keeps it in sync.
-
-* Markdown
-| Key                           | Action                          |
-|-------------------------------+---------------------------------|
-| C-c C-s b                     | bold (wrap selection)           |
-| C-c C-s i                     | italic                          |
-| C-c C-s c                     | inline code                     |
-| C-c C-l                       | insert link                     |
-| C-c C-i                       | insert image                    |
-| TAB                           | cycle heading / fold block      |
-| C-c C-n / C-c C-p            | next / prev heading             |
-| C-c s i                       | jump to heading (consult-imenu) |
-| C-c c f                       | format with prettier (apheleia) |
-
-* AI Assistant (C-c a)
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-c a c     | open AI chat                    |
-| C-c a s     | send to AI                      |
-| C-c a r     | AI rewrite selection            |
-| C-c a m     | AI menu                         |
-
-* Completion (corfu)
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-n / C-p   | next / prev candidate           |
-| TAB         | accept completion               |
-| C-g / ESC   | dismiss popup                   |
-| RET         | newline only (never accepts)    |
-| M-y         | cycle kill ring after yank      |
-
-- =corfu= — inline popup, auto after 2 chars
-- =vertico= — minibuffer completion
-- =orderless= — fuzzy: type words in any order
-
-** Embark (act on any candidate)
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-.         | embark-act — open action menu   |
-
-Works anywhere: minibuffer candidates, =corfu= completions, region, symbol at point.
-Examples: on a file candidate → open, delete, rename; on a symbol → describe, find-refs.
-
-Tip: =C-.= in =consult-ripgrep= results → =e= → enter =wgrep= mode to edit all matches inline.
-
-* Virtual Environment (C-c v)
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-c v a     | activate conda env              |
-| C-c v d     | deactivate conda env            |
-
-* Help & Discovery (C-c h)
-| Key         | Action                          |
-|-------------+---------------------------------|
-| M-x         | command palette (all commands)  |
-| C-c h k     | describe key                    |
-| C-c h f     | describe function               |
-| C-c h v     | describe variable               |
-| C-c h .     | describe thing at point         |
-| C-h m       | describe current major mode     |
-| C-h b       | list all active keybindings     |
-
-Tip: press =C-c= and wait 0.3s — which-key shows all options.
-
-* Quit (C-c q)
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-c q q     | quit emacs                      |
-| C-c q r     | restart emacs                   |
-
-* Prefix Map at a Glance
-| Prefix  | Domain           |
-|---------+------------------|
-| C-c b   | Buffers          |
-| C-c c   | Code / LSP / Debug |
-| C-c e   | Errors           |
-| C-c f   | Files            |
-| C-c g   | Git              |
-| C-c j   | Jump (avy)       |
-| C-c n   | Notes/capture    |
-| C-c o   | Org / Roam       |
-| C-c p   | Projects         |
-| C-c s   | Search           |
-| C-c v   | Virtual env      |
-| C-c w   | Windows / Tabs   |
-| C-c a   | AI               |
-| C-c h   | Help             |
-| C-c q   | Quit             |
-| C-x t   | Tab bar          |
-
-* Workflow — Daily Use
-1. Start day: =C-c o a= → check agenda
-2. Capture anything: =C-c o c= → pick template
-3. Work task: =C-c n w= → work/tasks.org
-4. Learn something: =C-c n k= → concept node in roam
-5. Question arises: =C-c n q= → question node
-6. End of day: =C-c n j= → journal entry
-7. Weekly: fill out reviews.org weekly section
-
-* File Locations
-| File                                  | Purpose                  |
-|---------------------------------------+--------------------------|
-| garden/inbox.org                      | shared capture dump      |
-| garden/journal.org                    | daily log                |
-| garden/reading.org                    | books + reading notes    |
-| garden/reviews.org                    | SRS + weekly reviews     |
-| garden/work/tasks.org                 | work next actions        |
-| garden/work/projects.org              | work project index       |
-| garden/work/projects/*.org            | individual work projects |
-| garden/personal/tasks.org             | personal next actions    |
-| garden/personal/projects.org          | personal project index   |
-| garden/personal/projects/*.org        | individual projects      |
-| ~/.emacs.d/init.el                    | emacs config             |
-| ~/.emacs.d/cheatsheet.org             | this file                |
+#+END:

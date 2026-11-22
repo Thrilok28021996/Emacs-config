@@ -1,5 +1,6 @@
 ;;; -*- lisp-data -*-
-(("/Users/thrilok/Desktop/broko-dataapi/")
+(("/Users/thrilok/.emacs.d/elpa/eglot-booster/")
+ ("/Users/thrilok/Desktop/broko-dataapi/")
  ("/Users/thrilok/.emacs.d/elpa/gptel/")
  ("/Users/thrilok/.emacs.d/elpa/ligature/")
  ("/Users/thrilok/.emacs.d/elpa/consult-todo/")
