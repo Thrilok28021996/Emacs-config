@@ -124,6 +124,60 @@ a global-only lookup would report them as dead."
                      (> (length keys) 20)
                      (format "%d keys" (length keys)))))
 
+;;;; 4b. The handbook's keys must be real keys somewhere
+
+(defvar my/stage7-handbook (expand-file-name "HANDBOOK.org" user-emacs-directory))
+(defvar my/stage7-inventory (expand-file-name "INVENTORY.org" user-emacs-directory))
+
+(defun my/stage7-key-like (string)
+  "Return non-nil when STRING looks like a key sequence rather than prose."
+  (and (string-match-p "\\`[A-Za-z0-9<]-?\\|\\`<\\|\\`RET\\|\\`TAB\\|\\`SPC\\|\\`ESC" string)
+       (string-match-p "\\(C-\\|M-\\|S-\\|RET\\|TAB\\|SPC\\|ESC\\|<[a-z]+>\\|\\`F[0-9]+\\)" string)
+       (< (length string) 30)))
+
+(my/stage7-check "the handbook exists" (file-exists-p my/stage7-handbook))
+(my/stage7-check "the inventory exists" (file-exists-p my/stage7-inventory))
+
+(when (and (file-exists-p my/stage7-handbook) (file-exists-p my/stage7-inventory))
+  (let* ((handbook (my/stage7-text my/stage7-handbook))
+         (inventory (my/stage7-text my/stage7-inventory))
+         (keys (delete-dups
+                (with-temp-buffer
+                  (insert handbook)
+                  (goto-char (point-min))
+                  (let (found)
+                    (while (re-search-forward "=\\([^=\n]+\\)=" nil t)
+                      (let ((key (string-trim (match-string 1))))
+                        ;; "M-x command" is a command claim, checked separately.
+                        (when (and (my/stage7-key-like key)
+                                   (not (string-prefix-p "M-x " key)))
+                          (push key found))))
+                    (nreverse found)))))
+         (dead (cl-remove-if (lambda (key)
+                               (or (my/stage7-resolves-p key)
+                                   (string-match-p (regexp-quote key) inventory)))
+                             keys)))
+    (my/stage7-check "the handbook teaches a useful number of keys"
+                     (> (length keys) 40) (format "%d keys" (length keys)))
+    (my/stage7-check "every M-x command the handbook names is a real command"
+                 (let (cmds)
+                   (with-temp-buffer
+                     (insert handbook)
+                     (goto-char (point-min))
+                     (while (re-search-forward "M-x \\([a-zA-Z0-9-]+\\)" nil t)
+                       (push (match-string 1) cmds)))
+                   (let ((dead (cl-remove-if
+                                (lambda (name)
+                                  (or (commandp (intern name))
+                                      (fboundp (intern name))))
+                                (delete-dups cmds))))
+                     (if dead
+                         (progn (princ (format "  dead commands: %S\n" dead)) nil)
+                       t))))
+(my/stage7-check "every key in the handbook is bound somewhere or listed in the inventory"
+                     (null dead)
+                     (format "%d dead: %S" (length dead) dead))))
+
 ;;;; 5. The documents actually cover the system they describe
 
 (let ((cheatsheet (my/stage7-text my/stage7-cheatsheet))
@@ -147,7 +201,7 @@ a global-only lookup would report them as dead."
 
 (dolist (file (list my/stage7-cheatsheet my/stage7-tutorial))
   (let ((text (my/stage7-text file)))
-    (dolist (target '("ORG-PKM.org" "VERIFICATION.org"))
+    (dolist (target '("ORG-PKM.org" "VERIFICATION.org" "HANDBOOK.org" "INVENTORY.org"))
       (my/stage7-check (format "%s points at %s" (file-name-nondirectory file) target)
                        (string-match-p (regexp-quote target) text)))))
 

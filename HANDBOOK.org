@@ -1,0 +1,260 @@
+#+TITLE: Handbook: what else your Emacs can do
+#+STARTUP: overview
+
+The tutorial teaches the knowledge system. This document is about the rest of
+Emacs — the built-in subsystems that are already installed here, are not bound
+to any key in this configuration, and are therefore easy to forget.
+
+Nothing here needs a package. Every key in this file is checked against
+=INVENTORY.org=, which is generated from the live keymaps: if a key is wrong,
+the gate fails.
+
+=cheatsheet.org= is the day-to-day reference; =INVENTORY.org= lists every
+binding in every reachable keymap.
+
+* Dired — the file manager
+
+=C-x d= (or =C-c p D= for the current project) opens a directory listing you can
+edit like text. This is the single largest thing most Emacs users never learn.
+
+| Key | Does |
+|---|---|
+| =RET= | open the file or enter the directory |
+| =^= | up to the parent directory |
+| =C= | copy the marked files |
+| =R= | rename or move |
+| =D= | delete (asks once) |
+| =m= / =u= / =U= | mark / unmark / unmark all |
+| =t= | toggle all marks |
+| =Q= | replace regexp in the marked files |
+| =g= | refresh the listing |
+| =Z= | compress or uncompress |
+| =!= / =&= | run a shell command on the file / asynchronously |
+| =C-x C-q= | wdired: edit the file *names* as text, then save |
+
+The last one is the reason to learn dired: batch renaming becomes a text edit.
+
+*Do this now:* open dired on ~/knowledge (M-x dired), mark two files with =m=,
+press =C= and choose a target directory.
+
+* Isearch and replace
+
+=C-s= starts an incremental search, =C-r= backwards. Search is the primary way
+to move around a buffer.
+
+| Key | Does |
+|---|---|
+| =C-s= / =C-r= | search forward / backward |
+| =C-s C-s= | repeat the last search |
+| =M-%= | query-replace |
+| =C-M-%= | query-replace-regexp |
+| =C-s= then =C-w= | add the word at point to the search |
+| =M-n= / =M-p= | in a search, pull in the next/previous line from the buffer |
+| =C-M-s= | regexp search |
+
+Inside =query-replace=: =y= replace, =n= skip, =!= replace all, =q= stop,
+=^= back to the previous match, =RET= stop at this point.
+
+For a project-wide replace, =C-c p r= (=project-query-replace-regexp=) edits
+every match in the project, and =M-x rgrep= searches files without opening them
+all.
+
+* Registers — named clipboards
+
+=C-x r= is a whole namespace of places to stash things.
+
+| Key | Does |
+|---|---|
+| =C-x r s= | save the region into a register |
+| =C-x r i= | insert what that register holds |
+| =C-x r SPC= | save point and buffer into a register |
+| =C-x r j= | jump back to it |
+| =C-x r w= | save the window configuration |
+| =C-x r f= | save the frame configuration |
+| =C-x r m= / =C-x r b= | set / jump to a bookmark |
+| =C-x r l= | list bookmarks |
+
+Bookmarks are the useful half: they survive restarts and can point at a file and
+position.
+
+* Keyboard macros
+
+Anything you can type, Emacs can repeat.
+
+| Key | Does |
+|---|---|
+| =F3= | start recording |
+| =F4= | stop, then replay |
+| =C-x (= | start recording (terminal-safe alternative to F3) |
+| =C-x )= | stop recording |
+| =C-x e= | replay the last macro |
+| =C-x e= with a prefix count | replay it that many times |
+| =C-x C-k n= | name the macro |
+| =C-x C-k b= | bind the macro to a key for this session |
+| =C-x C-k e= | edit the macro as Lisp |
+
+If you do a repetitive edit twice, record it the third time.
+
+*Especially useful:* record a macro, then use it inside =dired= or =occur= over
+hundreds of lines.
+
+* Rectangles — column editing
+
+=C-x r= also holds the rectangle commands, for text laid out in columns.
+
+| Key | Does |
+|---|---|
+| =C-x SPC= | rectangle-mark-mode: mark a column block visually |
+| =C-x r k= | kill the rectangle |
+| =C-x r y= | yank it back |
+| =C-x r t= | replace the rectangle with a string on every line |
+| =C-x r o= | insert blank space to push a rectangle right |
+| =C-x r N= | number the lines of the rectangle |
+
+*Calc — a calculator that powers through units and matrices
+
+=M-x calc= opens a full RPN calculator with symbolic algebra, units, dates and
+matrices. =C-x *= works from any buffer on the number at point.
+
+| Key | Does |
+|---|---|
+| =C-x * c= | open the calculator |
+| =C-x * == | evaluate the region or the number at point |
+| =C-x * j= | evaluate and insert the result in the buffer |
+| =C-x * k= | edit the number at point with Calc keys |
+| =C-x * q= | open the quick calculator in the echo area |
+
+Inside Calc, ='= enters an algebraic expression (=2+3*4=), not reverse Polish.
+
+* Eshell — a shell written in Lisp
+
+=M-x eshell= gives you a shell where the commands are Lisp functions and the
+pipes, redirects and globs are Lisp too. =C-c p e= opens it inside the current
+project.
+
+| Key | Does |
+|---|---|
+| =M-x eshell= | start a shell buffer |
+| =C-c p e= | project eshell |
+| =M-n= / =M-p= | next / previous input |
+| =C-c C-e= | edit the command in a buffer |
+
+Why use it over a terminal: =.ma= and =.(+ 1 2)= work as commands, and the
+output is text you can navigate with normal Emacs keys. See =M-x eshell= →
+=M-x describe-mode= for the full set.
+
+* Tramp — edit files on another machine
+
+No client, no mount. Just write the path:
+
+#+begin_example
+  /ssh:user@host:/etc/hosts
+  /sudo::/etc/hosts        ; edit as root
+  /docker:container:/app   ; inside a container
+#+end_example
+
+Everything works as if the file were local: dired, magit, compile, remote
+search. The cost is latency, so =C-c p g= on a Tramp buffer is slow by nature.
+
+* Version control beyond Magit
+
+Magit is bound and is the main answer (see =cheatsheet.org=). The built-in VC is
+still useful for one-off questions:
+
+| Key | Does |
+|---|---|
+| =C-x v == | show diff for the file |
+| =C-x v l= | show the file's log |
+| =C-x v g= | annotate (blame) with the log |
+| =C-x v d= | directory-level VC view |
+| =C-x v u= / =C-x v r= | revert / retrieve a revision |
+
+For side-by-side comparison of two revisions, =M-x ediff-revision=. Ediff's own
+keymap only exists once Ediff is running, which is why =INVENTORY.org= reports it
+as unavailable at refresh time.
+
+* Doc View — page images
+
+=C-x C-f= on a PDF or DVI opens =doc-view=, which renders pages as images.
+
+It does not work in a terminal: images cannot be displayed, so there is nothing
+to see. That is why PDF reading is out of scope for this system — see Lesson 7
+of =tutorial.org=. In a graphical Emacs the keys are =n= / =p= for pages, =s= to
+toggle scrolling and =W= to fit width.
+
+EPUB is different: =nov.el= renders text and does work here.
+
+* Calendar and diary
+
+=M-x calendar= is a real calendar with a diary file attached.
+
+| Key | Does |
+|---|---|
+| =M-x calendar= | open it |
+| =SPC= / == | day forward / today |
+| =n= / =p= | month forward / back |
+| =i d= | add a diary entry for the date at point |
+| =d= | show that day's diary entries |
+| =M-x diary= | the entries scheduled for today |
+
+Diary entries are plain text entries in =~/diary=. Org has its own agenda dates;
+the diary is worth knowing for =M-x calendar= and for =diary-mail-entries=.
+
+* Proced — the process manager
+
+=M-x proced= lists processes like =ps=, in a buffer you can act on.
+
+| Key | Does |
+|---|---|
+| =m= | mark a process |
+| =k= | kill the marked processes |
+| =g= | refresh |
+| =s= | sort by column |
+| =p= | prefix arguments to ps |
+
+Like dired for processes, and refreshed by hand rather than a timer.
+
+* Abbrev and spelling
+
+| Key | Does |
+|---|---|
+| =M-$= | ispell the word at point |
+| =M-x ispell= | ispell the buffer |
+| =M-x ispell-buffer= | spell-check everything since the last check |
+| =C-x a i l= | define an abbrev from a line (abbrev, not spelling) |
+| =M-x edit-abbrevs= | edit all defined abbreviations |
+
+Abbrevs expand as you type: define one, type it, and press =SPC= or =RET= to
+expand.
+
+* Looking things up — the referencing systems
+
+Emacs documents itself. This is the feature that makes everything else
+learnable.
+
+| Key | Does |
+|---|---|
+| =C-h k= | what does this key do |
+| =C-h f= | describe a function or command |
+| =C-h v= | describe a variable |
+| =C-h m= | describe the current major and minor modes |
+| =C-h b= | list the bindings that apply right now |
+| =C-h e= | the last messages (where errors show up) |
+| =C-h w= | which key runs a given command |
+| =M-x apropos= | search commands and variables by regexp |
+| =C-h i= | the manuals (Info) |
+| =C-h F= | functions related to a topic (Info lookup) |
+| =C-c ?= | this configuration's own bindings |
+
+The combination that answers most questions in ten seconds:
+=C-h k= on the key you don't know, then =C-h f= on the command it names.
+
+* The rest of the inventory
+
+This is a handbook, not a catalogue. =INVENTORY.org= holds every binding in 31
+keymaps — including the ones you will never need, and the ones you will discover
+by accident. Skim it once.
+
+When something is missing from it, that is not an oversight: the block documents
+what is bound, and most of Emacs' ~5,100 interactive commands are reachable only
+through =M-x=.

@@ -10,6 +10,8 @@ Refresh that table after changing keys: =C-c k b= (or =C-c C-c= on the block).
 Open the live version any time with =C-c ?=.
 
 Architecture and reasoning: =ORG-PKM.org= (=C-c k H=).
+Everything else your Emacs can do: =HANDBOOK.org=.
+Every binding in every reachable keymap: =INVENTORY.org=.
 Evidence that it all works: =VERIFICATION.org=.
 Gates: =./emacs-sync.sh verify=.
 
@@ -333,13 +335,13 @@ configuration too — this table is built from the live keymaps, not typed.
 | Key | Command | What it does |
 |---+---+---|
 | =C-c ?= | =my/help-bindings= | Show every C-c binding in the live global map, grouped by prefix |
-| =C-c M-g= | =magit-file-dispatch= |  |
+| =C-c M-g= | =magit-file-dispatch= | Invoke a Magit command that acts on the visited file |
 | =C-c b b= | =switch-to-buffer= | Display buffer BUFFER-OR-NAME in the selected window |
 | =C-c c a= | =eglot-code-actions= | Find LSP code actions of type ACTION-KIND between BEG and END |
 | =C-c c c= | =compile= | Compile the program including the current buffer |
 | =C-c c d= | =xref-find-references= | Find references to the identifier at point |
 | =C-c c f= | =eglot-format-buffer= | Format contents of current buffer. |
-| =C-c c h= | =eglot-inlay-hints-mode= | Minor mode for annotating buffers with LSP server’s inlay hints |
+| =C-c c h= | =eglot-inlay-hints-mode= | Minor mode for annotating buffers with LSP server's inlay hints |
 | =C-c c i= | =eglot-find-implementation= | Find implementation for SYM, the identifier at point. |
 | =C-c c p= | =my/python-run-current-file= | Run the current Python file with python3. |
 | =C-c c r= | =eglot-rename= | Rename the current symbol to NEWNAME |
@@ -347,16 +349,16 @@ configuration too — this table is built from the live keymaps, not typed.
 | =C-c e n= | =flymake-goto-next-error= | Go to Nth next Flymake diagnostic that matches FILTER |
 | =C-c e p= | =flymake-goto-prev-error= | Go to Nth previous Flymake diagnostic that matches FILTER |
 | =C-c f r= | =recentf-open-files= | Show a dialog to open a recent file |
-| =C-c g a= | =magit-blame= |  |
-| =C-c g b= | =magit-branch= |  |
-| =C-c g c= | =magit-commit= |  |
+| =C-c g a= | =magit-blame= | Show the commits that added or removed lines in the visited file. |
+| =C-c g b= | =magit-branch= | Add, configure or remove a branch. |
+| =C-c g c= | =magit-commit= | Create a new commit or replace an existing commit. |
 | =C-c g d= | =magit-diff-dwim= | Show changes for the thing at point |
-| =C-c g f= | =magit-fetch= |  |
+| =C-c g f= | =magit-fetch= | Fetch from another repository. |
 | =C-c g g= | =magit-status= | Show the status of the current Git repository in a buffer |
-| =C-c g l= | =magit-log-current= |  |
-| =C-c g p= | =magit-push= |  |
-| =C-c g s= | =magit-stash= |  |
-| =C-c g u= | =magit-pull= |  |
+| =C-c g l= | =magit-log-current= | Show log for the current branch, or 'HEAD' if no branch is checked out. |
+| =C-c g p= | =magit-push= | Push to another repository. |
+| =C-c g s= | =magit-stash= | Stash uncommitted changes. |
+| =C-c g u= | =magit-pull= | Pull from another repository. |
 | =C-c i l= | =indent-rigidly-left-to-tab-stop= | Indent all lines between BEG and END leftward to a tab stop |
 | =C-c i r= | =indent-rigidly-right-to-tab-stop= | Indent all lines between BEG and END rightward to a tab stop |
 | =C-c k A= | =my/reading-attach= | Attach FILE to the current Org entry and report where it went |
@@ -383,7 +385,7 @@ configuration too — this table is built from the live keymaps, not typed.
 | =C-c k s= | =my/roam-sync= | Re-index the knowledge tree and report what is in the index. |
 | =C-c k t= | =org-capture= | Capture something |
 | =C-c k v= | =my/roam-toggle-buffer= | Show or hide the backlinks buffer for the current note. |
-| =C-c n k= | =org-roam-capture= | Launches an ‘org-capture’ process for a new or existing node |
+| =C-c n k= | =org-roam-capture= | Launches an 'org-capture' process for a new or existing node |
 | =C-c o I= | =org-clock-in= | Start the clock on the current item |
 | =C-c o O= | =org-clock-out= | Stop the currently running clock |
 | =C-c o R= | =org-clock-report= | Update or create a table containing a report about clocked time |
@@ -391,25 +393,25 @@ configuration too — this table is built from the live keymaps, not typed.
 | =C-c o c= | =org-capture= | Capture something |
 | =C-c o i= | =org-roam-node-insert= | Find an Org-roam node and insert (where the point is) an "id:" link to it |
 | =C-c o r= | =org-roam-node-find= | Find and open an Org-roam node by its title or alias |
-| =C-c p != | =project-shell-command= | Run ‘shell-command’ in the current project’s root directory. |
-| =C-c p &= | =project-async-shell-command= | Run ‘async-shell-command’ in the current project’s root directory. |
+| =C-c p != | =project-shell-command= | Run 'shell-command' in the current project's root directory. |
+| =C-c p &= | =project-async-shell-command= | Run 'async-shell-command' in the current project's root directory. |
 | =C-c p C-b= | =project-list-buffers= | Display a list of project buffers |
-| =C-c p C-x s= | =project-save-some-buffers= | Like ‘save-some-buffers’, but only for this project’s buffers |
-| =C-c p D= | =project-dired= | Start Dired in the current project’s root. |
+| =C-c p C-x s= | =project-save-some-buffers= | Like 'save-some-buffers', but only for this project's buffers |
+| =C-c p D= | =project-dired= | Start Dired in the current project's root. |
 | =C-c p F= | =project-or-external-find-file= | Visit a file (with completion) in the current project or external roots |
 | =C-c p G= | =project-or-external-find-regexp= | Find all matches for REGEXP in the project roots or external roots |
 | =C-c p b= | =project-switch-to-buffer= | Display buffer BUFFER-OR-NAME in the selected window |
-| =C-c p c= | =project-compile= | Run ‘compile’ in the project root. |
+| =C-c p c= | =project-compile= | Run 'compile' in the project root. |
 | =C-c p d= | =project-find-dir= | Start Dired in a directory inside the current project |
-| =C-c p e= | =project-eshell= | Start Eshell in the current project’s root directory |
+| =C-c p e= | =project-eshell= | Start Eshell in the current project's root directory |
 | =C-c p f= | =project-find-file= | Visit a file (with completion) in the current project |
-| =C-c p g= | =project-find-regexp= | Find all matches for REGEXP in the current project’s roots |
+| =C-c p g= | =project-find-regexp= | Find all matches for REGEXP in the current project's roots |
 | =C-c p k= | =project-kill-buffers= | Kill the buffers belonging to the current project |
 | =C-c p o= | =project-any-command= | Run the next command in the current project |
 | =C-c p p= | =project-switch-project= | "Switch" to another project by running an Emacs command |
 | =C-c p r= | =project-query-replace-regexp= | Query-replace REGEXP in all the files of the project |
-| =C-c p s= | =project-shell= | Start an inferior shell in the current project’s root directory |
-| =C-c p v= | =project-vc-dir= | Run VC-Dir in the current project’s root. |
+| =C-c p s= | =project-shell= | Start an inferior shell in the current project's root directory |
+| =C-c p v= | =project-vc-dir= | Run VC-Dir in the current project's root. |
 | =C-c p x= | =project-execute-extended-command= | Execute an extended command in project root. |
 | =C-c s i= | =imenu= | Jump to a place in the buffer chosen using a buffer menu or mouse menu |
 | =C-c s s= | =isearch-forward= | Do incremental search forward |
@@ -417,7 +419,7 @@ configuration too — this table is built from the live keymaps, not typed.
 | =C-c v a= | =conda-env-activate= | Switch to environment NAME, prompting if called interactively |
 | =C-c v d= | =conda-env-deactivate= | Deactivate the current conda env. |
 | =C-c w == | =balance-windows= | Balance the sizes of windows shown on the selected frame |
-| =C-c w U= | =winner-redo= | Cancel the current sequence of ‘winner-undo’ commands |
+| =C-c w U= | =winner-redo= | Cancel the current sequence of 'winner-undo' commands |
 | =C-c w h= | =windmove-left= | Select the window to the left of the current one |
 | =C-c w j= | =windmove-down= | Select the window below the current one |
 | =C-c w k= | =windmove-up= | Select the window above the current one |

@@ -144,7 +144,8 @@ created project file appear without any configuration change."
 (defvar my/knowledge-doc-files nil
   "Documentation files whose generated blocks are refreshed with the dashboards.")
 
-(defvar my/dblock-types '("kanban" "my-tasks" "project-health" "learning-progress" "my-keys")
+(defvar my/dblock-types '("kanban" "my-tasks" "project-health" "learning-progress" "my-keys"
+                                   "my-inventory")
   "Dynamic block names this configuration knows how to regenerate.")
 
 (defun my/refresh-dblocks-in-file (file)
@@ -163,7 +164,13 @@ Returns the number of blocks updated.  Unknown block names are left alone:
           (cl-incf count)
           (when (re-search-forward "^#\\+END:" nil t)
             (forward-line 1))))
-      (when (> count 0) (save-buffer))
+      (when (> count 0)
+        ;; Bind the coding system around the write: otherwise a file whose
+        ;; coding system is undecided prompts "Select coding system" in the
+        ;; middle of a refresh, which in batch is a hard error.
+        (set-buffer-file-coding-system 'utf-8-unix t)
+        (let ((coding-system-for-write 'utf-8-unix))
+          (save-buffer)))
       (set-buffer-modified-p nil)
       count)))
 

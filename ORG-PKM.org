@@ -17,8 +17,12 @@ stale.
 | =lisp/my-help.el=           | =C-c ?= binding listing and the doc opener             |
 | =lisp/my-reading.el=        | EPUB, attachments, reading status                     |
 | =lisp/my-dashboards.el=     | Generated dashboard blocks and agenda views           |
-| =lisp/tests/stageN-check.el= | Headless acceptance checks, 170 in total             |
+| =lisp/tests/stageN-check.el= | Headless acceptance checks, 179 in total             |
 | =VERIFICATION.org=          | The twelve acceptance criteria and their evidence     |
+| =cheatsheet.org=            | The key reference, with a generated master table       |
+| =tutorial.org=              | The guided course for the knowledge system             |
+| =HANDBOOK.org=              | The rest of Emacs: dired, calc, eshell, macros, …      |
+| =INVENTORY.org=             | Every binding in every reachable keymap, generated     |
 | =emacs-sync.sh=             | Gate script: =check=, =test=, =verify=, =build=, =benchmark=, =doctor= |
 
 Nothing in =lisp/= is byte-compiled at startup and nothing is loaded before
@@ -398,7 +402,7 @@ not observations:
 
 | What                            | Measured | Gate   |
 |---------------------------------+----------+--------|
-| Batch load of the whole config   | 0.173 s  | 0.25 s |
+| Batch load of the whole config   | 0.15 s   | 0.25 s |
 | Agenda build over 40 projects    | 0.56 s   | 5 s    |
 | Regenerate every board/dashboard | 0.26 s   | 15 s   |
 | Cold org-roam re-index           | 0.07 s   | 20 s   |
@@ -411,6 +415,13 @@ startup.
 
 =VERIFICATION.org= maps all twelve acceptance criteria to the checks that prove
 them, and states plainly which two were not implemented and why.
+
+=HANDBOOK.org= covers the built-in subsystems this configuration does not bind:
+dired, isearch and replace, registers, keyboard macros, rectangles, calc, eshell,
+tramp, ediff, doc-view, calendar/diary, proced, abbrev and spelling, and the
+self-documentation commands. =INVENTORY.org= is the completeness document: every
+binding in 32 keymaps, generated from the live maps, with any keymap that could
+not be reached listed rather than silently dropped.
 
 * Capture templates
 
@@ -450,7 +461,7 @@ refusal to overwrite, agenda discovery without config edits, capture target
 resolution, and the generated help buffer. It creates a fixture project and
 deletes it again.
 
-Last measured: =CONFIG_OK=, 170 checks, 0 failures, =load-seconds= 0.173.
+Last measured: =CONFIG_OK=, 179 checks, 0 failures, =load-seconds= 0.15.
 The per-stage breakdown is in =VERIFICATION.org=.
 
 * Terminal limits

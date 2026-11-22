@@ -435,5 +435,7 @@ nothing — the tests clean up after themselves.
 | why the system is shaped this way | =ORG-PKM.org= |
 | what is proven and what is not | =VERIFICATION.org= |
 | the data layout and backup rules | =~/knowledge/README.org= |
+| the rest of Emacs (dired, calc, eshell, macros, rectangles, …) | =HANDBOOK.org= |
+| every binding in every keymap | =INVENTORY.org= |
 | Org itself | =M-x info= → Org manual |
 | the packages that stayed | =C-h f org-roam-node-insert=, =C-h f org-ql-search=, =C-h f nov-mode=, =C-h f org-kanban/shift= |

@@ -12,7 +12,7 @@ Run the whole thing yourself:
 #+end_src
 
 Last full run, 2026-11-22: =CONFIG_OK=, **170 checks, 0 failures**, batch load
-**0.173 s**.
+**0.15 s**.
 
 The checks live in =lisp/tests/stageN-check.el= and run headless. Each one
 creates its own fixtures and removes them again.
@@ -126,7 +126,7 @@ included). These are gates now, not observations:
 
 | What                              | Measured | Gate  |
 |-----------------------------------+----------+-------|
-| Batch load of the whole config     | 0.173 s  | 0.25 s |
+| Batch load of the whole config     | 0.15 s   | 0.25 s |
 | Agenda build over 40 projects      | 0.56 s   | 5 s    |
 | Regenerate every board/dashboard   | 0.26 s   | 15 s   |
 | Cold org-roam re-index             | 0.07 s   | 20 s   |
@@ -135,6 +135,22 @@ Each timing is paired with a check that the work actually happened — a fast
 number that skipped the work would be worse than a slow one.
 
 * Documentation is gated too
+
+Four documents, four jobs:
+
+| File | Job | Verified by |
+|---|---|---|
+| =cheatsheet.org= | key reference | every live binding must appear; every taught key must resolve |
+| =tutorial.org= | guided course | every taught key must resolve; must cover the knowledge layer |
+| =HANDBOOK.org= | the built-in subsystems (dired, calc, eshell, macros, …) | every key must resolve or appear in the inventory; every =M-x= command must exist |
+| =INVENTORY.org= | every binding in every reachable keymap, generated | row count, block presence, and the key coverage check |
+
+The inventory currently holds **4,304 bindings across 32 keymaps**. For scale:
+this Emacs ships **5,135 interactive commands** and MELPA carries **6,351
+packages**. The inventory documents what is *bound*; the rest is reachable only
+through =M-x= and is not claimed here. That is the honest boundary of "leave
+nothing unturned": a complete list of everything Emacs can do is the manual.
+
 
 =stage7-check.el= (39 checks) keeps the documentation honest, because a document
 that teaches a key which does not exist is worse than no document:
