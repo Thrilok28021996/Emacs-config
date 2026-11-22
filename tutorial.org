@@ -378,7 +378,7 @@ CSS, TypeScript and Bash when installed, with the classic modes as fallback.
 
 Completion is built in: =fido-vertical-mode= in the minibuffer,
 =completion-preview-mode= while typing code (not in prose, where it is noise),
-=imenu= for jumping to definitions. There is no corfu, no consult, no vertico —
+=imenu= for jumping to definitions. There is no third-party completion stack:
 that is the deliberate trade for a 0.15 s start.
 
 *Do this now:* open a Python file, break the syntax, and fix it using
@@ -427,29 +427,6 @@ cannot fix.
 *Check yourself:* "0 failures". Then =git -C ~/knowledge status --short= prints
 nothing — the tests clean up after themselves.
 
-* Historical lessons — what this tutorial used to teach
-
-The previous configuration was a large package stack. These lessons taught it.
-They are listed so the deletion is visible, not because any of it still applies.
-
-| Was | Taught | Why it is gone |
-|---|---|---|
-| Lesson 2 | org-modern stars, org-appear, olivetti centring | not loaded; plain Org now |
-| Lesson 8 | people tracking with =C-c n x= and per-person nodes | keys never existed in this config; roam covers linking |
-| Lesson 9 | spaced repetition (=org-fc= / =org-drill=) | org-fc is on no ELPA archive and was deferred; nothing is installed |
-| Lesson 11 | org-pomodoro timers | =org-clock= covers it |
-| Lesson 15 | org-transclusion, URL helpers | not loaded |
-| Lesson 17 | consult, avy, expand-region | built-in =isearch= / =imenu= / =recentf= replaced them |
-| Lesson 18 | vertico, orderless, corfu, embark | =fido-vertical-mode= and =completion-preview-mode= |
-| Lesson 19 | symbol-overlay, vundo, helpful | =hi-lock=, =undo-redo=, =describe-*= |
-| Lesson 22 | dape debugging | not configured |
-| Lesson 23 | apheleia formatters | =eglot-format-buffer= |
-| Lesson 25 | gptel + LM Studio | AI was explicitly optional |
-
-If you want any of it back, the honest way is one package at a time through
-MELPA or GNU ELPA, added to =lisp/=, with a check in =lisp/tests/= that it
-loads. Do not restore the old =init.el=.
-
 * Where to go deeper
 
 | Want | Read |
@@ -459,9 +436,4 @@ loads. Do not restore the old =init.el=.
 | what is proven and what is not | =VERIFICATION.org= |
 | the data layout and backup rules | =~/knowledge/README.org= |
 | Org itself | =M-x info= → Org manual |
-| the packages that stayed | =C-h f org-roam-node-insert=, =C-h f org-ql-search=, =C-h f nov-mode= |
-
-* Notes (generated)
-
-The table of every =C-c= binding is kept in =cheatsheet.org=, generated from the
-live keymaps, so there is exactly one copy of it. Refresh with =C-c k b=.
+| the packages that stayed | =C-h f org-roam-node-insert=, =C-h f org-ql-search=, =C-h f nov-mode=, =C-h f org-kanban/shift= |

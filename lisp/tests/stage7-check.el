@@ -13,8 +13,8 @@
 ;;   every binding in the keymaps  -> must appear in cheatsheet.org
 ;;   every key taught in the docs  -> must resolve to a command
 ;;
-;; Anything after the "Historical" heading is deliberately exempt: that section
-;; exists to describe things that are gone.
+;; The whole documents are checked. Removed software is deleted, not parked in a
+;; section that would have to be exempted from checking.
 
 ;;; Code:
 
@@ -40,13 +40,11 @@
     (insert-file-contents file)
     (buffer-string)))
 
-(defun my/stage7-before-historical (file)
-  "Return FILE's text up to its Historical heading, or all of it.
-The Historical section is allowed to name things that no longer exist."
-  (let ((text (my/stage7-text file)))
-    (if (string-match "^\\* .*[Hh]istorical" text)
-        (substring text 0 (match-beginning 0))
-      text)))
+(defun my/stage7-checkable (file)
+  "Return the text of FILE that the checks apply to.
+The whole document: dead lessons are gone rather than parked in a section that
+would need to be exempted from checking."
+  (my/stage7-text file))
 
 (defun my/stage7-taught-keys (text)
   "Return the C-c key sequences taught in TEXT as =-quoted= inline markup."
@@ -78,10 +76,15 @@ a global-only lookup would report them as dead."
   (my/stage7-check (format "%s exists" (file-name-nondirectory file))
                    (file-exists-p file)))
 
-(my/stage7-check "the cheatsheet has a Historical section"
-                 (string-match-p "^\\* .*Historical" (my/stage7-text my/stage7-cheatsheet)))
-(my/stage7-check "the tutorial has a Historical section"
-                 (string-match-p "^\\* .*Historical" (my/stage7-text my/stage7-tutorial)))
+(my/stage7-check "neither document keeps a section describing removed software"
+                 (and (null (string-match-p "^\\* .*[Hh]istorical" (my/stage7-text my/stage7-cheatsheet)))
+                      (null (string-match-p "^\\* .*[Hh]istorical" (my/stage7-text my/stage7-tutorial)))))
+(my/stage7-check "the cheatsheet no longer names packages that are not loaded"
+                 (let ((text (downcase (my/stage7-text my/stage7-cheatsheet))))
+                   (cl-every (lambda (name) (null (string-match-p name text)))
+                             '("vertico" "corfu" "embark" "marginalia"
+                               "orderless" "yasnippet" "org-modern" "olivetti"
+                               "dape" "apheleia" "gptel" "org-pomodoro"))))
 
 ;;;; 2. The generated key table is present and covers the live keymaps
 
@@ -110,7 +113,7 @@ a global-only lookup would report them as dead."
 ;;;; 4. Every key the documents teach actually exists
 
 (dolist (file (list my/stage7-cheatsheet my/stage7-tutorial))
-  (let* ((keys (my/stage7-taught-keys (my/stage7-before-historical file)))
+  (let* ((keys (my/stage7-taught-keys (my/stage7-checkable file)))
          (dead (cl-remove-if #'my/stage7-resolves-p keys)))
     (my/stage7-check (format "every key taught in %s resolves"
                              (file-name-nondirectory file))

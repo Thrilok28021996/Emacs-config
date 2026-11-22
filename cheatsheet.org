@@ -201,8 +201,8 @@ layer. Startup is ~0.15 s.
 | =M-<up>= / =M-<down>= | move the line or region up/down        |
 
 Completion previews appear while typing in code (=completion-preview-mode=),
-which is the built-in answer to corfu; prose buffers deliberately do not get
-them.
+the built-in alternative to a completion popup; prose buffers deliberately do
+not get them.
 
 ** Projects and compiling (C-c c)
 
@@ -428,28 +428,3 @@ configuration too — this table is built from the live keymaps, not typed.
 92 bindings under C-c. Generated from the live keymaps.
 
 #+END:
-
-* Historical: what this file used to describe
-
-The previous configuration was a full package stack. It is gone: this one is
-built-in only plus six packages that earn their place. Kept here so the change
-is legible, not because any of it is usable.
-
-| Was | What it did | Now |
-|---|---|---|
-| consult / vertico / orderless / marginalia | enhanced minibuffer and search | =fido-vertical-mode=, =isearch=, =imenu=, =recentf= |
-| corfu / cape | in-buffer completion popups | =completion-preview-mode= in code buffers |
-| embark / wgrep | act on candidates; edit grep results | =occur= / =rgrep= |
-| org-modern / org-appear / olivetti | star glyphs, live emphasis, centred writing | plain Org |
-| yasnippet | snippet expansion | none; =abbrev= if you want it back |
-| symbol-overlay / expand-region | highlight symbol, grow region | =hi-lock=, built-in marking |
-| vundo / diff-hl | visual undo tree, gutter diffs | =undo-redo=, =C-x v d= |
-| dape | debugger front-end | =gdb= / =dap= not configured |
-| apheleia | format on save | =eglot-format-buffer= |
-| gptel | LLM in Emacs | none; AI was explicitly optional |
-| org-pomodoro | timers | =org-clock= |
-| org-transclusion | live transclusion | none |
-| doom-modeline / nerd-icons | fancy mode line | the default mode line |
-| =C-c n i/j/r/w/t= capture wrappers | garden-era shortcuts | =C-c k i= / =C-c k t= |
-| the =d= dashboard (=C-c o a → d=) | one stacked agenda view | =C-c k D=, =C-c k P=, =C-c k L= |
-| =~/Documents/garden/= as =org-directory= | Org notes | =~/knowledge/= |
