@@ -2,6 +2,65 @@
 #+AUTHOR: Thrilok
 #+STARTUP: overview
 
+* Read this first (updated 2026-11-22)
+
+This file was written for the previous configuration. Parts of it are now
+wrong, and the wrong parts are the ones you would actually try to use. The
+authoritative list is =C-c ?= (=my/help-bindings=), which is generated from the
+live keymaps every time you open it. The architecture document is =ORG-PKM.org=
+(open with =C-c k H=).
+
+** What no longer exists
+
+| Removed                        | Why                                                    |
+|--------------------------------+--------------------------------------------------------|
+| consult / vertico / corfu / embark | the config is built-in only; completion is =fido-vertical-mode= |
+| org-modern, org-appear, olivetti, yasnippet | not loaded; the Org layer is plain Org |
+| =C-c o s/u/l/t/q/k/A=          | never bound in this configuration                       |
+| =C-c n i/j/r/w/t=              | garden-era capture wrappers; =C-c n w= signalled an error and was removed |
+| =~/Documents/garden/= as the Org directory | Org now lives in =~/knowledge/=              |
+| the =d= dashboard (=C-c o a → d=) | replaced by three agenda dashboards                  |
+
+** Where to look now
+
+| What                     | Where                                    |
+|--------------------------+------------------------------------------|
+| every key in this config | =C-c ?=                                   |
+| how the Org system works | =ORG-PKM.org= (=C-c k H=)                 |
+| knowledge tree layout    | =~/knowledge/README.org=                  |
+| this config's stage status | =ORG-PKM.org= → Stage status            |
+
+** The Org keys that actually exist
+
+| Key       | Command                        |
+|-----------+--------------------------------|
+| =C-c k i= | capture into the inbox         |
+| =C-c k t= | capture menu (any template)    |
+| =C-c k p= | new project file                |
+| =C-c k l= | new learning subject            |
+| =C-c k n= | new knowledge note              |
+| =C-c k r= | new source note                 |
+| =C-c k a= | agenda over the knowledge tree  |
+| =C-c k b= | regenerate every board/dashboard |
+| =C-c k d= | home dashboard file             |
+| =C-c k D= | home agenda dashboard           |
+| =C-c k P= | projects agenda dashboard       |
+| =C-c k L= | learning agenda dashboard       |
+| =C-c k B= | consolidated kanban             |
+| =C-c k f= | find/create a roam node         |
+| =C-c k v= | backlinks for this note         |
+| =C-c k s= | re-index roam                   |
+| =C-c k g= | graph in the browser            |
+| =C-c k q= | ad-hoc org-ql query             |
+| =C-c k A= | attach a file to this note      |
+| =C-c k S= | set reading status              |
+| =C-c k R= | reading tracker                 |
+| =C-c k H= | this system's documentation     |
+
+Everything else below about movement, files, buffers, windows, dired, magit,
+eglot and keyboard macros is still accurate — those parts of the configuration
+did not change.
+
 * Movement
 ** Character / Word
 | Key       | Action                        |
@@ -300,21 +359,18 @@ Tip: =M-i= then =M-n/M-p= to navigate all uses of a variable/function without a 
 | C-x p e (or C-c p s)| project eshell                  |
 | C-x p c (or C-c p c)| compile project                 |
 
-* Org Mode (C-c o)
-** Org commands
+* Org Mode
+** Org commands that still exist
 | Key         | Action                          |
 |-------------+---------------------------------|
-| C-c o a     | open agenda                     |
-| C-c o c     | org capture                     |
+| C-c o a     | open agenda dispatcher          |
+| C-c o c     | org capture (same as C-c k t)   |
 | C-c o r     | roam find node                  |
 | C-c o i     | roam insert link                |
-| C-c o s     | roam search                     |
-| C-c o u     | roam graph UI                   |
-| C-c o l     | paste URL as link               |
-| C-c o t     | transclusion toggle             |
-| C-c o q     | org-ql find (query agenda)      |
-| C-c o k     | org-kanban board (insert)       |
-| C-c o A     | archive subtree                 |
+| C-c o I/O/R | clock in / out / report         |
+
+The knowledge-layer keys are under =C-c k= — see "Read this first" at the top of
+this file. There is no =C-c o k=, =C-c o q=, =C-c o t=, =C-c o u= or =C-c o A=.
 
 ** Org Clock (C-c o)
 | Key         | Action                          |
@@ -326,20 +382,18 @@ Tip: =M-i= then =M-n/M-p= to navigate all uses of a variable/function without a 
 
 Tip: clock-in/out against any heading to track time. =C-c o R= inserts a report table at point.
 
-** Capture shortcuts (C-c n)
-| Key         | Action                          |
-|-------------+---------------------------------|
-| C-c n i     | inbox (shared)                  |
-| C-c n j     | journal entry                   |
-| C-c n r     | reading note                    |
-| C-c n w     | work task                       |
-| C-c n W     | work project                    |
-| C-c n t     | personal task                   |
-| C-c n p     | personal project                |
-| C-c n k     | new concept node (roam)         |
-| C-c n q     | new question node (roam)        |
-| C-c n P     | new person node                 |
-| C-c n x     | log interaction with person     |
+** Capture templates (C-c k t)
+| Key | Template                          |
+|-----+-----------------------------------|
+| i   | inbox item                        |
+| t   | task in a chosen project          |
+| l   | task in a chosen learning subject |
+| j   | journal entry (weekly date tree)  |
+| n   | someday idea                      |
+| r   | source / reading entry            |
+
+=C-c k i= jumps straight to the inbox template. The old =C-c n * = wrappers are
+gone: they referenced garden files and a deleted template.
 
 ** Tables
 *** Create
@@ -407,14 +461,16 @@ Example:
 *** Agenda
 The agenda pulls TODO/scheduled items from all files in =org-agenda-files=.
 
-1. =C-c o a= → open agenda (day view by default)
+1. =C-c o a= → agenda dispatcher (or =C-c k D= for the home dashboard)
 2. Navigate days with =f= (forward) / =b= (backward)
 3. On any item: =t= cycle state, =s= schedule, =d= deadline, =r= refile, =q= quit
 4. Press =v w= for week view, =v m= for month view
 
 Tip: agenda shows only items with a date or active TODO. Undated TODOs live in =C-x b tasks.org=.
 
-Dashboard view: =C-c o a= → =d= → combined day agenda + Next Actions + Due for Review (=org-agenda-custom-commands=).
+Dashboards: =C-c k D= (home), =C-c k P= (projects), =C-c k L= (learning).
+They are =org-agenda-custom-commands= entries defined in =lisp/my-dashboards.el=,
+not in =init.el=.
 
 *** Archiving (keep agenda files lean)
 Completed/dead items pile up in active files and slow agenda + refile. Archive them out.
@@ -623,26 +679,32 @@ Tip: press =C-c= or =C-h= and wait 0.3s — which-key shows all options.
 | C-x t     | Tab bar          |
 
 * Workflow — Daily Use
-1. Start day: =C-c o a= → check agenda
-2. Capture anything: =C-c o c= → pick template
-3. Work task: =C-c n w= → work/tasks.org
-4. Learn something: =C-c n k= → concept node in roam
-5. Question arises: =C-c n q= → question node
-6. End of day: =C-c n j= → journal entry
-7. Weekly: fill out reviews.org weekly section
+1. Start the day: =C-c k D= → home dashboard (today, next, doing, waiting, review)
+2. Capture anything: =C-c k i= → inbox, or =C-c k t= for the template menu
+3. Task for a project: =C-c k t= → =t= → pick the project
+4. Learn something: =C-c k t= → =l= → pick the subject
+5. Permanent idea: =C-c k n= → new knowledge note (prompts for the area)
+6. Source or book: =C-c k r= → new source note, then =C-c k A= to attach the file
+7. End of the day: =C-c k t= → =j= → journal entry
+8. Weekly: =C-c k b= to regenerate boards and dashboards, then read =C-c k d=
 
 * File Locations
-| File                                  | Purpose                  |
-|---------------------------------------+--------------------------|
-| garden/inbox.org                      | shared capture dump      |
-| garden/journal.org                    | daily log                |
-| garden/reading.org                    | books + reading notes    |
-| garden/reviews.org                    | SRS + weekly reviews     |
-| garden/work/tasks.org                 | work next actions        |
-| garden/work/projects.org              | work project index       |
-| garden/work/projects/*.org            | individual work projects |
-| garden/personal/tasks.org             | personal next actions    |
-| garden/personal/projects.org          | personal project index   |
-| garden/personal/projects/*.org        | individual projects      |
-| ~/.emacs.d/init.el                    | emacs config             |
-| ~/.emacs.d/cheatsheet.org             | this file                |
+| File                                        | Purpose                              |
+|---------------------------------------------+--------------------------------------|
+| ~/knowledge/inbox.org                       | unsorted capture                     |
+| ~/knowledge/notes/projects/<name>.org       | one file per project, with its board |
+| ~/knowledge/notes/learning/<name>.org       | one file per learning subject        |
+| ~/knowledge/notes/knowledge/<area>/<note>.org | permanent notes                    |
+| ~/knowledge/notes/references/<source>.org   | one file per source                  |
+| ~/knowledge/notes/references/tracking.org   | reading queue                        |
+| ~/knowledge/notes/daily/journal.org         | journal date tree                    |
+| ~/knowledge/dashboards/{home,projects,learning}.org | generated dashboards       |
+| ~/knowledge/attachments/<id>/               | org-attach store for books, PDFs     |
+| ~/knowledge/templates/                      | skeletons, not documents             |
+| ~/.emacs.d/init.el                          | emacs config (loads lisp/*.el at end)|
+| ~/.emacs.d/lisp/*.el                        | the knowledge-system modules         |
+| ~/.emacs.d/ORG-PKM.org                      | how it all fits together             |
+| ~/.emacs.d/org-roam.db                      | rebuildable index, never authoritative |
+
+~/Documents/garden/ is the older Markdown note base. It is untouched by all of
+this and nothing here reads it.

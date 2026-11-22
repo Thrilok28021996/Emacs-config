@@ -75,6 +75,29 @@
                      (string-match-p "#\\+BEGIN: kanban" text))
     (my/stage1-check "created file has its Tasks heading"
                      (string-match-p "^\\* Tasks$" text))))
+;;; 2b. Learning subjects use the same code path but deserve their own check
+
+(defvar my/stage1-subject
+  (expand-file-name "zz-stage1-subject.org" (my/knowledge-subdir "notes/learning")))
+
+(when (file-exists-p my/stage1-subject) (delete-file my/stage1-subject))
+(my/new-learning-subject "zz stage1 subject")
+(my/stage1-check "my/new-learning-subject creates notes/learning/<slug>.org"
+                 (file-exists-p my/stage1-subject))
+(with-temp-buffer
+  (insert-file-contents my/stage1-subject)
+  (my/stage1-check "the subject file mirrors the workflow and has a board"
+                   (and (string-match-p (regexp-quote (my/knowledge-todo-line)) (buffer-string))
+                        (string-match-p "#\\+BEGIN: kanban" (buffer-string))
+                        (string-match-p "^\\* Board$" (buffer-string)))))
+(my/stage1-check "a new subject is an agenda file"
+                 (org-agenda-file-p my/stage1-subject))
+(when (get-file-buffer my/stage1-subject)
+  (with-current-buffer (get-file-buffer my/stage1-subject)
+    (set-buffer-modified-p nil)
+    (kill-buffer)))
+(when (file-exists-p my/stage1-subject) (delete-file my/stage1-subject))
+
 (my/stage1-check "my/new-project refuses to overwrite"
                  (condition-case nil
                      (progn (my/new-project "zz stage1 fixture") nil)

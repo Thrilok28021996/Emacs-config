@@ -303,28 +303,12 @@
       org-archive-location "%s_archive::* Archived")
 (org-clock-persistence-insinuate)
 
-(defun my/capture-inbox () (interactive) (org-capture nil "i"))
-(defun my/capture-journal () (interactive) (org-capture nil "j"))
-(defun my/capture-reading () (interactive) (org-capture nil "r"))
-(defun my/capture-work-task () (interactive) (org-capture nil "w"))
-(defun my/capture-personal-task () (interactive) (org-capture nil "t"))
-(setq org-capture-templates
-      `(("i" "Inbox" entry (file+headline ,(expand-file-name "inbox.org" my/garden-dir) "Tasks")
-         "* TODO %?\n  %U\n  %a")
-        ("j" "Journal" entry (file+olp+datetree ,(expand-file-name "journal.org" my/garden-dir))
-         "* %U\n%?" :empty-lines 1)
-        ("r" "Reading" entry (file+headline ,(expand-file-name "reading.org" my/garden-dir) "Reading")
-         "* %^{Book/Resource}\n:PROPERTIES:\n:CREATED: %U\n:END:\n%?" :empty-lines 1)
-        ("w" "Work task" entry (file+headline ,(expand-file-name "tasks.org" my/work-dir) "Tasks")
-         "* TODO %?\n  %U\n  %a" :empty-lines 1)
-        ("t" "Personal task" entry (file+headline ,(expand-file-name "tasks.org" my/personal-dir) "Tasks")
-         "* TODO %?\n  %U\n  %a" :empty-lines 1)))
+;; The garden-era capture wrappers that lived here were removed in stage 6.
+;; They pointed at templates ("i" "j" "r" "w" "t") and directories
+;; (~/Documents/garden/work/) that no longer exist; "C-c n w" called a template
+;; that had been deleted, so pressing it signalled an error.  Capture is now
+;; C-c k i (inbox) and C-c k t (template menu), defined in lisp/my-org-pkm.el.
 
-(global-set-key (kbd "C-c n i") #'my/capture-inbox)
-(global-set-key (kbd "C-c n j") #'my/capture-journal)
-(global-set-key (kbd "C-c n r") #'my/capture-reading)
-(global-set-key (kbd "C-c n w") #'my/capture-work-task)
-(global-set-key (kbd "C-c n t") #'my/capture-personal-task)
 (global-set-key (kbd "C-c o a") #'org-agenda)
 (global-set-key (kbd "C-c o c") #'org-capture)
 (global-set-key (kbd "C-c o I") #'org-clock-in)

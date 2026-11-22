@@ -15,7 +15,10 @@ stale.
 | =init.el=                   | Unchanged except one load block at the very end        |
 | =lisp/my-org-pkm.el=        | Directories, workflow, discovery, capture, file creation |
 | =lisp/my-help.el=           | =C-c ?= binding listing and the doc opener             |
-| =lisp/tests/stage1-check.el= | Headless acceptance checks                            |
+| =lisp/my-reading.el=        | EPUB, attachments, reading status                     |
+| =lisp/my-dashboards.el=     | Generated dashboard blocks and agenda views           |
+| =lisp/tests/stageN-check.el= | Headless acceptance checks, 128 in total             |
+| =VERIFICATION.org=          | The twelve acceptance criteria and their evidence     |
 | =emacs-sync.sh=             | Gate script: =check=, =test=, =verify=, =build=, =benchmark=, =doctor= |
 
 Nothing in =lisp/= is byte-compiled at startup and nothing is loaded before
@@ -331,6 +334,82 @@ block uses the =:files= parameter:
 =:files= takes a function name or a variable holding a list; without it the
 block queries the agenda files as before.
 
+* Reliability
+
+** Git
+
+Two repositories, both local-only for the knowledge tree:
+
+| Repository        | Remote            | Contents                          |
+|-------------------+-------------------+-----------------------------------|
+| =~/.emacs.d=      | your Emacs-config | configuration, modules, docs      |
+| =~/knowledge=     | none              | Org files, templates, attachments |
+
+Nothing is pushed from =~/knowledge=. There is no remote on it.
+
+** What is committed and what is not
+
+Committed: every =.org= file, =templates/=, =dashboards/= (including the
+generated tables, so a fresh clone reads sensibly), =attachments/=, and
+=bin/backup.sh=.
+
+Ignored, because it is rebuildable or machine-specific: =org-roam.db=,
+=.org-id-locations=, =.DS_Store=, lock files, Emacs autosaves.
+
+The ignore rules are tested from both directions in =stage6-check.el=: indexes
+must be ignored, notes/attachments/templates must not be.
+
+** Backup
+
+#+begin_src sh
+  ~/knowledge/bin/backup.sh
+#+end_src
+
+It commits anything pending, then archives the *whole* repository — including
+=.git= — to =~/knowledge-backups/knowledge-YYYY-MM-DD.tar.gz=. The archive is
+the fallback for what git cannot fix: a lost directory or a corrupted =git=. The
+script is tested by extracting its own output and comparing every tracked file
+byte for byte.
+
+Restore:
+
+#+begin_src sh
+  mkdir -p ~ && tar -xzf ~/knowledge-backups/knowledge-2026-11-22.tar.gz -C ~
+#+end_src
+
+Restore one file: =git log --oneline -- path= then =git checkout <commit> -- path=.
+
+** Dead ends that were removed
+
+- The garden-era capture wrappers in =init.el= (=C-c n i/j/r/w/t=) pointed at
+  templates and directories that no longer existed. =C-c n w= called a deleted
+  template and signalled an error. Removed; capture is =C-c k i= / =C-c k t=.
+- The garden-era org-roam idle timer re-set =org-roam-directory= to
+  =~/Documents/garden/= five seconds after startup. Removed.
+- =C-c ? d= could not exist: =C-c ?= is a full command, so it cannot also be a
+  prefix. The document moved to =C-c k H=.
+
+** Performance
+
+Measured with 40 fixture projects, 200 tasks, boards included. These are gates,
+not observations:
+
+| What                            | Measured | Gate   |
+|---------------------------------+----------+--------|
+| Batch load of the whole config   | 0.162 s  | 0.25 s |
+| Agenda build over 40 projects    | 0.56 s   | 5 s    |
+| Regenerate every board/dashboard | 0.26 s   | 15 s   |
+| Cold org-roam re-index           | 0.07 s   | 20 s   |
+
+Startup is spent as: the built-in coding config, then ~20 ms for the five Org
+modules. org-ql, org-super-agenda and nov are loaded on first use, not at
+startup.
+
+** Reporting
+
+=VERIFICATION.org= maps all twelve acceptance criteria to the checks that prove
+them, and states plainly which two were not implemented and why.
+
 * Capture templates
 
 | Key | Target                                        |
@@ -369,8 +448,8 @@ refusal to overwrite, agenda discovery without config edits, capture target
 resolution, and the generated help buffer. It creates a fixture project and
 deletes it again.
 
-Last measured: =CONFIG_OK=, 98/98 checks (22 stage 1, 14 stage 2,
-21 stage 3, 21 stage 4, 20 stage 5), =load-seconds= 0.150.
+Last measured: =CONFIG_OK=, 128 checks, 0 failures, =load-seconds= 0.162.
+The per-stage breakdown is in =VERIFICATION.org=.
 
 * Terminal limits
 
@@ -388,5 +467,5 @@ repetition (=org-fc=) are out of scope by decision, not by accident.
 | 3 Org-roam                     | Done, verified                  |
 | 4 Dashboards                   | Done, verified                  |
 | 5 Reading (EPUB)               | Done, verified                  |
-| 6 Reliability / docs           | Not started                     |
+| 6 Reliability / docs           | Done, verified                  |
 | Flashcards, PDF annotation     | Out of scope                    |

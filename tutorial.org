@@ -2,8 +2,21 @@
 #+AUTHOR: Thrilok
 #+STARTUP: overview
 
+* Read this first (updated 2026-11-22)
+
+This tutorial teaches Org against the *previous* configuration. Lessons 0–2 are
+mostly still true; Lessons 3 and 4 taught a workflow and a dashboard that no
+longer exist, so they have been rewritten. Anything else that mentions
+=~/Documents/garden/=, consult, org-modern, olivetti or a two-sequence TODO
+setup is stale: Org now lives in =~/knowledge/=, the config is built-in only,
+and there is one eight-state workflow.
+
+|=C-c ?=| lists every key this configuration actually defines. =ORG-PKM.org=
+(=C-c k H=) is the architecture document, and =~/knowledge/README.org= describes
+the data.
+
 This is a *hands-on* learning path for the Org setup in your =init.el=. Every
-lesson uses your real keybindings and your real files (=~/Documents/garden/=).
+lesson uses your real keybindings and your real files (=~/knowledge/=).
 Do the "▶ Do this now" steps in order — the point is muscle memory, not reading.
 
 Pair this with =cheatsheet.org= (=C-x C-f ~/.emacs.d/cheatsheet.org=): tutorial
@@ -29,7 +42,7 @@ why this config leans on plain files instead of a database-backed app — except
 for org-roam, which *does* keep a SQLite cache (see Lesson 7) purely as a fast
 index over the same plain files, never as the source of truth.
 
-*Your file layout* (all under =~/Documents/garden/=, set by =org-directory=):
+*Your file layout* (all under =~/knowledge/=, set by =org-directory=):
 | File                  | What lives here                       |
 |-----------------------+----------------------------------------|
 | inbox.org             | quick capture dump — sort later       |
@@ -53,8 +66,9 @@ restart — no config edit needed. Restart is required because the glob runs
 once at startup, not on a timer.
 
 ▶ Do this now: =C-c o r= (roam find) — type any word, hit RET on "create". You
-just made your first node. =C-x C-f ~/Documents/garden/= to see your files.
-Then =C-x C-f ~/Documents/garden/work/projects/= and note it's currently empty
+just made your first node. =C-x C-f ~/knowledge/= to see your files.
+Then =C-x C-f ~/knowledge/notes/projects/= and note it's empty until you create
+a project with =C-c k p=.
 (or not) — that's the directory the glob watches.
 
 * Lesson 1 — Structure: headings, folding, lists, links (20 min)
@@ -126,25 +140,35 @@ A heading becomes a task when it starts with a TODO keyword. =C-c C-t= cycles
 forward through the sequence; =S-right/S-left= on the keyword cycles either
 direction without the menu.
 
-*Your two TODO sequences, exactly as configured:*
-- General: =TODO(t) NEXT(n) | DONE(d)=
-- Learning/SRS: =NEW(N) LEARNING(l) REVIEW(r) APPLY(a) | MASTERED(m) DROPPED(x)=
+*Your workflow, exactly as configured:* =BACKLOG(b) TODO(t) NEXT(n) DOING(o)
+WAITING(w) REVIEW(r) | DONE(d) CANCELLED(c)=
 
-The letter in parens after each keyword is a *fast-select* key: with cursor on
-a heading, =C-c C-t= then the letter jumps straight to that state instead of
-cycling. The =|= splits "in progress" states from "done" states — everything
-after it counts as complete for statistics and archiving purposes.
+The letter in parens is a *fast-select* key: with the cursor on a heading,
+=C-c C-t= then that letter jumps straight to that state instead of cycling. The
+=|= splits open states from terminal ones — everything after it counts as
+complete for statistics and archiving.
 
-*Why two sequences instead of one:* NEXT/DONE models one-shot work items.
-NEW→MASTERED models something you're gradually absorbing, with REVIEW/APPLY as
-checkpoints before you consider it internalized. Using the wrong sequence for
-the wrong kind of item is the most common way this system gets confusing —
-tasks that need "NEXT", not "REVIEW".
+What the states are for:
 
-*Custom colors:* each learning-sequence keyword has its own face color set via
-=org-todo-keyword-faces=, so NEW/LEARNING/REVIEW/APPLY/MASTERED/DROPPED are
-visually distinct from each other and from plain TODO/NEXT/DONE at a glance in
-both buffers and the agenda.
+- =BACKLOG= — captured, not committed to. Deliberately absent from the
+  dashboards, so a backlog item cannot nag you.
+- =TODO= — committed, unscheduled.
+- =NEXT= — the next physical action. A project with no NEXT is stalled, and the
+  project dashboard says so in a column.
+- =DOING= — in progress right now.
+- =WAITING= — blocked on someone else. It blocks its subtasks, because a parent
+  you cannot act on is not work you can do.
+- =REVIEW= — finished, awaiting a second look.
+- =DONE=, =CANCELLED= — terminal. Both write a =CLOSED:= timestamp into the
+  =LOGBOOK= drawer.
+
+Every knowledge file carries its own =#+TODO:= line mirroring this set. That is
+not decoration: the kanban boards derive their columns from the TODO keywords
+of the files they scan, so a file with a different set would change a board's
+shape.
+
+*Logging:* =org-log-done= is =time= and =org-log-into-drawer= is on, so marking
+something DONE adds a collapsed =:LOGBOOK:= drawer rather than inline noise.
 
 *Dependencies:* =org-enforce-todo-dependencies= is on. If a parent heading has
 child headings that aren't DONE yet, Emacs will refuse to mark the parent DONE
@@ -157,7 +181,7 @@ heading text stays clean and the history lives in a collapsed =:LOGBOOK:=
 drawer under it.
 
 ▶ Do this now: in =work/tasks.org= add =* TODO Try the agenda=, =C-c C-t= to set
-=NEXT=, then =C-c o a → a=. See it appear. Press =t= on it (in the agenda) to
+=NEXT=, then =C-c o a= → =a=. See it appear. Press =t= on it (in the agenda) to
 mark DONE, then look under the heading for the =:LOGBOOK:= drawer that
 appeared. Now make a heading with two TODO sub-children and try to mark the
 parent DONE before finishing them — watch it refuse.
@@ -178,26 +202,29 @@ heading in its real file.
 | (in agenda) r | refresh (re-scan files)          |
 | (in agenda) q | quit                             |
 
-*Your Dashboard* (=C-c o a → d=) is a custom agenda command defined in
-=init.el= — it's not built into Org. It stacks three blocks in one buffer: the
-day agenda, a =todo "NEXT"= block, and a =todo "REVIEW"= block. That's *why* it
-exists: instead of three separate agenda commands, one keystroke shows "what's
-scheduled today, what I've decided to do next, and what's due for review."
+*Your dashboards* are three custom agenda commands defined in
+=lisp/my-dashboards.el= — they are not built into Org:
 
-*Super-agenda grouping* runs automatically on every agenda view (not just the
-dashboard) — it re-buckets whatever the agenda would normally show into
-Overdue / Today / Next Actions / Learning / Work / Personal / Inbox, discarding
-the plain chronological layout Org uses by default. This is always on; there's
-no key to toggle it, because it's a global minor mode enabled at startup.
+| Key       | Dashboard | Contents                                        |
+|-----------+-----------+-------------------------------------------------|
+| =C-c k D= | Home      | today's schedule, next actions, doing, waiting, review |
+| =C-c k P= | Projects  | open project tasks grouped by state             |
+| =C-c k L= | Learning  | open learning tasks, revision, next actions     |
 
-*=org-agenda-window-setup= is =current-window=*, meaning the agenda replaces
-your current window instead of splitting — =q= returns you to what you were
-doing, it doesn't just close a second pane.
+The home view is grouped with =org-super-agenda= into Overdue / Today / Soon.
+The project and learning views are restricted to their own directories, so a
+learning task never appears on the project page. Super-agenda grouping applies
+to these views only; a plain =C-c o a= agenda is untransformed.
 
-▶ Do this now: =C-c o a → d= and read your dashboard top to bottom, noticing
-the three stacked sections. Then =C-c o a → a= for the plain day/week view and
-compare — same underlying data, different shape. Press =q=, confirm you're
-back exactly where you started.
+Static versions of the same information live in the dashboard files
+(=~/knowledge/dashboards/=), as blocks generated from org-ql queries. Refresh
+them with =C-c k b=. They exist because a terminal makes the agenda buffer hard
+to skim, and because a file can be grepped.
+
+▶ Do this now: =C-c k D= and read the home dashboard top to bottom. Then
+=C-c k P= and =C-c k L= to see the same data cut by area. Then =C-c o a= → =a=
+for the plain day/week view and compare — same underlying data, different
+shape. Press =q=, confirm you're back exactly where you started.
 
 * Lesson 5 — Capture → Refile (don't break flow) (25 min)
 *Capture* = drop a thought in 5 seconds without leaving what you're doing.
@@ -220,7 +247,7 @@ Your capture keys (each opens a template, write, then =C-c C-c= to file it):
 
 One more =C-c n= binding that isn't a capture template: =C-c n s= runs
 =my/learn-search=, a full-text ripgrep search across every file in
-=~/Documents/garden/= — the fastest way to find "where did I write about X"
+=~/knowledge/= — the fastest way to find "where did I write about X"
 when you don't remember which file or node it's in.
 
 *Anatomy of a template:* each one is a target file + a heading pattern +
@@ -313,7 +340,7 @@ yourself.
 | C-c n q | new *question* node (template)  |
 
 *How org-roam actually finds things:* every node lives as a plain heading or
-file in =~/Documents/garden/= (same directory as everything else — roam notes
+file in =~/knowledge/= (same directory as everything else — roam notes
 aren't segregated). A SQLite database (=org-roam-db-autosync-mode=) indexes
 titles, tags, and links so =C-c o r= can search instantly instead of
 re-scanning every file on every keystroke. If the graph ever looks stale after
@@ -376,7 +403,7 @@ file automatically — you never have to navigate to their file, find the
 right heading, and format the timestamp by hand.
 
 ▶ Do this now: =C-c n P=, name someone, fill =* Who= and =* Find Them=. Confirm
-the file landed in =~/Documents/garden/people/=. Then =C-c n x=, pick them,
+the node landed next to its siblings. Nodes are files, not a database;
 type what you talked about — it timestamps under =* Interactions=
 automatically. Add a =* Follow-up= checkbox and tick it with =C-c C-c= when
 done.
@@ -512,7 +539,7 @@ configured languages actually run.
 This lesson ties Lesson 4 (agenda) together with the two query/board tools
 that sit on top of the same TODO data.
 
-*Dashboard* (=C-c o a → d=, covered in Lesson 4): today's agenda + Next Actions
+*Dashboard* (=C-c k D=, covered in Lesson 4): today's agenda + Next Actions
 + items due for Review, in one screen. Your morning view.
 
 *Super-agenda* (also Lesson 4) is always on — auto-groups the agenda (Overdue /
@@ -543,7 +570,7 @@ state in the real file. Dragging a card on the board *is* cycling
 =C-c C-t= on the underlying heading; the board is a view, exactly like the
 agenda is a view.
 
-▶ Do this now: =C-c o a → d= and read your dashboard. Then =C-c o q=, type a word
+▶ Do this now: =C-c k D= and read your dashboard. Then =C-c o q=, type a word
 that's in one of your tasks, and watch it filter live. Try =M-x org-ql-search=
 with =(and (todo "NEXT") (tags "work"))= against your own tags. Finally,
 =C-c o k= in a file with a few TODO items, then =M-x org-kanban/shift= one card
@@ -1140,7 +1167,7 @@ installed, =C-c C-e= to preview.
 9. *Days 19–20:* Lesson 14. Org-ql + kanban.
 10. *Day 21:* Lessons 15–16. Transclusion, export, architecture map.
 
-The one habit that makes Phase 1 stick: *=C-c o a → d= every morning, capture
+The one habit that makes Phase 1 stick: *=C-c k D= every morning, capture
 to inbox all day, refile + archive once at night.*
 
 ** Phase 2 — Editor & dev layer (days 22–35)

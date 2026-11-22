@@ -180,7 +180,9 @@ one would test the wrong section."
                    (and text (string-match-p "Next actions" text))
                    (format "%S" (and text (substring text 0 (min 120 (length text))))))
   (my/stage4-check "home dashboard shows the NEXT task"
-                   (and text (string-match-p "wire the eval harness" text))))
+                   (and text (string-match-p "wire the eval harness" text)))
+  (my/stage4-check "home dashboard shows the deadline that is due"
+                   (and text (string-match-p "write the scoring notes" text))))
 
 (let ((text nil))
   (condition-case err (setq text (my/stage4-agenda "p"))

@@ -89,3 +89,19 @@ Compile the configuration:
 Measure startup:
 
     emacs --batch -Q --eval '(setq user-emacs-directory (expand-file-name "~/.emacs.d/"))' -l early-init.el --eval '(let ((start (float-time))) (load "init.el") (princ (format "load-seconds=%.3f\\n" (- (float-time) start))))'
+
+## Org knowledge & productivity system
+
+This configuration also runs a plain-text knowledge system in `~/knowledge/`:
+projects, learning subjects, permanent notes, Kanban boards, dashboards, reading
+and a local git history. It is loaded from `lisp/` by a single block at the end
+of `init.el`, so the coding setup above is untouched.
+
+- Architecture and keys: `ORG-PKM.org` (or `C-c k H` in Emacs)
+- Evidence for every acceptance criterion: `VERIFICATION.org`
+- Every binding this configuration defines: `C-c ?`
+- Gates: `./emacs-sync.sh verify` (check + 128 tests + benchmark)
+- Data: `~/knowledge/README.org`
+
+The old `cheatsheet.org` and `tutorial.org` describe the previous configuration
+and now open with a correction banner.
