@@ -39,6 +39,32 @@
    keymap)
   acc)
 
+(defun my/help--rows ()
+  "Return (KEY DESCRIPTION COMMAND) rows for every C-c binding, sorted."
+  (let (rows)
+    (dolist (pair (my/help--walk (current-global-map) [] nil))
+      (let ((desc (key-description (car pair))))
+        (when (string-prefix-p "C-c" desc)
+          (push (list desc
+                      (or (my/help--first-line (cdr pair)) "")
+                      (symbol-name (cdr pair)))
+                rows))))
+    (sort rows (lambda (a b) (string< (car a) (car b))))))
+
+(defun org-dblock-write:my-keys (_params)
+  "Write a table of every C-c binding in the live global map.
+Used by the reference documents so their key tables cannot go stale: refresh
+with =C-c k b=, or =C-c C-c= on the block.
+Org looks this up as `org-dblock-write:my-keys', so the name is fixed."
+  (let ((rows (my/help--rows))
+        (target (current-buffer)))
+    (with-current-buffer target
+      (insert (format "| Key | Command | What it does |\n|---+---+---|\n"))
+      (dolist (row rows)
+        (insert (format "| =%s= | =%s= | %s |\n" (car row) (nth 2 row) (nth 1 row))))
+      (insert (format "\n%d bindings under C-c. Generated from the live keymaps.\n"
+                      (length rows))))))
+
 (defun my/help--first-line (command)
   "Return the first sentence of COMMAND's docstring."
   (let ((doc (ignore-errors (documentation command))))
@@ -105,6 +131,10 @@ Generation happens on each call, so new bindings appear here immediately."
 
 (global-set-key (kbd "C-c ?") #'my/help-bindings)
 (global-set-key (kbd "C-c k H") #'my/help-open-doc)
+
+(setq my/knowledge-doc-files
+      (list (expand-file-name "cheatsheet.org" user-emacs-directory)
+            (expand-file-name "tutorial.org" user-emacs-directory)))
 
 (provide 'my-help)
 ;;; my-help.el ends here

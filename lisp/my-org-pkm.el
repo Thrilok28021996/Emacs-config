@@ -141,7 +141,10 @@ created project file appear without any configuration change."
 
 ;;;; Refreshing generated blocks
 
-(defvar my/dblock-types '("kanban" "my-tasks" "project-health" "learning-progress")
+(defvar my/knowledge-doc-files nil
+  "Documentation files whose generated blocks are refreshed with the dashboards.")
+
+(defvar my/dblock-types '("kanban" "my-tasks" "project-health" "learning-progress" "my-keys")
   "Dynamic block names this configuration knows how to regenerate.")
 
 (defun my/refresh-dblocks-in-file (file)
@@ -168,7 +171,8 @@ Returns the number of blocks updated.  Unknown block names are left alone:
   "Regenerate the boards and dashboards over the whole knowledge tree."
   (interactive)
   (let ((files (append (my/knowledge-actionable-files)
-                       (my/knowledge-files-in "dashboards")))
+                       (my/knowledge-files-in "dashboards")
+                       (seq-filter #'file-exists-p my/knowledge-doc-files)))
         (blocks 0))
     (dolist (file files)
       (cl-incf blocks (my/refresh-dblocks-in-file file)))

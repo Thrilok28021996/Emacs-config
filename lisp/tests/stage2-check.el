@@ -229,6 +229,31 @@
                           (my/stage2-column-of (my/stage2-table board)
                                                "wire the retrieval eval harness"))))
 
+;;;; 3b. The keyboard path, not just the function
+
+;; Everything above calls `org-kanban/next' directly. A user cannot: org-kanban
+;; ships no keybinding, so `my/kanban-move' plus the transient map *is* the
+;; path. Test it the way a person uses it.
+(let ((board (my/knowledge-subdir "dashboards/projects.org")))
+  (with-current-buffer (my/stage2-goto-row board "read the chunking benchmark results")
+    ;; A transient map dispatches through the *selected window's* buffer, so the
+    ;; board has to be the one on screen for the keystroke to land in the table.
+    (set-window-buffer (selected-window) (current-buffer))
+    (call-interactively #'my/kanban-move)
+    ;; The transient map is live now; one keypress continues the move.
+    (execute-kbd-macro (kbd "d")))
+  (my/stage2-check "C-c k m then a direction key moves the task"
+                   (equal "DOING"
+                          (my/stage2-state-of my/stage2-project
+                                              "read the chunking benchmark results"))
+                   (format "%S" (my/stage2-state-of my/stage2-project
+                                                    "read the chunking benchmark results")))
+  (my/kanban-refresh-file board)
+  (my/stage2-check "and the board shows it in the DOING column"
+                   (equal "DOING"
+                          (my/stage2-column-of (my/stage2-table board)
+                                               "read the chunking benchmark results"))))
+
 ;;;; 4. Width, measured rather than assumed
 
 (princ "\nBoard widths (characters, longest rendered line):\n")

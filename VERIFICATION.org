@@ -11,8 +11,8 @@ Run the whole thing yourself:
   ./emacs-sync.sh verify
 #+end_src
 
-Last full run, 2026-11-22: =CONFIG_OK=, **129 checks, 0 failures**, batch load
-**0.155 s**.
+Last full run, 2026-11-22: =CONFIG_OK=, **170 checks, 0 failures**, batch load
+**0.150 s**.
 
 The checks live in =lisp/tests/stageN-check.el= and run headless. Each one
 creates its own fixtures and removes them again.
@@ -126,13 +126,32 @@ included). These are gates now, not observations:
 
 | What                              | Measured | Gate  |
 |-----------------------------------+----------+-------|
-| Batch load of the whole config     | 0.155 s  | 0.25 s |
+| Batch load of the whole config     | 0.150 s  | 0.25 s |
 | Agenda build over 40 projects      | 0.56 s   | 5 s    |
 | Regenerate every board/dashboard   | 0.26 s   | 15 s   |
 | Cold org-roam re-index             | 0.07 s   | 20 s   |
 
 Each timing is paired with a check that the work actually happened — a fast
 number that skipped the work would be worse than a slow one.
+
+* Documentation is gated too
+
+=stage7-check.el= (39 checks) keeps the documentation honest, because a document
+that teaches a key which does not exist is worse than no document:
+
+- every =C-c= binding in the live keymaps must appear in =cheatsheet.org=, and
+  the master table there is generated from the keymaps, not typed
+- every key the cheatsheet and tutorial teach must resolve to a command, checked
+  in an Org buffer so =C-c C-c=, =C-c C-t= and friends are found in =org-mode-map=
+- both documents must cover the knowledge layer (creation, dashboards, blocks,
+  attachments, backlinks, kanban, org-ql, EPUB, backup, gates)
+- both must point at =ORG-PKM.org= and =VERIFICATION.org= instead of duplicating
+  them
+
+It immediately caught a real error: the tutorials taught =C-c C-x C-w= to move a
+kanban row, and that key is =org-cut-special=. org-kanban ships *no* keybinding
+at all — =org-kanban/shift= is only reachable through =M-x= — so =C-c k m= was
+added and is now tested through the transient map with real keystrokes.
 
 * Known limits
 

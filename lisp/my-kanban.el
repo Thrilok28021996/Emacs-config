@@ -163,6 +163,19 @@ Refuses when the file already has one, so it is safe to hit twice."
   (save-buffer)
   (message "Board added"))
 
+(defun my/kanban-move ()
+  "Move the kanban row at point, then read one more key for the direction.
+org-kanban ships no binding for `org-kanban/shift' at all — it is only reachable
+through M-x — so this is the only keystroke path to moving a task.
+
+After this, the transient map accepts:
+  a / h  back one state      d / l  forward one state
+  w / k  row up              s / j  row down"
+  (interactive)
+  (unless (derived-mode-p 'org-mode)
+    (user-error "Put point on a kanban row in an Org buffer"))
+  (org-kanban/shift))
+
 (defun my/kanban-open-overview ()
   "Open the dashboard holding the consolidated project board."
   (interactive)
@@ -173,6 +186,7 @@ Refuses when the file already has one, so it is safe to hit twice."
   (interactive)
   (find-file (my/knowledge-subdir "dashboards/learning.org")))
 
+(global-set-key (kbd "C-c k m") #'my/kanban-move)
 (global-set-key (kbd "C-c k b") #'my/kanban-update-all)
 (global-set-key (kbd "C-c k B") #'my/kanban-open-overview)
 

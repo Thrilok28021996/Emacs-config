@@ -36,6 +36,10 @@
 (defvar my/stage6-count 40
   "How many fixture projects the performance run creates.")
 
+(defvar my/stage6-status-before nil
+  "git status at the start of the run.  The check compares against this rather
+than requiring a clean tree: uncommitted work of yours is not a test failure.")
+
 ;;;; 1. Ignore rules
 
 (defun my/stage6-git (&rest args)
@@ -44,6 +48,8 @@
     (let ((default-directory (file-name-as-directory (directory-file-name my/knowledge-dir))))
       (apply #'call-process "git" nil t nil args))
     (string-trim (buffer-string))))
+
+(setq my/stage6-status-before (my/stage6-git "status" "--porcelain"))
 
 (my/stage6-check "org-roam.db is ignored"
                  (= 0 (call-process "git" nil nil nil "-C" my/knowledge-dir
@@ -246,8 +252,10 @@
 (when (file-directory-p my/stage6-backup-dir) (delete-directory my/stage6-backup-dir t))
 (when (file-directory-p my/stage6-sandbox) (delete-directory my/stage6-sandbox t))
 (when (file-directory-p my/stage6-restore-dir) (delete-directory my/stage6-restore-dir t))
-(my/stage6-check "the knowledge tree is clean after the run"
-                 (equal "" (my/stage6-git "status" "--porcelain")))
+(my/stage6-check "the run added nothing to the knowledge tree"
+                 (equal my/stage6-status-before (my/stage6-git "status" "--porcelain"))
+                 (let ((after (my/stage6-git "status" "--porcelain")))
+                   (format "before %S after %S" my/stage6-status-before after)))
 
 (princ (format "\n%d checks, %d failures\n" my/stage6-checks my/stage6-failures))
 (when (> my/stage6-failures 0)
