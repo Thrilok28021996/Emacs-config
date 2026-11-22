@@ -270,6 +270,67 @@ Generated tables are narrow because they hold numbers, not links:
 120-column terminal. The task lists hold one link per line, so a long task title
 is a long line — same trade-off as the kanban boards.
 
+* Reading
+
+Two files, two jobs:
+
+| File                                  | Job                                    |
+|---------------------------------------+----------------------------------------|
+| =notes/references/<slug>.org=          | one source: summary, critique, quotes, the attached file |
+| =notes/references/tracking.org=        | the queue: unread, reading, finished    |
+
+** EPUB
+
+=nov.el= (MELPA, 20251213.1501) renders an EPUB as text through =shr=, which
+works in a terminal. Open any attached =.epub= and it renders; =n=/=p= move
+between documents, =TAB= follows links inside the book.
+
+Two things that had to be dealt with rather than assumed:
+
+1. Emacs maps =.epub= to =archive-mode= by itself, so the =nov-mode= entry has
+   to be *prepended* to `auto-mode-alist', not merely present.
+2. Only nov's autoloads are loaded at startup. The reader loads when you first
+   open a book, not when Emacs starts.
+
+PDF is out of scope by decision, not by accident: a terminal can display no
+pages, and without pdf-tools there is no text layer either. =doc-view= would
+render nothing.
+
+Annotations are **not** a feature of nov.el. There is no highlight store, no
+annotation list, nothing to sync. Notes about a book are taken in Org and
+linked to the source note; pretending otherwise would have meant inventing a
+subsystem.
+
+** Attachments
+
+=C-c k A= copies a file into =~/knowledge/attachments/<id>/= through
+=`org-attach'=, so the book sits beside its note and neither is duplicated.
+=C-c k o= opens the first attachment of the current note.
+
+** Tracking
+
+| Key       | Command                    |
+|-----------+----------------------------|
+| =C-c k S= | Set STATUS on the entry at point |
+| =C-c k R= | Open the reading tracker          |
+| =C-c k A= | Attach a file to the current note |
+| =C-c k o= | Open the first attachment         |
+
+=STATUS= takes =unread=, =reading=, =done= or =abandoned=. Setting it records
+=STATUS_CHANGED=, and =done= also records =FINISHED=.
+
+The home dashboard's "Reading in flight" block is an org-ql query over the
+reference directory. Because the reference files are not agenda files, that
+block uses the =:files= parameter:
+
+#+begin_src org
+  #+BEGIN: my-tasks :query (not (done)) :files my/reference-files
+  #+END:
+#+end_src
+
+=:files= takes a function name or a variable holding a list; without it the
+block queries the agenda files as before.
+
 * Capture templates
 
 | Key | Target                                        |
@@ -308,8 +369,8 @@ refusal to overwrite, agenda discovery without config edits, capture target
 resolution, and the generated help buffer. It creates a fixture project and
 deletes it again.
 
-Last measured: =CONFIG_OK=, 78/78 checks (22 stage 1, 14 stage 2,
-21 stage 3, 21 stage 4), =load-seconds= 0.138.
+Last measured: =CONFIG_OK=, 98/98 checks (22 stage 1, 14 stage 2,
+21 stage 3, 21 stage 4, 20 stage 5), =load-seconds= 0.150.
 
 * Terminal limits
 
@@ -326,6 +387,6 @@ repetition (=org-fc=) are out of scope by decision, not by accident.
 | 2 Kanban                       | Done, verified                  |
 | 3 Org-roam                     | Done, verified                  |
 | 4 Dashboards                   | Done, verified                  |
-| 5 Reading (EPUB)               | Not started                     |
+| 5 Reading (EPUB)               | Done, verified                  |
 | 6 Reliability / docs           | Not started                     |
 | Flashcards, PDF annotation     | Out of scope                    |

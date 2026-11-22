@@ -39,10 +39,24 @@
 (defvar my/dashboard-buffer-name "*My Dashboard*"
   "Buffer used when a dashboard is opened on its own.")
 
-(defun my/dashboard--query (query)
-  "Return markers for QUERY over the knowledge agenda files."
+(defun my/dashboard--files (spec)
+  "Resolve a block's :files SPEC to a list of files.
+SPEC is nil (use the agenda files), a symbol naming a function, or a symbol
+holding a list."
+  (cond ((null spec) (org-agenda-files))
+        ((and (symbolp spec) (fboundp spec)) (funcall spec))
+        ((and (symbolp spec) (boundp spec)) (symbol-value spec))
+        ((listp spec) spec)
+        (t (org-agenda-files))))
+
+(defun my/dashboard--query (query &optional files)
+  "Return markers for QUERY over FILES, defaulting to the agenda files."
   (my/dashboard--ensure-ql)
-  (org-ql-select (org-agenda-files) query :action '(point-marker)))
+  (org-ql-select (my/dashboard--files files) query :action '(point-marker)))
+
+(defun my/reference-files ()
+  "Every Org file under notes/references, for the reading blocks."
+  (my/knowledge-files-in "notes/references"))
 
 (defun my/dashboard--state-counts (file)
   "Return an alist of (STATE . COUNT) for the open and done items in FILE."
@@ -104,12 +118,12 @@ of alignment when the shape changes."
     (insert "| " (mapconcat #'identity row " | ") " |\n"))
   (org-table-align))
 
-(defun my/dashboard--query-lines (query base-dir)
-  "Return formatted lines for QUERY, with links relative to BASE-DIR.
+(defun my/dashboard--query-lines (query base-dir files)
+  "Return formatted lines for QUERY over FILES, links relative to BASE-DIR.
 `org-ql-select' visits the files it searches, so nothing here may assume it is
 still running in the dashboard buffer."
   (let (lines)
-    (dolist (marker (my/dashboard--query query))
+    (dolist (marker (my/dashboard--query query files))
       (org-with-point-at marker
         (let ((heading (org-get-heading t t t t))
               (todo (or (org-get-todo-state) ""))
@@ -134,7 +148,8 @@ and two labels for one list is how dashboards start to drift."
   (let* ((target (current-buffer))
          (base (file-name-directory (or (buffer-file-name) default-directory)))
          (query (plist-get params :query))
-         (lines (when query (my/dashboard--query-lines query base)))
+         (files (plist-get params :files))
+         (lines (when query (my/dashboard--query-lines query base files)))
          (text (if lines
                    (concat (mapconcat #'identity lines "\n") "\n\n")
                  (concat (or (plist-get params :empty) "Nothing here.") "\n\n"))))

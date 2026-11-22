@@ -34,6 +34,25 @@ garden at `~/Documents/garden` stays untouched and is not migrated.
 Kanban, org-roam, dashboard content, `nov.el`, `org-fc`, git remote,
 migration from garden.
 
+## Stage 5 deliverables
+
+- `lisp/my-reading.el` — nov.el for EPUB (autoloads only at startup),
+  `org-attach` into `~/knowledge/attachments/`, STATUS/FINISHED properties,
+  reading queue, keys `C-c k A/o/R/S`.
+- `lisp/tests/make-test-epub.sh` — builds a real EPUB 2 fixture, so the reader
+  is tested against a file, not a mock.
+- `lisp/tests/stage5-check.el` — 20 checks: nov-mode activation, metadata,
+  spine, rendered chapter text, attachment placement, status transitions,
+  queue entry, and the dashboard reading block.
+- `my-tasks` gained a `:files` parameter so a block can query directories that
+  are not agenda files.
+
+Out of scope by decision: PDF, pdf-tools, org-noter. nov.el has no annotation
+feature at all, so "annotations attached to the book" is not implementable and
+is not faked.
+
+Measured: startup 0.150s (0.164s with nov loaded eagerly).
+
 ## Stage 4 deliverables
 
 - `lisp/my-dashboards.el` — three generated block types (`my-tasks`,

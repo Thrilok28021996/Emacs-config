@@ -31,7 +31,8 @@ case "${1:-check}" in
       -l "$D/lisp/tests/stage1-check.el" \
       -l "$D/lisp/tests/stage2-check.el" \
       -l "$D/lisp/tests/stage3-check.el" \
-      -l "$D/lisp/tests/stage4-check.el"
+      -l "$D/lisp/tests/stage4-check.el" \
+      -l "$D/lisp/tests/stage5-check.el"
     ;;
   verify)
     "$0" check && "$0" test && "$0" benchmark
