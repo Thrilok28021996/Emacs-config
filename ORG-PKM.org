@@ -1,0 +1,138 @@
+#+TITLE: Org knowledge system
+#+STARTUP: overview
+
+How the Org knowledge system is wired into this Emacs configuration. The data
+lives in =~/knowledge/=; this file is about the Emacs side.
+
+Open it any time with =C-c k H=. For every key this configuration defines,
+press =C-c ?= — that buffer is generated from the live keymaps, so it cannot go
+stale.
+
+* Files that do the work
+
+| File                        | Responsibility                                        |
+|-----------------------------+-------------------------------------------------------|
+| =init.el=                   | Unchanged except one load block at the very end        |
+| =lisp/my-org-pkm.el=        | Directories, workflow, discovery, capture, file creation |
+| =lisp/my-help.el=           | =C-c ?= binding listing and the doc opener             |
+| =lisp/tests/stage1-check.el= | Headless acceptance checks                            |
+| =emacs-sync.sh=             | Gate script: =check=, =test=, =verify=, =build=, =benchmark=, =doctor= |
+
+Nothing in =lisp/= is byte-compiled at startup and nothing is loaded before
+=init.el= finishes, so the coding setup's startup path is untouched.
+
+* Why the configuration is built this way
+
+The configuration is deliberately built-in-only: no =use-package=, no
+=package-initialize=, no completion framework. Startup speed is the reason.
+The Org layer costs two small =require= calls and nothing else, measured below.
+
+Two consequences worth knowing:
+
+1. ~org-agenda-files~ points at *directories*, not files. Org expands
+   directories itself, so a new project file appears in the agenda with no
+   configuration edit. That is the whole trick behind "discover automatically".
+2. Every knowledge file carries its own =#+TODO:= line mirroring the global
+   workflow. Kanban columns are derived from the TODO keywords found in the
+   files being scanned, so a file that forgot a state would silently change the
+   board's shape. Stage 2 relies on this.
+
+* The workflow
+
+=BACKLOG= → =TODO= → =NEXT= → =DOING= → =WAITING= → =REVIEW= → =DONE=, with
+=CANCELLED= as a second terminal state.
+
+- =BACKLOG= — captured, not committed to. Shows up in no dashboard.
+- =TODO= — committed, unscheduled.
+- =NEXT= — the next physical action.
+- =DOING= — in progress now.
+- =WAITING= — blocked on someone else. It blocks its subtasks, because a
+  parent you cannot act on is not work you can do.
+- =REVIEW= — finished, awaiting a second look.
+- =DONE=, =CANCELLED= — terminal. Completing either writes a =CLOSED:= line
+  into the =LOGBOOK= drawer.
+
+Recurring items use plain Org repeaters (=+1w=, =.+1d=, =++1m=). No habit
+graphs: they are agenda noise in a terminal.
+
+Dependencies are parent/child plus the =ORDERED= property. =org-depend= is not
+used: it was part of Org's contrib directory, which Emacs 31 no longer ships.
+
+* Keys
+
+| Key       | Command                        |
+|-----------+--------------------------------|
+| =C-c k p= | New project file               |
+| =C-c k l= | New learning subject file      |
+| =C-c k n= | New permanent knowledge note   |
+| =C-c k r= | New source/reference note      |
+| =C-c k i= | Capture an inbox item          |
+| =C-c k t= | Pick any capture template      |
+| =C-c k a= | Agenda over the knowledge tree |
+| =C-c k d= | Home dashboard                 |
+| =C-c k H= | This document                  |
+| =C-c ?=   | Every =C-c= binding, generated live |
+
+Inside a kanban table (Stage 2) the arrow keys are vim-style: =a= / =h= move a
+row to the previous state, =d= / =l= to the next, =w= / =k= and =s= / =j=
+reorder rows.
+
+* Capture templates
+
+| Key | Target                                        |
+|-----+-----------------------------------------------|
+| =i= | =inbox.org= under *Tasks*                     |
+| =t= | Prompts for a project, files under *Tasks*    |
+| =l= | Prompts for a subject, files under *Tasks*    |
+| =j= | Weekly date tree in =notes/daily/journal.org= |
+| =n= | Someday idea under =inbox.org= *Ideas*        |
+| =r= | Reading tracker in =notes/references/=        |
+
+The journal uses one file with a date tree rather than one file per day: it
+keeps =org-agenda-files= short and makes a week visible in one screen.
+
+* Templates and file creation
+
+=my/new-project= and friends read a skeleton from =~/knowledge/templates/=,
+substitute the name and today's date, refuse to overwrite an existing file, and
+open the result. There is no example project: create your own with =C-c k p=.
+
+* IDs
+
+Org has no file-level ID without a heading, so file IDs are deferred to Stage 3,
+where Org-roam assigns them on the files it indexes. Until then links use
+=headline= search, which =org-id-link-to-org-use-id= still upgrades to an =ID=
+when you create a link interactively inside a heading that has one.
+
+* Gates
+
+#+begin_src sh
+  cd ~/.emacs.d
+  ./emacs-sync.sh verify     # check + test + benchmark
+#+end_src
+
+=test= runs =lisp/tests/stage1-check.el=: workflow order, file creation,
+refusal to overwrite, agenda discovery without config edits, capture target
+resolution, and the generated help buffer. It creates a fixture project and
+deletes it again.
+
+Last measured: =CONFIG_OK=, 22/22 checks, =load-seconds= 0.120.
+
+* Terminal limits
+
+A terminal cannot display images, so PDF pages, inline images and =org-latex-preview=
+are unavailable. =org-startup-with-latex-preview= is set to =nil= here to keep
+Org from even trying. PDF annotation (=pdf-tools=, =org-noter=) and spaced
+repetition (=org-fc=) are out of scope by decision, not by accident.
+
+* Stage status
+
+| Stage                          | Status                          |
+|--------------------------------+---------------------------------|
+| 1 Foundation                   | Done, verified                  |
+| 2 Kanban                       | Not started                     |
+| 3 Org-roam                     | Not started                     |
+| 4 Dashboards                   | Not started                     |
+| 5 Reading (EPUB)               | Not started                     |
+| 6 Reliability / docs           | Not started                     |
+| Flashcards, PDF annotation     | Out of scope                    |

@@ -392,4 +392,14 @@
               js-indent-level 2
               css-indent-offset 2)
 
+;;; Org knowledge system (see lisp/ and ORG-PKM.org)
+;; Loaded last so it can override the garden-oriented Org settings above.
+;; Each module is small; together they add a few milliseconds of load time.
+
+(let ((my/lisp-dir (expand-file-name "lisp/" user-emacs-directory)))
+  (when (file-directory-p my/lisp-dir)
+    (add-to-list 'load-path my/lisp-dir)
+    (dolist (module '(my-org-pkm my-help))
+      (require module nil t))))
+
 ;;; init.el ends here

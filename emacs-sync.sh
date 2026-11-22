@@ -21,6 +21,18 @@ case "${1:-check}" in
       -l "$D/early-init.el" \
       --eval "(byte-compile-file \"$D/init.el\")"
     ;;
+  test)
+    # Headless acceptance checks for the Org knowledge system.
+    # Exit status is the harness's, so a failing check fails this script.
+    "$EMACS_BIN" --batch -Q \
+      --eval "(setq user-emacs-directory \"$D/\")" \
+      -l "$D/early-init.el" \
+      -l "$D/init.el" \
+      -l "$D/lisp/tests/stage1-check.el"
+    ;;
+  verify)
+    "$0" check && "$0" test && "$0" benchmark
+    ;;
   benchmark)
     "$EMACS_BIN" --batch -Q \
       --eval "(setq user-emacs-directory \"$D/\")" \
@@ -38,7 +50,7 @@ case "${1:-check}" in
     done
     ;;
   *)
-    printf 'Usage: %s [check|build|benchmark|doctor]\n' "$0"
+    printf 'Usage: %s [check|test|verify|build|benchmark|doctor]\n' "$0"
     exit 2
     ;;
 esac
