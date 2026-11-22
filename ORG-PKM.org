@@ -70,12 +70,83 @@ used: it was part of Org's contrib directory, which Emacs 31 no longer ships.
 | =C-c k t= | Pick any capture template      |
 | =C-c k a= | Agenda over the knowledge tree |
 | =C-c k d= | Home dashboard                 |
+| =C-c k b= | Regenerate every kanban board  |
+| =C-c k B= | Consolidated project board     |
 | =C-c k H= | This document                  |
 | =C-c ?=   | Every =C-c= binding, generated live |
 
-Inside a kanban table (Stage 2) the arrow keys are vim-style: =a= / =h= move a
-row to the previous state, =d= / =l= to the next, =w= / =k= and =s= / =j=
-reorder rows.
+* Kanban
+
+Every project and learning file ends with a =* Board= section holding a
+dynamic block. The consolidated boards live in =dashboards/projects.org= and
+=dashboards/learning.org=.
+
+Refresh a board with =C-c C-c= on the block, one file with
+=M-x my/kanban-refresh-buffer=, all of them with =C-c k b=.
+
+** Moving tasks
+
+Put point on a row and press =C-c C-x C-w= (=org-kanban/shift=), then:
+
+| Key       | Effect                          |
+|-----------+---------------------------------|
+| =a= / =h= | move the task back one state     |
+| =d= / =l= | move the task forward one state  |
+| =w= / =k= | move the row up                  |
+| =s= / =j= | move the row down                |
+
+The row is a link, not a copy. Moving it runs =org-todo= on the heading in the
+task's own file and saves that file, so the board and the file cannot disagree.
+
+** Verified behaviour
+
+- Columns come from the =#+TODO:= line of the files in scope, in workflow
+  order, so every board shows BACKLOG … DONE left to right.
+- =CANCELLED= is dropped with =:skip-columns ("CANCELLED")=. The strings
+  matter: org-kanban compares columns with =-difference= against strings.
+- The consolidated board uses =:scope (~/knowledge/notes/projects
+  ~/knowledge/notes/learning)=. Org expands those directories itself, so a new
+  project file shows up on the next refresh with no edit here. The parameters
+  must be *symbols*, not strings, and a directory scope is not recursive.
+- An empty tree renders an empty board, because there are no TODO keywords to
+  derive columns from. That is org-kanban's behaviour, not a bug here.
+
+** Width, measured honestly
+
+A seven-column board is wide. On a fixture with ordinary task titles the
+project board rendered at **305 characters** and the consolidated board at
+**324 characters** per line. A terminal at 80, 120 or even 200 columns cannot
+show that.
+
+The cause is that each cell holds a full Org link
+(=[[file:path::*heading][heading]]=), so the raw table is as wide as the link
+plus the title, and =:layout= only truncates the visible description, not the
+link.
+
+When you want to narrow a board, the knob is one line. Put it on the
+=BEGIN: kanban= line:
+
+#+begin_src org
+  #+BEGIN: kanban :range (TODO . REVIEW) :skip-columns ("CANCELLED")
+#+end_src
+
+That drops BACKLOG and DONE from the table while keeping them as real states in
+the file. =:compressed t= stacks sparse columns into fewer rows, which trades
+width for height.
+
+** A bug that was found and fixed
+
+org-kanban's =org-kanban//find= resolves the row under point with
+=org-find-exact-headline-in-buffer=, called on the task file *without resetting
+point in it*. Depending on where point last sat in that buffer, the call can
+return a **neighbouring heading**. The move then lands on the wrong task,
+silently, in the wrong place. It was caught here by a check asserting that the
+other tasks did not move.
+
+=lisp/my-kanban.el= overrides =org-kanban//find= with a resolver that walks the
+file from the top, compares heading text, and returns =nil= rather than guess.
+If a row cannot be resolved, the move refuses instead of corrupting data.
+
 
 * Capture templates
 
@@ -116,7 +187,7 @@ refusal to overwrite, agenda discovery without config edits, capture target
 resolution, and the generated help buffer. It creates a fixture project and
 deletes it again.
 
-Last measured: =CONFIG_OK=, 22/22 checks, =load-seconds= 0.120.
+Last measured: =CONFIG_OK=, 36/36 checks (22 stage 1 + 14 stage 2), =load-seconds= 0.110.
 
 * Terminal limits
 
@@ -130,7 +201,7 @@ repetition (=org-fc=) are out of scope by decision, not by accident.
 | Stage                          | Status                          |
 |--------------------------------+---------------------------------|
 | 1 Foundation                   | Done, verified                  |
-| 2 Kanban                       | Not started                     |
+| 2 Kanban                       | Done, verified                  |
 | 3 Org-roam                     | Not started                     |
 | 4 Dashboards                   | Not started                     |
 | 5 Reading (EPUB)               | Not started                     |

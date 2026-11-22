@@ -28,7 +28,8 @@ case "${1:-check}" in
       --eval "(setq user-emacs-directory \"$D/\")" \
       -l "$D/early-init.el" \
       -l "$D/init.el" \
-      -l "$D/lisp/tests/stage1-check.el"
+      -l "$D/lisp/tests/stage1-check.el" \
+      -l "$D/lisp/tests/stage2-check.el"
     ;;
   verify)
     "$0" check && "$0" test && "$0" benchmark

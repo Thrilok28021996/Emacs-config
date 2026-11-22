@@ -149,6 +149,7 @@
                    "magit-section-[0-9]*" "magit-[0-9]*" "with-editor-[0-9]*"
                    "cond-let-[0-9]*" "llama-[0-9]*"
                    "conda-[0-9]*" "dash-[0-9]*" "s-[0-9]*" "f-[0-9]*"
+                   "org-kanban-[0-9]*"
                    "pythonic-[0-9]*"))
   (my/add-elpa-package pattern))
 
@@ -399,7 +400,7 @@
 (let ((my/lisp-dir (expand-file-name "lisp/" user-emacs-directory)))
   (when (file-directory-p my/lisp-dir)
     (add-to-list 'load-path my/lisp-dir)
-    (dolist (module '(my-org-pkm my-help))
+    (dolist (module '(my-org-pkm my-kanban my-help))
       (require module nil t))))
 
 ;;; init.el ends here

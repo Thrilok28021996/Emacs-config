@@ -34,6 +34,22 @@ garden at `~/Documents/garden` stays untouched and is not migrated.
 Kanban, org-roam, dashboard content, `nov.el`, `org-fc`, git remote,
 migration from garden.
 
+## Stage 2 deliverables
+
+- `lisp/my-kanban.el` — board params, refresh commands, `C-c k b` / `C-c k B`.
+- Per-file boards in the project and learning templates, with
+  `:skip-columns ("CANCELLED")`.
+- Consolidated boards in `dashboards/projects.org` (projects + learning) and
+  `dashboards/learning.org` (learning only), scoped to directories.
+- `lisp/tests/stage2-check.el` — 14 headless checks, including a move through
+  the consolidated board that must edit the right task in the right file.
+- Fix: org-kanban resolves a row to a neighbouring heading depending on the
+  target buffer's point. Overridden with a deterministic resolver that refuses
+  to guess.
+
+Measured board width: 305 chars project board, 324 chars consolidated. Does not
+fit a terminal; the one-line `:range` knob is documented.
+
 ## Stage 1 deliverables
 
 ```
