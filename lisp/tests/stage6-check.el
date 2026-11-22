@@ -77,18 +77,36 @@
                            (buffer-string)))))
           files))
 
-(let* ((script (expand-file-name "bin/backup.sh" my/knowledge-dir))
-       (tracked (split-string (my/stage6-git "ls-files") "\n" t))
-       (before (my/stage6-file-hashes my/knowledge-dir tracked))
+(defvar my/stage6-sandbox (expand-file-name "knowledge-sandbox-test" temporary-file-directory))
+
+(my/stage6-check "bin/backup.sh is executable"
+                 (file-executable-p (expand-file-name "bin/backup.sh" my/knowledge-dir)))
+
+;; Run the script against a *copy*.  It commits pending work, and a test must
+;; never commit to the repository it is testing.
+(when (file-directory-p my/stage6-sandbox) (delete-directory my/stage6-sandbox t))
+(make-directory my/stage6-sandbox t)
+(my/stage6-check "the tree can be copied for a safe backup test"
+                 (zerop (call-process "cp" nil nil nil "-a"
+                                      (directory-file-name my/knowledge-dir)
+                                      (expand-file-name "knowledge" my/stage6-sandbox))))
+
+(let* ((copy (expand-file-name "knowledge" my/stage6-sandbox))
+       (script (expand-file-name "bin/backup.sh" copy))
+       (tracked (with-temp-buffer
+                  (let ((default-directory (file-name-as-directory copy)))
+                    (call-process "git" nil t nil "ls-files"))
+                  (split-string (buffer-string) "\n" t)))
+       (before (my/stage6-file-hashes copy tracked))
        (output (with-temp-buffer
                  (let ((process-environment
-                        (cons (format "KNOWLEDGE_BACKUP_DIR=%s" my/stage6-backup-dir)
-                              process-environment)))
+                        (append (list (format "KNOWLEDGE_DIR=%s" copy)
+                                      (format "KNOWLEDGE_BACKUP_DIR=%s" my/stage6-backup-dir))
+                                process-environment)))
                    (call-process script nil t nil)
                    (buffer-string))))
        (archive (expand-file-name (format "knowledge-%s.tar.gz" (format-time-string "%Y-%m-%d"))
                                   my/stage6-backup-dir)))
-  (my/stage6-check "bin/backup.sh is executable" (file-executable-p script))
   (my/stage6-check "it reports what it did"
                    (string-match-p "archived" output) (format "%S" output))
   (my/stage6-check "it leaves an archive behind" (file-exists-p archive))
@@ -226,6 +244,7 @@
 ;;;; 5. Cleanup of the backup test
 
 (when (file-directory-p my/stage6-backup-dir) (delete-directory my/stage6-backup-dir t))
+(when (file-directory-p my/stage6-sandbox) (delete-directory my/stage6-sandbox t))
 (when (file-directory-p my/stage6-restore-dir) (delete-directory my/stage6-restore-dir t))
 (my/stage6-check "the knowledge tree is clean after the run"
                  (equal "" (my/stage6-git "status" "--porcelain")))

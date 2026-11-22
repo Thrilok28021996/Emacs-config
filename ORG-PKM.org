@@ -17,7 +17,7 @@ stale.
 | =lisp/my-help.el=           | =C-c ?= binding listing and the doc opener             |
 | =lisp/my-reading.el=        | EPUB, attachments, reading status                     |
 | =lisp/my-dashboards.el=     | Generated dashboard blocks and agenda views           |
-| =lisp/tests/stageN-check.el= | Headless acceptance checks, 128 in total             |
+| =lisp/tests/stageN-check.el= | Headless acceptance checks, 129 in total             |
 | =VERIFICATION.org=          | The twelve acceptance criteria and their evidence     |
 | =emacs-sync.sh=             | Gate script: =check=, =test=, =verify=, =build=, =benchmark=, =doctor= |
 
@@ -396,7 +396,7 @@ not observations:
 
 | What                            | Measured | Gate   |
 |---------------------------------+----------+--------|
-| Batch load of the whole config   | 0.162 s  | 0.25 s |
+| Batch load of the whole config   | 0.155 s  | 0.25 s |
 | Agenda build over 40 projects    | 0.56 s   | 5 s    |
 | Regenerate every board/dashboard | 0.26 s   | 15 s   |
 | Cold org-roam re-index           | 0.07 s   | 20 s   |
@@ -448,7 +448,7 @@ refusal to overwrite, agenda discovery without config edits, capture target
 resolution, and the generated help buffer. It creates a fixture project and
 deletes it again.
 
-Last measured: =CONFIG_OK=, 128 checks, 0 failures, =load-seconds= 0.162.
+Last measured: =CONFIG_OK=, 129 checks, 0 failures, =load-seconds= 0.155.
 The per-stage breakdown is in =VERIFICATION.org=.
 
 * Terminal limits
