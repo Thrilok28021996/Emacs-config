@@ -148,6 +148,66 @@ file from the top, compares heading text, and returns =nil= rather than guess.
 If a row cannot be resolved, the move refuses instead of corrupting data.
 
 
+* Org-roam
+
+The knowledge tree is indexed by Org-roam into one SQLite file:
+=~/.emacs.d/org-roam.db=. It lives outside the repository on purpose — it is an
+index, not knowledge, and it is rebuilt from the Org files at any time.
+
+** What becomes a node
+
+| Thing                          | Node? |
+|--------------------------------+-------|
+| Any of the four templates      | Yes — file-level node, ID written at creation |
+| A heading with an =ID=          | Yes |
+| A heading without an =ID=       | No |
+| =dashboards/=, =templates/=, =archive/=, =attachments/= | No — excluded from the index |
+
+IDs live in a property drawer at the very top of the file, before the first
+heading. That is the only place Org-roam reads a file-level node from, and it is
+why the templates start with one.
+
+Headings are not given IDs automatically. A node nothing links to is pure
+maintenance cost, so you opt in per heading with =M-x org-id-get-create=.
+
+** Keys
+
+| Key       | Command                     |
+|-----------+-----------------------------|
+| =C-c k f= | Find or create a node        |
+| =C-c k v= | Toggle the backlinks buffer  |
+| =C-c k s= | Re-index and report counts   |
+| =C-c k g= | Graph in a browser           |
+| =C-c o i= | Insert a link to a node      |
+
+The graph is served by =org-roam-ui= to your browser, so it works from a
+terminal.
+
+** Rebuilding the index
+
+#+begin_src sh
+  emacsclient --eval '(my/roam-sync)'
+#+end_src
+
+or =C-c k s=. Deleting =org-roam.db= and re-indexing is a supported operation,
+not a repair: the stage-3 checks delete it, rebuild, and compare the node count,
+the link count and the checksum of every knowledge file.
+
+The garden-era index was moved aside to =org-roam.db.pre-knowledge.bak= when
+this stage landed, and the old idle timer that pointed Org-roam at
+=~/Documents/garden/= was removed from =init.el=. It would have re-set
+=org-roam-directory= five seconds after startup and fought the knowledge tree.
+
+** Verified behaviour
+
+- two notes get distinct file-level IDs; the ID sits in a drawer above the first heading
+- a project file is indexed as a file-level node; dashboards are not indexed at all
+- a node resolves from its ID and carries the file title
+- an =id:= link is indexed with both endpoints, and the target gets a backlink
+- deleting the database and re-indexing restores the same node and link counts
+  and changes no knowledge file
+- a plain heading does not acquire an ID unless asked
+
 * Capture templates
 
 | Key | Target                                        |
@@ -170,10 +230,9 @@ open the result. There is no example project: create your own with =C-c k p=.
 
 * IDs
 
-Org has no file-level ID without a heading, so file IDs are deferred to Stage 3,
-where Org-roam assigns them on the files it indexes. Until then links use
-=headline= search, which =org-id-link-to-org-use-id= still upgrades to an =ID=
-when you create a link interactively inside a heading that has one.
+Every file created from a template gets a file-level =ID= in a drawer above the
+first heading, so documents are linkable from anywhere without tagging each
+heading. Headings stay un-identified until you ask for an ID.
 
 * Gates
 
@@ -187,7 +246,8 @@ refusal to overwrite, agenda discovery without config edits, capture target
 resolution, and the generated help buffer. It creates a fixture project and
 deletes it again.
 
-Last measured: =CONFIG_OK=, 36/36 checks (22 stage 1 + 14 stage 2), =load-seconds= 0.110.
+Last measured: =CONFIG_OK=, 57/57 checks (22 stage 1, 14 stage 2, 21 stage 3),
+=load-seconds= 0.113.
 
 * Terminal limits
 
@@ -202,7 +262,7 @@ repetition (=org-fc=) are out of scope by decision, not by accident.
 |--------------------------------+---------------------------------|
 | 1 Foundation                   | Done, verified                  |
 | 2 Kanban                       | Done, verified                  |
-| 3 Org-roam                     | Not started                     |
+| 3 Org-roam                     | Done, verified                  |
 | 4 Dashboards                   | Not started                     |
 | 5 Reading (EPUB)               | Not started                     |
 | 6 Reliability / docs           | Not started                     |

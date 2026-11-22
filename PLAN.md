@@ -34,6 +34,23 @@ garden at `~/Documents/garden` stays untouched and is not migrated.
 Kanban, org-roam, dashboard content, `nov.el`, `org-fc`, git remote,
 migration from garden.
 
+## Stage 3 deliverables
+
+- `lisp/my-roam.el` — Org-roam against `~/knowledge/`, index at
+  `~/.emacs.d/org-roam.db`, dashboards/templates/archive/attachments excluded.
+- File-level IDs: templates start with a `:PROPERTIES: :ID: {{ID}} :END:`
+  drawer and `my/knowledge-create-file` fills in a fresh UUID.
+- `my/roam-sync`, `my/roam-ensure-file-id`, `my/roam-insert-node`,
+  `my/roam-find-node`, `my/roam-toggle-buffer`, `my/roam-open-ui`;
+  keys `C-c k f/v/s/g`.
+- `lisp/tests/stage3-check.el` — 21 headless checks, including deleting the
+  database, rebuilding it, and comparing node counts, link counts and the md5
+  of every knowledge file.
+
+The garden-era `my/org-roam-enable` idle timer was removed from `init.el`: it
+re-set `org-roam-directory` to `~/Documents/garden/` five seconds after startup.
+The old index was moved to `~/.emacs.d/org-roam.db.pre-knowledge.bak`.
+
 ## Stage 2 deliverables
 
 - `lisp/my-kanban.el` — board params, refresh commands, `C-c k b` / `C-c k B`.

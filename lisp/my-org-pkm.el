@@ -145,7 +145,7 @@ created project file appear without any configuration change."
   (string-trim (replace-regexp-in-string "[^a-z0-9]+" "-" (downcase name)) "-+" "-+"))
 
 (defun my/knowledge-fill-template (template-path name)
-  "Return TEMPLATE-PATH contents with NAME and the date substituted."
+  "Return TEMPLATE-PATH contents with NAME, the date and a fresh ID substituted."
   (unless (file-readable-p template-path)
     (user-error "Template not found: %s" template-path))
   (with-temp-buffer
@@ -153,7 +153,8 @@ created project file appear without any configuration change."
     (let ((contents (buffer-string))
           (date (format-time-string "%Y-%m-%d")))
       (setq contents (replace-regexp-in-string "{{NAME}}" (regexp-quote name) contents t t)
-            contents (replace-regexp-in-string "{{DATE}}" date contents t t))
+            contents (replace-regexp-in-string "{{DATE}}" date contents t t)
+            contents (replace-regexp-in-string "{{ID}}" (org-id-new) contents t t))
       (replace-regexp-in-string "{{RELATED}}" "" contents t t))))
 
 (defun my/knowledge-create-file (path template name)

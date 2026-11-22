@@ -150,6 +150,7 @@
                    "cond-let-[0-9]*" "llama-[0-9]*"
                    "conda-[0-9]*" "dash-[0-9]*" "s-[0-9]*" "f-[0-9]*"
                    "org-kanban-[0-9]*"
+                   "simple-httpd-[0-9]*" "websocket-[0-9]*" "org-roam-ui-[0-9]*"
                    "pythonic-[0-9]*"))
   (my/add-elpa-package pattern))
 
@@ -337,16 +338,10 @@
 (global-set-key (kbd "C-c o i") #'org-roam-node-insert)
 (global-set-key (kbd "C-c n k") #'org-roam-capture)
 
-(defvar org-roam-directory nil)
-(defvar org-roam-db-gc-threshold nil)
-(defun my/org-roam-enable ()
-  "Enable Org-roam after startup using Emacs's built-in SQLite support."
-  (when (and (file-directory-p my/garden-dir)
-             (require 'org-roam nil t))
-    (setq org-roam-directory my/garden-dir)
-    (setq org-roam-db-gc-threshold most-positive-fixnum)
-    (org-roam-db-autosync-mode 1)))
-(run-with-idle-timer 5 nil #'my/org-roam-enable)
+;; Org-roam itself is configured in lisp/my-roam.el, against ~/knowledge/.
+;; The garden-era idle timer that pointed it at ~/Documents/garden/ was removed:
+;; it would have re-set org-roam-directory five seconds after startup and
+;; fought the knowledge tree.
 
 ;;; Conda environment switching
 
@@ -400,7 +395,7 @@
 (let ((my/lisp-dir (expand-file-name "lisp/" user-emacs-directory)))
   (when (file-directory-p my/lisp-dir)
     (add-to-list 'load-path my/lisp-dir)
-    (dolist (module '(my-org-pkm my-kanban my-help))
+    (dolist (module '(my-org-pkm my-kanban my-roam my-help))
       (require module nil t))))
 
 ;;; init.el ends here
