@@ -31,26 +31,47 @@
   "The path `my/new-reference' will produce for the fixture title.")
 (defvar my/stage5-tracker (my/knowledge-subdir "notes/references/tracking.org"))
 
+(defun my/stage5-remove-empty-attachment-dirs ()
+  "Delete empty directories under the attachment store, keeping the root.
+`org-attach' nests by ID prefix, so a fixture can be two levels deep and a
+single-level wildcard would miss it."
+  (let* ((root (expand-file-name "attachments" my/knowledge-dir))
+         (dirs (directory-files-recursively root "" t)))
+    (dolist (dir (sort dirs (lambda (a b) (> (length a) (length b)))))
+      (when (and (file-directory-p dir)
+                 (not (equal (directory-file-name dir) (directory-file-name root)))
+                 (null (directory-files dir nil "\\`[^.]")))
+        (delete-directory dir)))))
+
 (defun my/stage5-cleanup ()
-  "Remove fixtures, their attachments and the generated tracker rows."
+  "Remove fixtures, their attachments and their tracker entries.
+Tracker entries are removed with `org-cut-subtree', not a regexp: a regexp
+that misses the property drawer leaves orphan drawers behind, which is exactly
+what an earlier version of this file did."
   (when (get-file-buffer my/stage5-note)
     (with-current-buffer (get-file-buffer my/stage5-note)
       (set-buffer-modified-p nil)
       (kill-buffer)))
   (dolist (f (list my/stage5-note my/stage5-epub))
     (when (file-exists-p f) (delete-file f)))
-  ;; Attachments live under attachments/<id>/ — remove the fixture's directory.
-  (dolist (dir (file-expand-wildcards (expand-file-name "attachments/*" my/knowledge-dir)))
-    (when (and (file-directory-p dir)
-               (cl-some (lambda (f) (string-match-p "zz-stage5-book" f))
-                        (directory-files dir)))
-      (delete-directory dir t)))
-  (with-current-buffer (find-file-noselect my/stage5-tracker)
-    (save-excursion
-      (goto-char (point-min))
-      (while (re-search-forward "^\\*\\* zz-stage5 reading fixture.*\\(?:\n:PROPERTIES:.*?:END:\\)?" nil t)
-        (replace-match "")))
-    (save-buffer)))
+  (let ((root (expand-file-name "attachments" my/knowledge-dir)))
+    (when (file-directory-p root)
+      (dolist (f (directory-files-recursively root "" nil))
+        (when (and (file-regular-p f)
+                   (string-match-p "zz-stage5" (file-name-nondirectory f)))
+          (delete-file f)))
+      (my/stage5-remove-empty-attachment-dirs)))
+  (when (file-exists-p my/stage5-tracker)
+    (with-current-buffer (find-file-noselect my/stage5-tracker)
+      (let (marks)
+        (org-map-entries
+         (lambda ()
+           (when (string-match-p "zz-stage5" (or (org-get-heading t t t t) ""))
+             (push (point-marker) marks))))
+        (dolist (mark (sort marks (lambda (a b) (> a b))))
+          (goto-char mark)
+          (org-cut-subtree))
+        (when marks (save-buffer))))))
 
 ;;;; 1. A real EPUB opens in nov-mode and renders as text
 
