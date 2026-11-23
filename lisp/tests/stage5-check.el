@@ -180,7 +180,7 @@ what an earlier version of this file did."
                                       (cl-some (lambda (f) (string-match-p "zz-stage5-book" f))
                                                (directory-files dir))))
                                (file-expand-wildcards
-                                (expand-file-name "attachments/*" my/knowledge-dir)))))
+                                (expand-file-name "attachments/*" my/projects-dir)))))
 (my/refresh-dblocks-in-file (my/projects-subdir "dashboards/home.org"))
 (my/stage5-check "the dashboard is clean again"
                  (with-current-buffer (find-file-noselect (my/projects-subdir "dashboards/home.org"))

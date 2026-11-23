@@ -103,6 +103,23 @@
                         :where (= id $s1)]
                        (my/roam-node-id my/stage3-proj))))
 
+(let ((one (expand-file-name "main-box/1.org" my/knowledge-dir)))
+  (my/stage3-check "the real zettel main-box/1.org is an indexed node"
+                   (and (org-roam-node-from-id (my/roam-node-id one)) t))
+  (my/stage3-check "main-box/index.org exists and links a zettel by id"
+                   (and (file-exists-p (expand-file-name "main-box/index.org" my/knowledge-dir))
+                        (with-temp-buffer
+                          (insert-file-contents (expand-file-name "main-box/index.org" my/knowledge-dir))
+                          (string-match-p "\\[\\[id:" (buffer-string))))))
+
+(let ((org-count (length (directory-files (expand-file-name "main-box" my/knowledge-dir) nil "\\.org\\'"))))
+  (my/stage3-check "org-roam-capture- refuses instead of creating a file"
+                   (condition-case _err
+                       (progn (org-roam-capture-) nil)
+                     (user-error t)))
+  (my/stage3-check "and the refusal created nothing"
+                   (= org-count (length (directory-files (expand-file-name "main-box" my/knowledge-dir) nil "\\.org\\'")))))
+
 (let* ((a (nth 0 (my/stage3-ids)))
        (b (nth 1 (my/stage3-ids)))
        (node (org-roam-node-from-id a)))

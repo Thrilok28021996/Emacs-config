@@ -153,7 +153,26 @@ uncommitted work of yours is not a test failure.")
                      (with-temp-buffer
                        (call-process "tar" nil t nil "-tzf" archive-p)
                        (and (string-match-p "projects/inbox\\.org" (buffer-string))
-                            (string-match-p "projects/attachments/" (buffer-string)))))))
+                            (string-match-p "projects/attachments/" (buffer-string)))))
+    (when (file-directory-p (expand-file-name "projects" my/stage6-restore-dir))
+      (delete-directory (expand-file-name "projects" my/stage6-restore-dir) t))
+    (my/stage6-check "the projects archive extracts"
+                     (zerop (call-process "tar" nil nil nil "-xzf" archive-p "-C" my/stage6-restore-dir)))
+    (let* ((restored-p (expand-file-name "projects" my/stage6-restore-dir))
+           (tracked-p (with-temp-buffer
+                        (let ((default-directory (file-name-as-directory copy-p)))
+                          (call-process "git" nil t nil "ls-files"))
+                        (split-string (buffer-string) "\n" t)))
+           (before-p (my/stage6-file-hashes copy-p tracked-p))
+           (after-p (my/stage6-file-hashes
+                     restored-p
+                     (cl-remove-if-not (lambda (f) (file-exists-p (expand-file-name f restored-p)))
+                                       tracked-p))))
+      (my/stage6-check "every tracked projects file restores byte for byte"
+                       (equal before-p after-p)
+                       (format "%d of %d files differ"
+                               (length (cl-set-difference before-p after-p :test #'equal))
+                               (length before-p))))))
 
 ;;;; 3. Performance at size
 
@@ -219,14 +238,14 @@ uncommitted work of yours is not a test failure.")
     (when (file-exists-p org-roam-db-location) (delete-file org-roam-db-location))
     (org-roam-db-sync 'force)
     (my/stage6-report "org-roam cold re-index" (- (float-time) start) 20.0)
-    (my/stage6-check "and the index really contains the zettelkasten"
+    (my/stage6-check "and the index really contains a main-box node"
                      (>= (caar (org-roam-db-query
-                                [:select (funcall count *) :from files
+                                [:select (funcall count *) :from nodes
                                  :where (like file $s1)] "%main-box%"))
                          1)
-                     (format "%s files"
+                     (format "%s nodes"
                              (caar (org-roam-db-query
-                                    [:select (funcall count *) :from files
+                                    [:select (funcall count *) :from nodes
                                      :where (like file $s1)] "%main-box%"))))
     (my/stage6-check "and none of the project fixtures leaked into it"
                      (= 0 (caar (org-roam-db-query

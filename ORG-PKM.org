@@ -18,7 +18,7 @@ stale.
 | =lisp/my-help.el=           | =C-c ?= binding listing and the doc opener             |
 | =lisp/my-reading.el=        | EPUB, attachments, reading status                     |
 | =lisp/my-dashboards.el=     | Generated dashboard blocks and agenda views           |
-| =lisp/tests/stageN-check.el= | Headless acceptance checks, 185 in total             |
+| =lisp/tests/stageN-check.el= | Headless acceptance checks, 191 in total             |
 | =VERIFICATION.org=          | The twelve acceptance criteria and their evidence     |
 | =cheatsheet.org=            | The key reference, with a generated master table       |
 | =tutorial.org=              | The guided course for the knowledge system             |
@@ -165,7 +165,10 @@ The zettelkasten is indexed by Org-roam into one SQLite file:
 an index, not knowledge, and it is rebuilt from the Org files at any time.
 
 There is no Org-roam capture template, deliberately: a template cannot know the
-next number in =main-box/=. A zettel is created by hand (=C-x C-f=), given a
+next number in =main-box/=. =org-roam-capture-' itself is refused by advice in
+=my-roam.el=, so a missing title in =C-c k f= or =C-c o i= signals an error
+instead of writing a file — no unnumbered note can land in the zettelkasten
+through the back door. A zettel is created by hand (=C-x C-f=), given a
 =#+TITLE:=, and then =C-c k e= writes the ID drawer. =my/new-project= and the
 other template commands live in the projects tree, which Org-roam never
 touches.
@@ -477,7 +480,7 @@ refusal to overwrite, agenda discovery without config edits, capture target
 resolution, and the generated help buffer. It creates a fixture project and
 deletes it again.
 
-Last measured: =CONFIG_OK=, 185 checks, 0 failures, =load-seconds= 0.22.
+Last measured: =CONFIG_OK=, 191 checks, 0 failures, =load-seconds= 0.22.
 The per-stage breakdown is in =VERIFICATION.org=.
 
 * Terminal limits

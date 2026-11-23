@@ -65,7 +65,7 @@ path. The journal writes into a weekly date tree in =daily/journal.org=.
 
 | Key       | Does                                              |
 |-----------+---------------------------------------------------|
-| =C-c k f= | find a zettel by title                            |
+| =C-c k f= | find a zettel by title; a missing title is *refused* — zettel files are made by hand |
 | =C-c k e= | give the current file the ID drawer the index needs |
 | =C-c k v= | toggle the backlinks panel for this note          |
 | =C-c k s= | re-index Org-roam and report node/link counts     |

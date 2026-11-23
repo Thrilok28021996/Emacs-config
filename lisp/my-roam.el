@@ -15,6 +15,11 @@
 ;; ID property drawer, plus a node for any heading that has an ID.  Headings
 ;; are not given IDs automatically — a node nobody links to is a maintenance
 ;; cost with no payoff.
+;;
+;; `org-roam-capture-' is refused outright: node-find and node-insert both
+;; route a missing title into it, and its template machinery cannot know the
+;; next number in a box.  Closing it here is the one guarantee that no
+;; unnumbered file lands in the zettelkasten.
 
 ;;; Code:
 
@@ -106,6 +111,15 @@ the drawer must come before the first heading."
         (org-roam-ui-mode 1)
         (org-roam-ui-open))
     (user-error "org-roam-ui is not installed; graph export needs it")))
+
+;;;; Capture is refused
+
+(defun my/roam-refuse-capture (&rest _)
+  "Refuse Org-roam capture: zettel files are created and numbered by hand.
+C-x C-f into a box, then C-c k e for the ID drawer."
+  (user-error "Zettel files are created by hand: C-x C-f into a box, then C-c k e"))
+
+(advice-add 'org-roam-capture- :override #'my/roam-refuse-capture)
 
 ;;;; Keys
 

@@ -281,6 +281,10 @@ number. You make one by hand and give it identity with one key:
 next note=, then press =C-c k e=. The numbering is yours: =1-1= continues the
 topic of =1=, =1-1a= branches within =1-1=, =2= starts a new topic.
 
+*Creation is refused, on purpose.* Type a title =C-c k f= does not know and it
+tells you to make the file by hand — Org-roam's template machinery cannot
+know the next number, so it is closed off rather than trusted.
+
 *The index is disposable.* =~/.emacs.d/org-roam.db= is built from the Org files.
 Delete it, run =C-c k s=, and you get the same nodes and links back — the
 stage-3 checks delete it, rebuild, and compare every zettel byte for byte. The
