@@ -18,7 +18,7 @@ stale.
 | =lisp/my-help.el=           | =C-c ?= binding listing and the doc opener             |
 | =lisp/my-reading.el=        | EPUB, attachments, reading status                     |
 | =lisp/my-dashboards.el=     | Generated dashboard blocks and agenda views           |
-| =lisp/tests/stageN-check.el= | Headless acceptance checks, 194 in total             |
+| =lisp/tests/stageN-check.el= | Headless acceptance checks, 195 in total             |
 | =VERIFICATION.org=          | The twelve acceptance criteria and their evidence     |
 | =cheatsheet.org=            | The key reference, with a generated master table       |
 | =tutorial.org=              | The guided course for the knowledge system             |
@@ -483,7 +483,7 @@ refusal to overwrite, agenda discovery without config edits, capture target
 resolution, and the generated help buffer. It creates a fixture project and
 deletes it again.
 
-Last measured: =CONFIG_OK=, 194 checks, 0 failures, =load-seconds= 0.22.
+Last measured: =CONFIG_OK=, 195 checks, 0 failures, =load-seconds= 0.22.
 The per-stage breakdown is in =VERIFICATION.org=.
 
 * Terminal limits

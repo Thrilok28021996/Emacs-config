@@ -49,10 +49,15 @@ holding a list."
         ((listp spec) spec)
         (t (org-agenda-files))))
 
-(defun my/dashboard--query (query &optional files)
-  "Return markers for QUERY over FILES, defaulting to the agenda files."
+(defun my/dashboard--query (query &optional spec)
+  "Return markers for QUERY over the files SPEC resolves to.
+An empty list means no files: `org-ql-select' would otherwise fall back to
+searching the current buffer, which for a dashboard block is the dashboard
+itself — its own headings would appear as results."
   (my/dashboard--ensure-ql)
-  (org-ql-select (my/dashboard--files files) query :action '(point-marker)))
+  (let ((files (my/dashboard--files spec)))
+    (when files
+      (org-ql-select files query :action '(point-marker)))))
 
 (defun my/reference-files ()
   "Every Org file under references, for the reading blocks."

@@ -231,6 +231,11 @@ one would test the wrong section."
                  (let ((rows (my/stage4-block-rows (my/projects-subdir "dashboards/projects.org")
                                                    "project-health")))
                    (equal "_no projects yet_" (caadr rows))))
+(my/stage4-check "an empty files-scope renders Nothing here, not the dashboard's own headings"
+                 (let ((text (with-temp-buffer
+                               (insert-file-contents (my/projects-subdir "dashboards/learning.org"))
+                               (buffer-string))))
+                   (not (string-match-p "file:learning.org" text))))
 
 (princ (format "\n%d checks, %d failures\n" my/stage4-checks my/stage4-failures))
 (when (> my/stage4-failures 0)

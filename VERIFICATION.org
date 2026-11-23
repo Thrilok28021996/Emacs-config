@@ -11,7 +11,7 @@ Run the whole thing yourself:
   ./emacs-sync.sh verify
 #+end_src
 
-Last full run, 2026-11-25: =CONFIG_OK=, **194 checks, 0 failures**, batch load
+Last full run, 2026-11-25: =CONFIG_OK=, **195 checks, 0 failures**, batch load
 **0.22 s**.
 
 The checks live in =lisp/tests/stageN-check.el= and run headless. Each one
