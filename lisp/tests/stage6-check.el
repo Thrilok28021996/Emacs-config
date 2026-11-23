@@ -7,8 +7,9 @@
 ;;     -l ~/.emacs.d/lisp/tests/stage6-check.el
 ;;
 ;; Three things, all measured rather than asserted:
-;;   1. the ignore rules protect what must not be committed and nothing else
-;;   2. bin/backup.sh produces an archive that actually restores
+;;   1. the ignore rules of both repositories protect what must not be
+;;      committed and nothing else
+;;   2. bin/backup.sh archives both trees and the archives actually restore
 ;;   3. agenda, dashboards and the roam index stay usable at 40 projects
 
 ;;; Code:
@@ -36,43 +37,48 @@
 (defvar my/stage6-count 40
   "How many fixture projects the performance run creates.")
 
-(defvar my/stage6-status-before nil
-  "git status at the start of the run.  The check compares against this rather
-than requiring a clean tree: uncommitted work of yours is not a test failure.")
+(defvar my/stage6-status-before-k nil
+  "git status of the knowledge tree at the start of the run.")
+(defvar my/stage6-status-before-p nil
+  "git status of the projects tree at the start of the run.
+The checks compare against these rather than requiring clean trees:
+uncommitted work of yours is not a test failure.")
 
-;;;; 1. Ignore rules
-
-(defun my/stage6-git (&rest args)
-  "Run git with ARGS in the knowledge tree and return its output."
+(defun my/stage6-git (dir &rest args)
+  "Run git with ARGS in DIR and return its output."
   (with-temp-buffer
-    (let ((default-directory (file-name-as-directory (directory-file-name my/knowledge-dir))))
+    (let ((default-directory (file-name-as-directory (directory-file-name dir))))
       (apply #'call-process "git" nil t nil args))
     (string-trim (buffer-string))))
 
-(setq my/stage6-status-before (my/stage6-git "status" "--porcelain"))
+(setq my/stage6-status-before-k (my/stage6-git my/knowledge-dir "status" "--porcelain")
+      my/stage6-status-before-p (my/stage6-git my/projects-dir "status" "--porcelain"))
 
-(my/stage6-check "org-roam.db is ignored"
-                 (= 0 (call-process "git" nil nil nil "-C" my/knowledge-dir
-                                    "check-ignore" "-q" "org-roam.db")))
-(my/stage6-check ".org-id-locations is ignored"
-                 (= 0 (call-process "git" nil nil nil "-C" my/knowledge-dir
-                                    "check-ignore" "-q" ".org-id-locations")))
-(my/stage6-check ".DS_Store is ignored"
-                 (= 0 (call-process "git" nil nil nil "-C" my/knowledge-dir
-                                    "check-ignore" "-q" ".DS_Store")))
-(my/stage6-check "a knowledge note is NOT ignored"
-                 (not (= 0 (call-process "git" nil nil nil "-C" my/knowledge-dir
-                                         "check-ignore" "-q" "notes/knowledge/software-engineering/x.org"))))
-(my/stage6-check "an attachment is NOT ignored"
-                 (not (= 0 (call-process "git" nil nil nil "-C" my/knowledge-dir
-                                         "check-ignore" "-q" "attachments/19/abc/book.epub"))))
-(my/stage6-check "a template is NOT ignored"
-                 (not (= 0 (call-process "git" nil nil nil "-C" my/knowledge-dir
-                                         "check-ignore" "-q" "templates/project.org"))))
+;;;; 1. Ignore rules
+
+(defun my/stage6-ignored-p (dir file)
+  "Return non-nil when FILE is ignored by the repository in DIR."
+  (zerop (call-process "git" nil nil nil "-C" dir "check-ignore" "-q" file)))
+
+(my/stage6-check "knowledge: .DS_Store is ignored"
+                 (my/stage6-ignored-p my/knowledge-dir ".DS_Store"))
+(my/stage6-check "knowledge: a zettel is NOT ignored"
+                 (not (my/stage6-ignored-p my/knowledge-dir "main-box/1.org")))
+(my/stage6-check "knowledge: a literature note is NOT ignored"
+                 (not (my/stage6-ignored-p my/knowledge-dir "literature-box/001.org")))
+(my/stage6-check "projects: .DS_Store is ignored"
+                 (my/stage6-ignored-p my/projects-dir ".DS_Store"))
+(my/stage6-check "projects: the inbox is NOT ignored"
+                 (not (my/stage6-ignored-p my/projects-dir "inbox.org")))
+(my/stage6-check "projects: an attachment is NOT ignored"
+                 (not (my/stage6-ignored-p my/projects-dir "attachments/19/abc/book.epub")))
+(my/stage6-check "projects: a template is NOT ignored"
+                 (not (my/stage6-ignored-p my/projects-dir "templates/project.org")))
 
 ;;;; 2. Backup and restore
 
 (defvar my/stage6-backup-dir (expand-file-name "knowledge-backups-test" temporary-file-directory))
+(defvar my/stage6-sandbox (expand-file-name "knowledge-sandbox-test" temporary-file-directory))
 (defvar my/stage6-restore-dir (expand-file-name "knowledge-restore-test" temporary-file-directory))
 
 (defun my/stage6-file-hashes (root files)
@@ -83,64 +89,71 @@ than requiring a clean tree: uncommitted work of yours is not a test failure.")
                            (buffer-string)))))
           files))
 
-(defvar my/stage6-sandbox (expand-file-name "knowledge-sandbox-test" temporary-file-directory))
-
 (my/stage6-check "bin/backup.sh is executable"
-                 (file-executable-p (expand-file-name "bin/backup.sh" my/knowledge-dir)))
+                 (file-executable-p (expand-file-name "bin/backup.sh" my/projects-dir)))
 
-;; Run the script against a *copy*.  It commits pending work, and a test must
+;; Run the script against *copies*.  It commits pending work, and a test must
 ;; never commit to the repository it is testing.
 (when (file-directory-p my/stage6-sandbox) (delete-directory my/stage6-sandbox t))
 (make-directory my/stage6-sandbox t)
-(my/stage6-check "the tree can be copied for a safe backup test"
-                 (zerop (call-process "cp" nil nil nil "-a"
-                                      (directory-file-name my/knowledge-dir)
-                                      (expand-file-name "knowledge" my/stage6-sandbox))))
+(my/stage6-check "both trees can be copied for a safe backup test"
+                 (and (zerop (call-process "cp" nil nil nil "-a"
+                                           (directory-file-name my/knowledge-dir)
+                                           (expand-file-name "knowledge" my/stage6-sandbox)))
+                      (zerop (call-process "cp" nil nil nil "-a"
+                                           (directory-file-name my/projects-dir)
+                                           (expand-file-name "projects" my/stage6-sandbox)))))
 
-(let* ((copy (expand-file-name "knowledge" my/stage6-sandbox))
-       (script (expand-file-name "bin/backup.sh" copy))
+(let* ((copy-k (expand-file-name "knowledge" my/stage6-sandbox))
+       (copy-p (expand-file-name "projects" my/stage6-sandbox))
        (tracked (with-temp-buffer
-                  (let ((default-directory (file-name-as-directory copy)))
+                  (let ((default-directory (file-name-as-directory copy-k)))
                     (call-process "git" nil t nil "ls-files"))
                   (split-string (buffer-string) "\n" t)))
-       (before (my/stage6-file-hashes copy tracked))
+       (before (my/stage6-file-hashes copy-k tracked))
        (output (with-temp-buffer
                  (let ((process-environment
-                        (append (list (format "KNOWLEDGE_DIR=%s" copy)
-                                      (format "KNOWLEDGE_BACKUP_DIR=%s" my/stage6-backup-dir))
+                        (append (list (format "KNOWLEDGE_DIR=%s" copy-k)
+                                      (format "PROJECTS_DIR=%s" copy-p)
+                                      (format "BACKUP_DIR=%s" my/stage6-backup-dir))
                                 process-environment)))
-                   (call-process script nil t nil)
+                   (call-process (expand-file-name "bin/backup.sh" copy-p) nil t nil)
                    (buffer-string))))
-       (archive (expand-file-name (format "knowledge-%s.tar.gz" (format-time-string "%Y-%m-%d"))
-                                  my/stage6-backup-dir)))
+       (archive-k (expand-file-name (format "knowledge-%s.tar.gz" (format-time-string "%Y-%m-%d"))
+                                    my/stage6-backup-dir))
+       (archive-p (expand-file-name (format "projects-%s.tar.gz" (format-time-string "%Y-%m-%d"))
+                                    my/stage6-backup-dir)))
   (my/stage6-check "it reports what it did"
                    (string-match-p "archived" output) (format "%S" output))
-  (my/stage6-check "it leaves an archive behind" (file-exists-p archive))
-  (when (file-exists-p archive)
-    (my/stage6-check "the archive contains the repository"
+  (my/stage6-check "it leaves a knowledge archive behind" (file-exists-p archive-k))
+  (my/stage6-check "it leaves a projects archive behind" (file-exists-p archive-p))
+  (when (file-exists-p archive-k)
+    (my/stage6-check "the knowledge archive contains the repository"
                      (with-temp-buffer
-                       (call-process "tar" nil t nil "-tzf" archive)
+                       (call-process "tar" nil t nil "-tzf" archive-k)
                        (and (string-match-p "knowledge/\\.git/" (buffer-string))
-                            (string-match-p "knowledge/inbox.org" (buffer-string)))))
-    (my/stage6-check "the archive contains attachments"
-                     (with-temp-buffer
-                       (call-process "tar" nil t nil "-tzf" archive)
-                       (string-match-p "knowledge/attachments/" (buffer-string))))
+                            (string-match-p "knowledge/main-box/" (buffer-string)))))
     (when (file-directory-p my/stage6-restore-dir)
       (delete-directory my/stage6-restore-dir t))
     (make-directory my/stage6-restore-dir t)
-    (my/stage6-check "the archive extracts"
-                     (zerop (call-process "tar" nil nil nil "-xzf" archive "-C" my/stage6-restore-dir)))
+    (my/stage6-check "the knowledge archive extracts"
+                     (zerop (call-process "tar" nil nil nil "-xzf" archive-k "-C" my/stage6-restore-dir)))
     (let* ((restored (expand-file-name "knowledge" my/stage6-restore-dir))
            (after (my/stage6-file-hashes
                    restored
                    (cl-remove-if-not (lambda (f) (file-exists-p (expand-file-name f restored)))
                                      tracked))))
-      (my/stage6-check "every tracked file restores byte for byte"
+      (my/stage6-check "every tracked knowledge file restores byte for byte"
                        (equal before after)
                        (format "%d of %d files differ"
                                (length (cl-set-difference before after :test #'equal))
-                               (length before))))))
+                               (length before)))))
+  (when (file-exists-p archive-p)
+    (my/stage6-check "the projects archive contains the inbox and attachments"
+                     (with-temp-buffer
+                       (call-process "tar" nil t nil "-tzf" archive-p)
+                       (and (string-match-p "projects/inbox\\.org" (buffer-string))
+                            (string-match-p "projects/attachments/" (buffer-string)))))))
 
 ;;;; 3. Performance at size
 
@@ -148,8 +161,8 @@ than requiring a clean tree: uncommitted work of yours is not a test failure.")
   "Create the fixture projects and subjects and return their paths."
   (let (files)
     (dotimes (i my/stage6-count)
-      (let* ((kind (if (= 0 (% i 4)) "notes/learning" "notes/projects"))
-             (path (expand-file-name (format "zz-perf-%02d.org" i) (my/knowledge-subdir kind)))
+      (let* ((kind (if (= 0 (% i 4)) "learning" "projects"))
+             (path (expand-file-name (format "zz-perf-%02d.org" i) (my/projects-subdir kind)))
              (states '("BACKLOG" "TODO" "NEXT" "DOING" "WAITING" "DONE")))
         (with-temp-file path
           (insert (concat (my/knowledge-todo-line) "\n\n* Tasks\n"))
@@ -165,21 +178,21 @@ than requiring a clean tree: uncommitted work of yours is not a test failure.")
 
 (defun my/stage6-cleanup-fixtures ()
   "Delete the performance fixtures and regenerate the dashboards."
-  (dolist (f (directory-files-recursively my/knowledge-dir "zz-perf-.*\\.org\\'"))
+  (dolist (f (directory-files-recursively my/projects-dir "zz-perf-.*\\.org\\'"))
     (when (get-file-buffer f)
       (with-current-buffer (get-file-buffer f)
         (set-buffer-modified-p nil)
         (kill-buffer)))
     (when (file-exists-p f) (delete-file f)))
-  (dolist (f (append (my/knowledge-files-in "dashboards")
-                     (append (my/knowledge-project-files) (my/knowledge-learning-files))))
+  (dolist (f (append (my/projects-files-in "dashboards")
+                     (append (my/projects-files) (my/projects-learning-files))))
     (my/refresh-dblocks-in-file f)))
 
 (my/stage6-cleanup-fixtures)
 (let ((fixtures (my/stage6-make-fixtures)))
   (my/stage6-check "fixtures created"
                    (= my/stage6-count (length fixtures)))
-  (setq org-agenda-files (my/knowledge-agenda-files))
+  (setq org-agenda-files (my/projects-agenda-files))
   (my/stage6-check "the agenda discovers all of them"
                    (>= (length (org-agenda-files)) my/stage6-count))
 
@@ -194,7 +207,7 @@ than requiring a clean tree: uncommitted work of yours is not a test failure.")
     (my/stage6-report "full dashboard refresh" (- (float-time) start) 15.0))
   ;; A fast number is worthless if the work did not happen: the health table
   ;; must actually carry a row per fixture project.
-  (with-current-buffer (find-file-noselect (my/knowledge-subdir "dashboards/projects.org"))
+  (with-current-buffer (find-file-noselect (my/projects-subdir "dashboards/projects.org"))
     (my/stage6-check "and the health table really has a row per project"
                      (> (how-many "^| zz-perf-") 25)
                      (format "%d rows" (how-many "^| zz-perf-"))))
@@ -206,11 +219,19 @@ than requiring a clean tree: uncommitted work of yours is not a test failure.")
     (when (file-exists-p org-roam-db-location) (delete-file org-roam-db-location))
     (org-roam-db-sync 'force)
     (my/stage6-report "org-roam cold re-index" (- (float-time) start) 20.0)
-    (my/stage6-check "and the index really contains the fixtures"
+    (my/stage6-check "and the index really contains the zettelkasten"
                      (>= (caar (org-roam-db-query
                                 [:select (funcall count *) :from files
-                                 :where (like file $s1)] "%zz-perf-%"))
-                         my/stage6-count)
+                                 :where (like file $s1)] "%main-box%"))
+                         1)
+                     (format "%s files"
+                             (caar (org-roam-db-query
+                                    [:select (funcall count *) :from files
+                                     :where (like file $s1)] "%main-box%"))))
+    (my/stage6-check "and none of the project fixtures leaked into it"
+                     (= 0 (caar (org-roam-db-query
+                                 [:select (funcall count *) :from files
+                                  :where (like file $s1)] "%zz-perf-%")))
                      (format "%s files"
                              (caar (org-roam-db-query
                                     [:select (funcall count *) :from files
@@ -218,12 +239,14 @@ than requiring a clean tree: uncommitted work of yours is not a test failure.")
 
   (my/stage6-cleanup-fixtures)
   (my/stage6-check "fixtures removed"
-                   (null (directory-files-recursively my/knowledge-dir "zz-perf-.*\\.org\\'"))))
+                   (null (directory-files-recursively my/projects-dir "zz-perf-.*\\.org\\'"))))
 
 ;;;; 4. No dead keys or dead templates
 
 (my/stage6-check "the garden-era C-c n w binding is gone"
                  (null (key-binding (kbd "C-c n w"))))
+(my/stage6-check "the knowledge-note key is gone with the command"
+                 (null (key-binding (kbd "C-c k n"))))
 (my/stage6-check "the capture keys that remain point at real templates"
                  (let ((keys (list "C-c k i" "C-c k t")))
                    (cl-every (lambda (k) (commandp (key-binding (kbd k)))) keys)))
@@ -253,9 +276,13 @@ than requiring a clean tree: uncommitted work of yours is not a test failure.")
 (when (file-directory-p my/stage6-sandbox) (delete-directory my/stage6-sandbox t))
 (when (file-directory-p my/stage6-restore-dir) (delete-directory my/stage6-restore-dir t))
 (my/stage6-check "the run added nothing to the knowledge tree"
-                 (equal my/stage6-status-before (my/stage6-git "status" "--porcelain"))
-                 (let ((after (my/stage6-git "status" "--porcelain")))
-                   (format "before %S after %S" my/stage6-status-before after)))
+                 (equal my/stage6-status-before-k (my/stage6-git my/knowledge-dir "status" "--porcelain"))
+                 (let ((after (my/stage6-git my/knowledge-dir "status" "--porcelain")))
+                   (format "before %S after %S" my/stage6-status-before-k after)))
+(my/stage6-check "the run added nothing to the projects tree"
+                 (equal my/stage6-status-before-p (my/stage6-git my/projects-dir "status" "--porcelain"))
+                 (let ((after (my/stage6-git my/projects-dir "status" "--porcelain")))
+                   (format "before %S after %S" my/stage6-status-before-p after)))
 
 (princ (format "\n%d checks, %d failures\n" my/stage6-checks my/stage6-failures))
 (when (> my/stage6-failures 0)

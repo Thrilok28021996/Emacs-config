@@ -27,15 +27,15 @@
 
 (defvar my/stage5-epub (expand-file-name "zz-stage5-book.epub" temporary-file-directory))
 (defvar my/stage5-note (expand-file-name "zz-stage5-reading-fixture.org"
-                                         (my/knowledge-subdir "notes/references"))
+                                         (my/projects-subdir "references"))
   "The path `my/new-reference' will produce for the fixture title.")
-(defvar my/stage5-tracker (my/knowledge-subdir "notes/references/tracking.org"))
+(defvar my/stage5-tracker (my/projects-subdir "references/tracking.org"))
 
 (defun my/stage5-remove-empty-attachment-dirs ()
   "Delete empty directories under the attachment store, keeping the root.
 `org-attach' nests by ID prefix, so a fixture can be two levels deep and a
 single-level wildcard would miss it."
-  (let* ((root (expand-file-name "attachments" my/knowledge-dir))
+  (let* ((root (expand-file-name "attachments" my/projects-dir))
          (dirs (directory-files-recursively root "" t)))
     (dolist (dir (sort dirs (lambda (a b) (> (length a) (length b)))))
       (when (and (file-directory-p dir)
@@ -54,7 +54,7 @@ what an earlier version of this file did."
       (kill-buffer)))
   (dolist (f (list my/stage5-note my/stage5-epub))
     (when (file-exists-p f) (delete-file f)))
-  (let ((root (expand-file-name "attachments" my/knowledge-dir)))
+  (let ((root (expand-file-name "attachments" my/projects-dir)))
     (when (file-directory-p root)
       (dolist (f (directory-files-recursively root "" nil))
         (when (and (file-regular-p f)
@@ -159,8 +159,8 @@ what an earlier version of this file did."
                      (re-search-forward "^\\*\\* zz-stage5 reading fixture$" nil t)
                      (equal "unread" (org-entry-get nil "STATUS")))))
 
-(my/refresh-dblocks-in-file (my/knowledge-subdir "dashboards/home.org"))
-(with-current-buffer (find-file-noselect (my/knowledge-subdir "dashboards/home.org"))
+(my/refresh-dblocks-in-file (my/projects-subdir "dashboards/home.org"))
+(with-current-buffer (find-file-noselect (my/projects-subdir "dashboards/home.org"))
   (my/stage5-check "the reading block on the home dashboard lists it"
                    (save-excursion
                      (goto-char (point-min))
@@ -181,9 +181,9 @@ what an earlier version of this file did."
                                                (directory-files dir))))
                                (file-expand-wildcards
                                 (expand-file-name "attachments/*" my/knowledge-dir)))))
-(my/refresh-dblocks-in-file (my/knowledge-subdir "dashboards/home.org"))
+(my/refresh-dblocks-in-file (my/projects-subdir "dashboards/home.org"))
 (my/stage5-check "the dashboard is clean again"
-                 (with-current-buffer (find-file-noselect (my/knowledge-subdir "dashboards/home.org"))
+                 (with-current-buffer (find-file-noselect (my/projects-subdir "dashboards/home.org"))
                    (not (string-match-p "zz-stage5 reading fixture"
                                         (buffer-substring-no-properties (point-min) (point-max))))))
 

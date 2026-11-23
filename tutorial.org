@@ -20,7 +20,8 @@ ends with something to do and something to check.
 Emacs here has two halves that do not interfere:
 
 1. *A coding editor*, built-in only, tuned to start fast (~0.15 s).
-2. *A knowledge system* in plain Org files under =~/knowledge/=, loaded from
+2. *A knowledge system* in plain Org files — the zettelkasten under
+   =~/knowledge/= and the projects tree under =~/projects=/, loaded from
    =lisp/= by a single block at the end of =init.el=.
 
 The knowledge system is the point of this tutorial.
@@ -34,15 +35,19 @@ want, and =VERIFICATION.org= proves that rebuilding it changes no file.
 
 | Path | What |
 |---|---|
-| =~/knowledge/inbox.org= | unsorted capture |
-| =~/knowledge/notes/projects/= | one file per project |
-| =~/knowledge/notes/learning/= | one file per learning subject |
-| =~/knowledge/notes/knowledge/= | permanent, reusable notes |
-| =~/knowledge/notes/references/= | one file per source, plus the reading queue |
-| =~/knowledge/notes/daily/journal.org= | journal, weekly date tree |
-| =~/knowledge/dashboards/= | generated views |
-| =~/knowledge/attachments/= | attached books and files |
-| =~/knowledge/templates/= | skeletons used when creating files |
+| =~/knowledge/literature-box/= | notes taken from sources: =001.org=, =002.org=, … |
+| =~/knowledge/main-box/= | permanent notes: =1.org=, =1-1.org=, =1-1a.org=, … |
+| =~/knowledge/main-box/index.org= | the hand-curated map of the main box |
+| =~/projects/inbox.org= | unsorted capture |
+| =~/projects/projects/= | one file per project |
+| =~/projects/learning/= | one file per learning subject |
+| =~/projects/references/= | one file per source, plus the reading queue |
+| =~/projects/daily/journal.org= | journal, weekly date tree |
+| =~/projects/dashboards/= | generated views |
+| =~/projects/attachments/= | attached books and files |
+| =~/projects/templates/= | skeletons used when creating files |
+
+Zettel files are created and numbered by hand — no command assigns a number.
 
 *Do this now:* open Emacs, press =C-c ?=. That buffer lists every =C-c= binding
 this configuration defines, generated live. Scroll it once — you never have to
@@ -171,17 +176,17 @@ Inside =*Org Agenda*=: =t= set state, =s= schedule, =d= deadline, =r= refile,
 you were, not to a second pane.
 
 *Why three dashboards and not one:* the project view is restricted to
-=notes/projects=, the learning view to =notes/learning=. A learning task never
+=projects/=, the learning view to =learning=. A learning task never
 appears on the project page. Both are grouped by state with org-super-agenda, so
 "Doing" and "Next" are buckets rather than a chronological list.
 
-*Which files the agenda reads:* =inbox.org= plus every =.org= file directly
-inside =notes/projects= and =notes/learning=. It points at the *directories*,
-so a new project file is picked up with no configuration change. Dashboards and
-knowledge notes are excluded on purpose — they are views and references, not
-sources of actions.
+*Which files the agenda reads:* =~/projects/inbox.org= plus every =.org=
+file directly inside =~/projects/projects= and =~/projects/learning=. It
+points at the *directories*, so a new project file is picked up with no
+configuration change. Dashboards and zettels are excluded on purpose — they
+are views and knowledge, not sources of actions.
 
-*The same information as files:* =~/knowledge/dashboards/= contains generated
+*The same information as files:* =~/projects/dashboards/= contains generated
 blocks (org-ql queries over your files) that you can read and grep without
 opening the agenda. =C-c k b= regenerates all of them. An empty section says
 "Nothing here" rather than showing a stale line.
@@ -195,15 +200,16 @@ copied.
 * Lesson 5 — Projects, learning subjects and kanban (30 min)
 
 *Creating.* =C-c k p= asks for a name and writes
-=~/knowledge/notes/projects/<slug>.org=: an ID drawer at the top, the workflow
+=~/projects/projects/<slug>.org=: an ID drawer at the top, the workflow
 line, Goal / Milestones / Tasks / Backlog / Board / Notes sections. =C-c k l=
-does the same in =notes/learning/= with a subject-shaped skeleton. Neither will
+does the same in =learning/= with a subject-shaped skeleton. Neither will
 overwrite an existing file — a typo in a name is refused, not destructive.
 
 *Thinking in two shapes.* A project file describes what you are building. A
 learning file describes what you are studying. Reusable concepts do not belong
-in either: they go in =notes/knowledge/= and get linked from both. That one rule
-is what stops the system from turning into three copies of the same paragraph.
+in either: they go in the zettelkasten (=~/knowledge/main-box/=) and get linked
+from both. That one rule is what stops the system from turning into three
+copies of the same paragraph.
 
 *Boards.* Every project and subject file ends with a =* Board= section holding a
 dynamic block. Put point on the block and press =C-c C-c= to render it; =C-c k b=
@@ -259,24 +265,29 @@ something worth linking lives inside a file.
 
 *Making and linking notes*
 
+There is no template for a zettel, on purpose: a template cannot know the next
+number. You make one by hand and give it identity with one key:
+
 | Key | Does |
 |---|---|
-| =C-c k n= | new permanent note: prompts for area, then title |
-| =C-c k f= | find a node, or create it |
-| =C-c o i= | insert a link to a node at point |
+| =C-c k e= | give the file at point the ID drawer the index needs |
+| =C-c k f= | find a zettel by title |
+| =C-c o i= | insert a link to a zettel at point |
 | =C-c k v= | backlinks panel for this note |
 | =C-c k s= | re-index; reports node and link counts |
 | =C-c k g= | the graph, in your browser |
 
+*Do this now:* =C-x C-f= =~/knowledge/main-box/1-1.org=, write =#+TITLE: The
+next note=, then press =C-c k e=. The numbering is yours: =1-1= continues the
+topic of =1=, =1-1a= branches within =1-1=, =2= starts a new topic.
+
 *The index is disposable.* =~/.emacs.d/org-roam.db= is built from the Org files.
 Delete it, run =C-c k s=, and you get the same nodes and links back — the
-stage-3 checks delete it, rebuild, and compare every knowledge file byte for
-byte. Dashboards, templates and attachments are excluded from indexing: they are
-views and skeletons, not knowledge.
+stage-3 checks delete it, rebuild, and compare every zettel byte for byte. The
+projects tree is outside the index entirely.
 
-*Do this now:* =C-c k n= → area =software-engineering= → "embeddings". Then
-create a project note (or edit your test project and press =C-c o i=) and insert
-a link to =embeddings=. Open =embeddings= and press =C-c k v=.
+*Do this now:* in a project file, press =C-c o i= and insert a link to the
+zettel you just made. Open the zettel and press =C-c k v=.
 
 *Check yourself:* the backlinks panel lists the file you linked from. If it
 does not, run =C-c k s= and look at the reported counts.
@@ -287,8 +298,8 @@ Two files do two jobs:
 
 | File | Job |
 |---|---|
-| =notes/references/<slug>.org= | one source: summary, critique, quotes, the attached file |
-| =notes/references/tracking.org= | the queue: what is unread, what is in flight |
+| =references/<slug>.org= | one source: summary, critique, quotes, the attached file |
+| =references/tracking.org= | the queue: what is unread, what is in flight |
 
 | Key | Does |
 |---|---|
@@ -316,8 +327,8 @@ dashboard's reading block is an org-ql query over the reference directory.
 *Do this now:* =C-c k r= → "test book", =C-c k A= → pick any =.epub=, =C-c k S= →
 reading. Then =C-c k d= and find it in the reading block.
 
-*Check yourself:* the attachment is under =~/knowledge/attachments/= and the
-source note contains a link to it. =git -C ~/knowledge status= shows the book as
+*Check yourself:* the attachment is under =~/projects/attachments/= and the
+source note contains a link to it. =git -C ~/projects status= shows the book as
 new.
 
 * Lesson 8 — Time: clocking (10 min)
@@ -393,7 +404,7 @@ block at the end loads five modules from =lisp/=:
 |---|---|
 | =my-org-pkm.el= | directories, workflow, discovery, capture, creation, block refresh |
 | =my-kanban.el= | board parameters, refresh, and a corrected row resolver |
-| =my-roam.el= | Org-roam over =~/knowledge/=, IDs, backlinks, keys |
+| =my-roam.el= | Org-roam over the zettelkasten, IDs, backlinks, keys |
 | =my-dashboards.el= | generated blocks (org-ql) and the three agenda views |
 | =my-reading.el= | EPUB, attachments, reading status |
 | =my-help.el= | the generated key table and documentation access |
@@ -406,7 +417,7 @@ first use, not at startup.
 
 #+begin_src sh
   cd ~/.emacs.d
-  ./emacs-sync.sh verify     # CONFIG_OK + 130 checks + load time
+  ./emacs-sync.sh verify     # CONFIG_OK + all checks + load time
   ./emacs-sync.sh test       # just the checks
   ./emacs-sync.sh benchmark  # just the load time
 #+end_src
@@ -418,14 +429,15 @@ numbers, a real EPUB, the backup archive round-trip, and performance at 40
 projects. =VERIFICATION.org= maps every acceptance criterion to the check that
 proves it.
 
-*Backups.* =~/knowledge/bin/backup.sh= commits pending work and archives the
-whole repository, including =git=. The archive is the fallback for what git
-cannot fix.
+*Backups.* =~/projects/bin/backup.sh= commits pending work in both
+repositories and archives each, including =git=. The archive is the fallback
+for what git cannot fix.
 
 *Do this now:* =./emacs-sync.sh verify=. Read the last line.
 
-*Check yourself:* "0 failures". Then =git -C ~/knowledge status --short= prints
-nothing — the tests clean up after themselves.
+*Check yourself:* "0 failures". Then =git -C ~/knowledge status --short= and
+=git -C ~/projects status --short= print nothing — the tests clean up after
+themselves.
 
 * Where to go deeper
 
@@ -434,7 +446,7 @@ nothing — the tests clean up after themselves.
 | every key | =cheatsheet.org=, or =C-c ?= |
 | why the system is shaped this way | =ORG-PKM.org= |
 | what is proven and what is not | =VERIFICATION.org= |
-| the data layout and backup rules | =~/knowledge/README.org= |
+| the data layout and backup rules | =~/knowledge/README.org= and =~/projects/README.org= |
 | the rest of Emacs (dired, calc, eshell, macros, rectangles, …) | =HANDBOOK.org= |
 | every binding in every keymap | =INVENTORY.org= |
 | Org itself | =M-x info= → Org manual |

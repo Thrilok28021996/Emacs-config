@@ -34,7 +34,7 @@ edit like text. This is the single largest thing most Emacs users never learn.
 
 The last one is the reason to learn dired: batch renaming becomes a text edit.
 
-*Do this now:* open dired on ~/knowledge (M-x dired), mark two files with =m=,
+*Do this now:* open dired on ~/projects (M-x dired), mark two files with =m=,
 press =C= and choose a target directory.
 
 * Isearch and replace
