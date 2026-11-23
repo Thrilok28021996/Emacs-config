@@ -11,8 +11,8 @@ Run the whole thing yourself:
   ./emacs-sync.sh verify
 #+end_src
 
-Last full run, 2026-11-22: =CONFIG_OK=, **170 checks, 0 failures**, batch load
-**0.15 s**.
+Last full run, 2026-11-25: =CONFIG_OK=, **200 checks, 0 failures**, batch load
+**0.22 s**.
 
 The checks live in =lisp/tests/stageN-check.el= and run headless. Each one
 creates its own fixtures and removes them again.
@@ -22,11 +22,11 @@ creates its own fixtures and removes them again.
 ** 1. Create a new project through a template
 
 Proven by =stage1-check.el=: =my/new-project= creates
-=notes/projects/<slug>.org=, the file carries the =#+TODO:= line, a kanban
+=projects/<slug>.org=, the file carries the =#+TODO:= line, a kanban
 block, a =Tasks= heading and a file-level ID.
 
 #+begin_example
-PASS  my/new-project creates notes/projects/<slug>.org
+PASS  my/new-project creates projects/<slug>.org
 PASS  created file carries the #+TODO line
 PASS  created file carries a kanban block
 PASS  created file has its Tasks heading
@@ -36,7 +36,7 @@ PASS  my/new-project refuses to overwrite
 ** 2. Create a new learning subject through a template
 
 Proven by =stage1-check.el=, same code path but asserted separately:
-=my/new-learning-subject= writes =notes/learning/<slug>.org= with the mirrored
+=my/new-learning-subject= writes =learning/<slug>.org= with the mirrored
 workflow line and a board, and the agenda discovers it.
 
 ** 3. Every project and learning document has its own board**
@@ -72,17 +72,20 @@ view shows project tasks only, the learning view learning tasks only; a due
 deadline is displayed) and =stage6-check.el= (agenda build over 40 fixture
 projects, 0.56 s).
 
-** 7. Org-roam resolves backlinks between learning, projects and knowledge notes**
+** 7. Org-roam resolves backlinks between zettels**
 
-Proven by =stage3-check.el=: an =id:= link is indexed with both endpoints, the
-target gets a backlink, and the link resolves to the target's file.
+Proven by =stage3-check.el=: an =id:= link between two hand-written zettels is
+indexed with both endpoints, the target gets a backlink, and the link resolves
+to the target's file. The same stage proves the projects tree is not part of
+the index.
 
-** 8. Knowledge notes can be linked without duplicating content**
+** 8. Zettels can be linked without duplicating content**
 
-Structural, not merely asserted: a file-level ID per document, links by =id:=,
-and the design rule that a learning file links to a knowledge note instead of
-restating it. =stage3-check.el= proves the link and backlink machinery;
-=C-c k v= shows what links to the note at point.
+Structural, not merely asserted: a file-level ID per zettel, written by
+=C-c k e= after the file is created by hand, links by =id:=, and the design rule
+that a project or learning file links to a zettel instead of restating it.
+=stage3-check.el= proves the link and backlink machinery; =C-c k v= shows what
+links to the note at point.
 
 ** 9. Flashcards can be created and reviewed — NOT IMPLEMENTED**
 
@@ -105,18 +108,18 @@ note, and notes are written in Org and linked. See =ORG-PKM.org= → Reading.
 
 ** 11. Git preserves the authoritative Org files and attachments**
 
-Proven by =stage6-check.el=: =bin/backup.sh= commits pending work and archives
-the whole repository; the archive is extracted into a temporary directory and
-**every tracked file is compared byte for byte**. The script is run against a
-copy of the tree, because it commits and a test must never commit to the
-repository it is testing. The ignore rules are checked
-from both directions: indexes and =.DS_Store= are ignored, notes, attachments
-and templates are not.
+Proven by =stage6-check.el=: =bin/backup.sh= commits pending work in both
+repositories and archives each; the knowledge archive is extracted into a
+temporary directory and **every tracked file is compared byte for byte**. The
+script is run against copies of both trees, because it commits and a test must
+never commit to the repository it is testing. The ignore rules of both
+repositories are checked from both directions: =.DS_Store= is ignored,
+zettels, the inbox, attachments and templates are not.
 
 ** 12. Rebuilding the Org-roam database does not destroy knowledge**
 
 Proven by =stage3-check.el=: the database is deleted, rebuilt, and the node
-count, the link count and the md5 of every knowledge file are compared before
+count, the link count and the md5 of every zettel are compared before
 and after.
 
 * Performance
@@ -124,15 +127,20 @@ and after.
 Measured by =stage6-check.el= with 40 fixture projects (200 tasks, boards
 included). These are gates now, not observations:
 
-| What                              | Measured | Gate  |
-|-----------------------------------+----------+-------|
-| Batch load of the whole config     | 0.15 s   | 0.25 s |
-| Agenda build over 40 projects      | 0.56 s   | 5 s    |
-| Regenerate every board/dashboard   | 0.26 s   | 15 s   |
-| Cold org-roam re-index             | 0.07 s   | 20 s   |
-
 Each timing is paired with a check that the work actually happened — a fast
 number that skipped the work would be worse than a slow one.
+
+| What                              | Measured | Gate  |
+|-----------------------------------+----------+-------|
+| Batch load of the whole config     | 0.21 s   | 0.25 s |
+| Agenda build over 40 projects      | 0.58 s   | 5 s    |
+| Regenerate every board/dashboard   | 0.26 s   | 15 s   |
+| Regenerate the documentation blocks | 13.9 s  | 20 s   |
+| Cold org-roam re-index             | 0.01 s   | 20 s   |
+
+The documentation-blocks gate is dominated by regenerating the 4,430-row
+inventory block in =INVENTORY.org=; it is gated separately so that cost
+cannot hide inside the board and dashboard number.
 
 * Documentation is gated too
 
@@ -152,7 +160,7 @@ through =M-x= and is not claimed here. That is the honest boundary of "leave
 nothing unturned": a complete list of everything Emacs can do is the manual.
 
 
-=stage7-check.el= (39 checks) keeps the documentation honest, because a document
+=stage7-check.el= keeps the documentation honest, because a document
 that teaches a key which does not exist is worse than no document:
 
 - every =C-c= binding in the live keymaps must appear in =cheatsheet.org=, and

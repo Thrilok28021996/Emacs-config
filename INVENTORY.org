@@ -17,9 +17,9 @@ Two caveats, stated rather than hidden:
   most are reachable only through =M-x= and are not listed here.
 
 #+BEGIN: my-inventory
-4430 bindings across 32 keymaps. Generated from the live keymaps.
+4429 bindings across 32 keymaps. Generated from the live keymaps.
 
-** Global map (967)
+** Global map (966)
 | Key | Command | What it does |
 |---+---+---|
 | =<Scroll_Lock>= | =scroll-lock-mode= | Buffer-local minor mode for pager-like scrolling |
@@ -401,23 +401,22 @@ Two caveats, stated rather than hidden:
 | =C-c k P= | =my/dashboard-projects= | Projects dashboard: every open project task, grouped by state. |
 | =C-c k R= | =my/reading-open-tracker= | Open the reading tracker. |
 | =C-c k S= | =my/reading-set-status= | Set the STATUS property of the entry at point and timestamp the change. |
-| =C-c k a= | =my/open-kb-agenda= | Open the agenda over the knowledge system. |
+| =C-c k a= | =my/open-kb-agenda= | Open the agenda over the projects tree. |
 | =C-c k b= | =my/kanban-update-all= | Regenerate every board and dashboard block. |
 | =C-c k d= | =my/open-home-dashboard= | Open the home dashboard. |
-| =C-c k f= | =my/roam-find-node= | Jump to a node of the knowledge tree. |
+| =C-c k e= | =my/roam-ensure-file-id= | Give the current file a top-of-file ID, creating the drawer if needed |
+| =C-c k f= | =my/roam-find-node= | Jump to a node of the zettelkasten. |
 | =C-c k g= | =my/roam-open-ui= | Open the Org-roam graph in a browser, if org-roam-ui is installed. |
 | =C-c k i= | =my/capture-inbox= | Capture an item into the inbox. |
-| =C-c k l= | =my/new-learning-subject= | Create a learning subject file called NAME under notes/learning. |
+| =C-c k l= | =my/new-learning-subject= | Create a learning subject file called NAME under learning. |
 | =C-c k m= | =my/kanban-move= | Move the kanban row at point, then read one more key for the direction |
-| =C-c k n= | =my/new-knowledge-note= | Create a permanent note called NAME inside AREA of notes/knowledge. |
 | =C-c k o= | =my/reading-open-attachment= | Open the first file attached to the current entry. |
-| =C-c k p= | =my/new-project= | Create a project file called NAME under notes/projects. |
+| =C-c k p= | =my/new-project= | Create a project file called NAME under projects. |
 | =C-c k q= | =my/dashboard-search= | Ask for an org-ql query and show the results. |
-| =C-c k r= | =my/new-reference= | Create a source note called NAME under notes/references. |
-| =C-c k s= | =my/roam-sync= | Re-index the knowledge tree and report what is in the index. |
+| =C-c k r= | =my/new-reference= | Create a source note called NAME under references. |
+| =C-c k s= | =my/roam-sync= | Re-index the zettelkasten and report what is in the index. |
 | =C-c k t= | =org-capture= | Capture something |
 | =C-c k v= | =my/roam-toggle-buffer= | Show or hide the backlinks buffer for the current note. |
-| =C-c n k= | =org-roam-capture= | Launches an 'org-capture' process for a new or existing node |
 | =C-c o I= | =org-clock-in= | Start the clock on the current item |
 | =C-c o O= | =org-clock-out= | Stop the currently running clock |
 | =C-c o R= | =org-clock-report= | Update or create a table containing a report about clocked time |

@@ -9,7 +9,7 @@
 ;;     -l ~/.emacs.d/lisp/tests/stage1-check.el
 ;;
 ;; Exit status 0 means every check passed.  A fixture project file is created
-;; and deleted again, so the knowledge tree is left exactly as found.
+;; and deleted again, so the projects tree is left exactly as found.
 
 ;;; Code:
 
@@ -59,12 +59,12 @@
 ;;; 2. Project creation
 
 (defvar my/stage1-fixture
-  (expand-file-name "zz-stage1-fixture.org" (my/knowledge-subdir "notes/projects")))
+  (expand-file-name "zz-stage1-fixture.org" (my/projects-subdir "projects")))
 
 (when (file-exists-p my/stage1-fixture) (delete-file my/stage1-fixture))
 
 (my/new-project "zz stage1 fixture")
-(my/stage1-check "my/new-project creates notes/projects/<slug>.org"
+(my/stage1-check "my/new-project creates projects/<slug>.org"
                  (file-exists-p my/stage1-fixture))
 (with-temp-buffer
   (insert-file-contents my/stage1-fixture)
@@ -78,11 +78,11 @@
 ;;; 2b. Learning subjects use the same code path but deserve their own check
 
 (defvar my/stage1-subject
-  (expand-file-name "zz-stage1-subject.org" (my/knowledge-subdir "notes/learning")))
+  (expand-file-name "zz-stage1-subject.org" (my/projects-subdir "learning")))
 
 (when (file-exists-p my/stage1-subject) (delete-file my/stage1-subject))
 (my/new-learning-subject "zz stage1 subject")
-(my/stage1-check "my/new-learning-subject creates notes/learning/<slug>.org"
+(my/stage1-check "my/new-learning-subject creates learning/<slug>.org"
                  (file-exists-p my/stage1-subject))
 (with-temp-buffer
   (insert-file-contents my/stage1-subject)
@@ -108,12 +108,12 @@
 (my/stage1-check "new project file is an agenda file with no config change"
                  (org-agenda-file-p my/stage1-fixture))
 (my/stage1-check "inbox.org is an agenda file"
-                 (org-agenda-file-p (expand-file-name "inbox.org" my/knowledge-dir)))
+                 (org-agenda-file-p (expand-file-name "inbox.org" my/projects-dir)))
 (my/stage1-check "dashboards are not agenda files"
-                 (not (org-agenda-file-p (my/knowledge-subdir "dashboards/home.org"))))
+                 (not (org-agenda-file-p (my/projects-subdir "dashboards/home.org"))))
 (my/stage1-check "learning files are discovered from the directory"
-                 (equal (my/knowledge-learning-files)
-                        (my/knowledge-files-in "notes/learning")))
+                 (equal (my/projects-learning-files)
+                        (my/projects-files-in "learning")))
 
 ;;; 4. Capture targets
 
@@ -126,10 +126,10 @@
       (org-capture-expand-file (nth 1 target)))))
 
 (dolist (spec '(("i" . "inbox.org")
-                ("j" . "notes/daily/journal.org")
-                ("r" . "notes/references/tracking.org")))
+                ("j" . "daily/journal.org")
+                ("r" . "references/tracking.org")))
   (let* ((key (car spec))
-         (expected (my/knowledge-subdir (cdr spec)))
+         (expected (my/projects-subdir (cdr spec)))
          (actual (my/stage1-check-target key)))
     (my/stage1-check (format "capture template %S resolves to %s" key (cdr spec))
                      (equal actual expected)
@@ -141,7 +141,7 @@
 ;; `cl-letf' on the function cell, because a plain `let' cannot rebind a
 ;; function name for the interpreter.
 (cl-letf (((symbol-function 'completing-read)
-           (lambda (&rest _) "notes/projects/zz-stage1-fixture.org")))
+           (lambda (&rest _) "projects/zz-stage1-fixture.org")))
   (my/stage1-check "project capture target resolves via the picker"
                    (equal (my/capture-project-file) my/stage1-fixture)))
 
@@ -165,7 +165,7 @@
     (set-buffer-modified-p nil)
     (kill-buffer)))
 (when (file-exists-p my/stage1-fixture) (delete-file my/stage1-fixture))
-(my/stage1-check "fixture removed, knowledge tree unchanged"
+(my/stage1-check "fixture removed, projects tree unchanged"
                  (not (file-exists-p my/stage1-fixture)))
 
 (princ (format "\n%d checks, %d failures\n" my/stage1-checks my/stage1-failures))

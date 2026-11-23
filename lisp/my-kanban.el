@@ -40,8 +40,8 @@ anything.  Paths are written with a leading ~ so the block stays readable."
   (format ":scope (%s) %s"
           (mapconcat (lambda (d)
                        (abbreviate-file-name
-                        (directory-file-name (my/knowledge-subdir d))))
-                     my/knowledge-agenda-dirs " ")
+                        (directory-file-name (my/projects-subdir d))))
+                     my/projects-agenda-dirs " ")
           (my/kanban-params)))
 
 ;;;; Moving rows
@@ -179,12 +179,12 @@ After this, the transient map accepts:
 (defun my/kanban-open-overview ()
   "Open the dashboard holding the consolidated project board."
   (interactive)
-  (find-file (my/knowledge-subdir "dashboards/projects.org")))
+  (find-file (my/projects-subdir "dashboards/projects.org")))
 
 (defun my/kanban-open-learning-overview ()
   "Open the learning dashboard, which holds the learning-only board."
   (interactive)
-  (find-file (my/knowledge-subdir "dashboards/learning.org")))
+  (find-file (my/projects-subdir "dashboards/learning.org")))
 
 (global-set-key (kbd "C-c k m") #'my/kanban-move)
 (global-set-key (kbd "C-c k b") #'my/kanban-update-all)

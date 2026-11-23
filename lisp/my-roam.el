@@ -1,17 +1,25 @@
 ;;; my-roam.el --- Org-roam over the knowledge tree -*- lexical-binding: t; -*-
 
 ;;; Commentary:
-;; Org-roam indexes the knowledge tree into a SQLite database.  The Org files
-;; are the source of truth: delete the database and `org-roam-db-sync' rebuilds
-;; it from scratch, which the stage-3 checks prove.
+;; Org-roam indexes the zettelkasten (~/knowledge: literature-box/ and
+;; main-box/) into a SQLite database.  The Org files are the source of truth:
+;; delete the database and `org-roam-db-sync' rebuilds it from scratch, which
+;; the stage-3 checks prove.
+;;
+;; Zettel files are created and numbered by hand — there is deliberately no
+;; capture template, because a template cannot know the next number.  The
+;; only machine help a new zettel needs is `my/roam-ensure-file-id' (C-c k e),
+;; which adds the ID drawer Org-roam reads.
 ;;
 ;; Node policy: a file-level node for every document that carries a top-of-file
-;; ID property drawer (all four templates do), plus a node for any heading that
-;; has an ID.  Headings are not given IDs automatically — a node nobody links to
-;; is a maintenance cost with no payoff.
+;; ID property drawer, plus a node for any heading that has an ID.  Headings
+;; are not given IDs automatically — a node nobody links to is a maintenance
+;; cost with no payoff.
 ;;
-;; Dashboards, templates and attachments are excluded from the index: they are
-;; views and skeletons, not knowledge.
+;; `org-roam-capture-' is refused outright: node-find and node-insert both
+;; route a missing title into it, and its template machinery cannot know the
+;; next number in a box.  Closing it here is the one guarantee that no
+;; unnumbered file lands in the zettelkasten.
 
 ;;; Code:
 
@@ -29,12 +37,9 @@ knowledge, and it must never be committed."
 
 (setq org-roam-directory (directory-file-name my/knowledge-dir)
       org-roam-db-location my/roam-db-location
-      org-roam-dailies-directory "notes/daily/"
       org-roam-completion-everywhere t
-      ;; Excluded paths are relative to `org-roam-directory'.
-      org-roam-file-exclude-regexp
-      (list "\\`dashboards/" "\\`templates/" "\\`archive/" "\\`attachments/"
-            (regexp-quote (file-name-nondirectory (directory-file-name org-attach-id-dir))))
+      ;; The zettelkasten holds nothing but notes; there is nothing to exclude.
+      org-roam-file-exclude-regexp nil
       org-roam-node-display-template
       (concat "${title:*} " (propertize "${tags:12}" 'face 'org-tag))
       org-roam-buffer-position 'right
@@ -65,7 +70,7 @@ the drawer must come before the first heading."
           id)))))
 
 (defun my/roam-sync ()
-  "Re-index the knowledge tree and report what is in the index."
+  "Re-index the zettelkasten and report what is in the index."
   (interactive)
   (org-roam-db-sync 'force)
   (message "Org-roam indexed %d nodes, %d links"
@@ -81,13 +86,13 @@ the drawer must come before the first heading."
 ;;;; Links and backlinks
 
 (defun my/roam-insert-node ()
-  "Insert a link to a node of the knowledge tree."
+  "Insert a link to a node of the zettelkasten."
   (interactive)
   (require 'org-roam-node)
   (org-roam-node-insert))
 
 (defun my/roam-find-node ()
-  "Jump to a node of the knowledge tree."
+  "Jump to a node of the zettelkasten."
   (interactive)
   (org-roam-node-find))
 
@@ -107,25 +112,19 @@ the drawer must come before the first heading."
         (org-roam-ui-open))
     (user-error "org-roam-ui is not installed; graph export needs it")))
 
-;;;; Capture
+;;;; Capture is refused
 
-(setq org-roam-capture-templates
-      `(("d" "Knowledge note" plain
-         ,(concat ":PROPERTIES:\n:ID:       ${id}\n:END:\n"
-                  "#+TITLE: ${title}\n"
-                  "#+FILETAGS: :knowledge:\n"
-                  "#+STARTUP: overview indent\n\n"
-                  "* The idea\n%?\n\n"
-                  "* Why it matters\n\n"
-                  "* Details\n\n"
-                  "* Links\n- Related:\n- Used by projects:\n- Used by learning:\n\n"
-                  "* Sources\n")
-         :target (file+head "notes/knowledge/%<%Y%m%d%H%M%S>-${slug}.org"
-                            ":PROPERTIES:\n:ID:       ${id}\n:END:\n#+TITLE: ${title}\n")
-         :empty-lines 1)))
+(defun my/roam-refuse-capture (&rest _)
+  "Refuse Org-roam capture: zettel files are created and numbered by hand.
+C-x C-f into a box, then C-c k e for the ID drawer."
+  (user-error "Zettel files are created by hand: C-x C-f into a box, then C-c k e"))
+
+(advice-add 'org-roam-capture- :override #'my/roam-refuse-capture)
 
 ;;;; Keys
 
+;; Creating a zettel is manual: C-x C-f, a #+TITLE:, then C-c k e for the ID.
+(global-set-key (kbd "C-c k e") #'my/roam-ensure-file-id)
 (global-set-key (kbd "C-c k f") #'my/roam-find-node)
 (global-set-key (kbd "C-c k v") #'my/roam-toggle-buffer)
 (global-set-key (kbd "C-c k g") #'my/roam-open-ui)

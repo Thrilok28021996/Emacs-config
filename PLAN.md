@@ -1,4 +1,8 @@
-# Plan — Org knowledge & productivity system (Stage 1)
+# Plan — Org knowledge & productivity system (Stage 1) (historical)
+
+The layout described below predates the zettelkasten split: knowledge now
+holds only `literature-box/` and `main-box/`, and everything actionable
+moved to `~/projects`. See ORG-PKM.org for the current system.
 
 Approved scope for this branch. Later stages get their own plan update.
 

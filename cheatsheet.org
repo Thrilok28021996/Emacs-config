@@ -17,17 +17,23 @@ Gates: =./emacs-sync.sh verify=.
 
 * The knowledge layer (C-c k) — start here
 
-This is what the configuration exists for. ~/knowledge/ holds the notes; Emacs
-is the only editor expected to understand them.
+This is what the configuration exists for. Two plain-Org repositories: the
+zettelkasten in ~/knowledge/, everything actionable in ~/projects/. Emacs is the
+only editor expected to understand them.
 
 ** Making things
 
 | Key       | Does                                              |
 |-----------+---------------------------------------------------|
-| =C-c k p= | new project: prompts a name, writes =notes/projects/<name>.org= with an ID, the workflow line, a Tasks section and a kanban block |
-| =C-c k l= | new learning subject: same, in =notes/learning/=   |
-| =C-c k n= | new permanent note: prompts for the area (artificial-intelligence, software-engineering, business, economics, productivity) then the title |
-| =C-c k r= | new source note in =notes/references/=             |
+| =C-c k p= | new project: prompts a name, writes =projects/<name>.org= with an ID, the workflow line, a Tasks section and a kanban block |
+| =C-c k l= | new learning subject: same, in =learning/=        |
+| =C-c k r= | new source note in =references/=                   |
+
+A zettel is created by hand — there is no template, because no template can
+know the next number. =C-x C-f= in =main-box/= or =literature-box/=, name it
+(=1.org=, =1-1.org=, =001.org=, …), give it a =#+TITLE:=, then press =C-c k e=
+to add the ID drawer Org-roam indexes. Keep =main-box/index.org= curated by
+hand: one line per note worth finding again.
 
 Every created file refuses to overwrite an existing one, which is the point:
 a typo in the name never destroys a file.
@@ -40,31 +46,31 @@ a typo in the name never destroys a file.
 | =C-c k t= | capture menu: =i= inbox, =t= task in a project, =l= task in a subject, =j= journal, =n= someday idea, =r= source |
 
 =t= and =l= prompt for the target file, so capture never needs you to know a
-path. The journal writes into a weekly date tree in =notes/daily/journal.org=.
+path. The journal writes into a weekly date tree in =daily/journal.org=.
 
 ** Working
 
 | Key       | Does                                              |
 |-----------+---------------------------------------------------|
-| =C-c k a= | agenda over the knowledge tree                    |
+| =C-c k a= | agenda over the projects tree                    |
 | =C-c k D= | home dashboard: today, next, doing, waiting, review |
 | =C-c k P= | projects dashboard, grouped by state              |
 | =C-c k L= | learning dashboard                                |
 | =C-c k d= | open the home dashboard *file*                    |
 | =C-c k B= | consolidated kanban in =dashboards/projects.org=  |
-| =C-c k b= | regenerate every board, dashboard block and doc key table |
+| =C-c k b= | regenerate every board, dashboard block and doc key table — the 4,430-row inventory makes this take ~14 s |
 | =C-c k q= | ad-hoc org-ql query                               |
 
 ** Linking and backlinks
 
 | Key       | Does                                              |
 |-----------+---------------------------------------------------|
-| =C-c k f= | find a node, or create it                         |
+| =C-c k f= | find a zettel by title; a missing title is *refused* — zettel files are made by hand |
+| =C-c k e= | give the current file the ID drawer the index needs |
 | =C-c k v= | toggle the backlinks panel for this note          |
 | =C-c k s= | re-index Org-roam and report node/link counts     |
 | =C-c k g= | knowledge graph in your browser (org-roam-ui)     |
 | =C-c o i= | insert a link to a node at point                  |
-| =C-c n k= | roam capture (older binding, still works)         |
 
 ** Reading
 
@@ -73,7 +79,7 @@ path. The journal writes into a weekly date tree in =notes/daily/journal.org=.
 | =C-c k A= | attach a file to this note — copied into =attachments/<id>/= |
 | =C-c k o= | open the first attachment of this note            |
 | =C-c k S= | set STATUS: unread / reading / done / abandoned   |
-| =C-c k R= | open the reading queue (=notes/references/tracking.org=) |
+| =C-c k R= | open the reading queue (=references/tracking.org=) |
 
 An =.epub= opens in =nov-mode= and renders as text, so reading works in a
 terminal. Inside a book: =n= / =p= next/previous document, =TAB= next link.
@@ -285,7 +291,7 @@ reload and files you edit are saved without asking.
 1. =C-c k D= — today, next actions, what is in progress, what is waiting.
 2. Capture whatever interrupts you: =C-c k i= (inbox) or =C-c k t=.
 3. Work a task: open its project file, or move it on =C-c k B=.
-4. Learn something: =C-c k t= → =l= → subject; note the reusable idea with =C-c k n= and link it with =C-c k f=.
+4. Learn something: =C-c k t= → =l= → subject. When an idea is reusable, write it as a zettel by hand and link it with =C-c o i=.
 5. Read: =C-c k R= to see the queue, =C-c k A= to attach a book, =C-c k S= to move its status.
 6. End of day: =C-c k t= → =j=.
 7. Weekly: =C-c k b= to rebuild every board and dashboard, then read =C-c k d=.
@@ -294,16 +300,18 @@ reload and files you edit are saved without asking.
 
 | Path                                          | What it is                        |
 |-----------------------------------------------+-----------------------------------|
-| =~/knowledge/inbox.org=                       | unsorted capture                  |
-| =~/knowledge/notes/projects/<name>.org=       | one project, with its board       |
-| =~/knowledge/notes/learning/<name>.org=       | one learning subject              |
-| =~/knowledge/notes/knowledge/<area>/<note>.org= | permanent notes, one idea each  |
-| =~/knowledge/notes/references/…=              | one note per source, plus =tracking.org= |
-| =~/knowledge/notes/daily/journal.org=         | journal date tree                 |
-| =~/knowledge/dashboards/…=                    | generated dashboards              |
-| =~/knowledge/attachments/<id>/=               | org-attach store                  |
-| =~/knowledge/templates/=                      | skeletons                         |
-| =~/knowledge/bin/backup.sh=                   | commit + archive the whole repo   |
+| =~/knowledge/literature-box/001.org= …        | literature notes, numbered by hand |
+| =~/knowledge/main-box/1.org=, =1-1.org=, =1-1a.org= … | permanent notes, numbered by hand |
+| =~/knowledge/main-box/index.org=              | the manually curated map          |
+| =~/projects/inbox.org=                        | unsorted capture                  |
+| =~/projects/projects/<name>.org=              | one project, with its board       |
+| =~/projects/learning/<name>.org=              | one learning subject              |
+| =~/projects/references/…=                     | one note per source, plus =tracking.org= |
+| =~/projects/daily/journal.org=                | journal date tree                 |
+| =~/projects/dashboards/…=                     | generated dashboards              |
+| =~/projects/attachments/<id>/=                | org-attach store                  |
+| =~/projects/templates/=                       | skeletons                         |
+| =~/projects/bin/backup.sh=                    | commit + archive both repositories |
 | =~/.emacs.d/init.el=                          | config; loads =lisp/*.el= at the end |
 | =~/.emacs.d/lisp/my-*.el=                     | the six knowledge-system modules  |
 | =~/.emacs.d/cheatsheet.org=                   | this file                         |
@@ -369,23 +377,22 @@ configuration too — this table is built from the live keymaps, not typed.
 | =C-c k P= | =my/dashboard-projects= | Projects dashboard: every open project task, grouped by state. |
 | =C-c k R= | =my/reading-open-tracker= | Open the reading tracker. |
 | =C-c k S= | =my/reading-set-status= | Set the STATUS property of the entry at point and timestamp the change. |
-| =C-c k a= | =my/open-kb-agenda= | Open the agenda over the knowledge system. |
+| =C-c k a= | =my/open-kb-agenda= | Open the agenda over the projects tree. |
 | =C-c k b= | =my/kanban-update-all= | Regenerate every board and dashboard block. |
 | =C-c k d= | =my/open-home-dashboard= | Open the home dashboard. |
-| =C-c k f= | =my/roam-find-node= | Jump to a node of the knowledge tree. |
+| =C-c k e= | =my/roam-ensure-file-id= | Give the current file a top-of-file ID, creating the drawer if needed |
+| =C-c k f= | =my/roam-find-node= | Jump to a node of the zettelkasten. |
 | =C-c k g= | =my/roam-open-ui= | Open the Org-roam graph in a browser, if org-roam-ui is installed. |
 | =C-c k i= | =my/capture-inbox= | Capture an item into the inbox. |
-| =C-c k l= | =my/new-learning-subject= | Create a learning subject file called NAME under notes/learning. |
+| =C-c k l= | =my/new-learning-subject= | Create a learning subject file called NAME under learning. |
 | =C-c k m= | =my/kanban-move= | Move the kanban row at point, then read one more key for the direction |
-| =C-c k n= | =my/new-knowledge-note= | Create a permanent note called NAME inside AREA of notes/knowledge. |
 | =C-c k o= | =my/reading-open-attachment= | Open the first file attached to the current entry. |
-| =C-c k p= | =my/new-project= | Create a project file called NAME under notes/projects. |
+| =C-c k p= | =my/new-project= | Create a project file called NAME under projects. |
 | =C-c k q= | =my/dashboard-search= | Ask for an org-ql query and show the results. |
-| =C-c k r= | =my/new-reference= | Create a source note called NAME under notes/references. |
-| =C-c k s= | =my/roam-sync= | Re-index the knowledge tree and report what is in the index. |
+| =C-c k r= | =my/new-reference= | Create a source note called NAME under references. |
+| =C-c k s= | =my/roam-sync= | Re-index the zettelkasten and report what is in the index. |
 | =C-c k t= | =org-capture= | Capture something |
 | =C-c k v= | =my/roam-toggle-buffer= | Show or hide the backlinks buffer for the current note. |
-| =C-c n k= | =org-roam-capture= | Launches an 'org-capture' process for a new or existing node |
 | =C-c o I= | =org-clock-in= | Start the clock on the current item |
 | =C-c o O= | =org-clock-out= | Stop the currently running clock |
 | =C-c o R= | =org-clock-report= | Update or create a table containing a report about clocked time |
@@ -427,6 +434,6 @@ configuration too — this table is built from the live keymaps, not typed.
 | =C-c w u= | =winner-undo= | Switch back to an earlier window configuration saved by Winner mode |
 | =C-c z= | =undo-redo= | Undo the last ARG undos, i.e., redo the last ARG changes |
 
-92 bindings under C-c. Generated from the live keymaps.
+91 bindings under C-c. Generated from the live keymaps.
 
 #+END:

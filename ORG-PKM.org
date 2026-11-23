@@ -1,8 +1,9 @@
 #+TITLE: Org knowledge system
 #+STARTUP: overview
 
-How the Org knowledge system is wired into this Emacs configuration. The data
-lives in =~/knowledge/=; this file is about the Emacs side.
+How the Org system is wired into this Emacs configuration. The data lives in
+two repositories — =~/knowledge=, the zettelkasten, and =~/projects=, everything
+actionable; this file is about the Emacs side.
 
 Open it any time with =C-c k H=. For every key this configuration defines,
 press =C-c ?= — that buffer is generated from the live keymaps, so it cannot go
@@ -17,7 +18,7 @@ stale.
 | =lisp/my-help.el=           | =C-c ?= binding listing and the doc opener             |
 | =lisp/my-reading.el=        | EPUB, attachments, reading status                     |
 | =lisp/my-dashboards.el=     | Generated dashboard blocks and agenda views           |
-| =lisp/tests/stageN-check.el= | Headless acceptance checks, 179 in total             |
+| =lisp/tests/stageN-check.el= | Headless acceptance checks, 200 in total             |
 | =VERIFICATION.org=          | The twelve acceptance criteria and their evidence     |
 | =cheatsheet.org=            | The key reference, with a generated master table       |
 | =tutorial.org=              | The guided course for the knowledge system             |
@@ -71,11 +72,11 @@ used: it was part of Org's contrib directory, which Emacs 31 no longer ships.
 |-----------+--------------------------------|
 | =C-c k p= | New project file               |
 | =C-c k l= | New learning subject file      |
-| =C-c k n= | New permanent knowledge note   |
 | =C-c k r= | New source/reference note      |
+| =C-c k e= | Give a hand-written zettel its ID drawer |
 | =C-c k i= | Capture an inbox item          |
 | =C-c k t= | Pick any capture template      |
-| =C-c k a= | Agenda over the knowledge tree |
+| =C-c k a= | Agenda over the projects tree  |
 | =C-c k d= | Home dashboard                 |
 | =C-c k b= | Regenerate every kanban board  |
 | =C-c k B= | Consolidated project board     |
@@ -113,8 +114,8 @@ task's own file and saves that file, so the board and the file cannot disagree.
   order, so every board shows BACKLOG … DONE left to right.
 - =CANCELLED= is dropped with =:skip-columns ("CANCELLED")=. The strings
   matter: org-kanban compares columns with =-difference= against strings.
-- The consolidated board uses =:scope (~/knowledge/notes/projects
-  ~/knowledge/notes/learning)=. Org expands those directories itself, so a new
+- The consolidated board uses =:scope (~/projects/projects
+  ~/projects/learning)=. Org expands those directories itself, so a new
   project file shows up on the next refresh with no edit here. The parameters
   must be *symbols*, not strings, and a directory scope is not recursive.
 - An empty tree renders an empty board, because there are no TODO keywords to
@@ -159,22 +160,30 @@ If a row cannot be resolved, the move refuses instead of corrupting data.
 
 * Org-roam
 
-The knowledge tree is indexed by Org-roam into one SQLite file:
-=~/.emacs.d/org-roam.db=. It lives outside the repository on purpose — it is an
-index, not knowledge, and it is rebuilt from the Org files at any time.
+The zettelkasten is indexed by Org-roam into one SQLite file:
+=~/.emacs.d/org-roam.db=. It lives outside both repositories on purpose — it is
+an index, not knowledge, and it is rebuilt from the Org files at any time.
+
+There is no Org-roam capture template, deliberately: a template cannot know the
+next number in =main-box/=. =org-roam-capture-' itself is refused by advice in
+=my-roam.el=, so a missing title in =C-c k f= or =C-c o i= signals an error
+instead of writing a file — no unnumbered note can land in the zettelkasten
+through the back door. A zettel is created by hand (=C-x C-f=), given a
+=#+TITLE:=, and then =C-c k e= writes the ID drawer. =my/new-project= and the
+other template commands live in the projects tree, which Org-roam never
+touches.
 
 ** What becomes a node
 
 | Thing                          | Node? |
 |--------------------------------+-------|
-| Any of the four templates      | Yes — file-level node, ID written at creation |
+| A zettel after =C-c k e=       | Yes — file-level node |
 | A heading with an =ID=          | Yes |
 | A heading without an =ID=       | No |
-| =dashboards/=, =templates/=, =archive/=, =attachments/= | No — excluded from the index |
+| Anything in =~/projects=       | No — outside =org-roam-directory= |
 
 IDs live in a property drawer at the very top of the file, before the first
-heading. That is the only place Org-roam reads a file-level node from, and it is
-why the templates start with one.
+heading. That is the only place Org-roam reads a file-level node from.
 
 Headings are not given IDs automatically. A node nothing links to is pure
 maintenance cost, so you opt in per heading with =M-x org-id-get-create=.
@@ -183,7 +192,8 @@ maintenance cost, so you opt in per heading with =M-x org-id-get-create=.
 
 | Key       | Command                     |
 |-----------+-----------------------------|
-| =C-c k f= | Find or create a node        |
+| =C-c k f= | Find a node                   |
+| =C-c k e= | Give the current file an ID     |
 | =C-c k v= | Toggle the backlinks buffer  |
 | =C-c k s= | Re-index and report counts   |
 | =C-c k g= | Graph in a browser           |
@@ -209,12 +219,13 @@ this stage landed, and the old idle timer that pointed Org-roam at
 
 ** Verified behaviour
 
-- two notes get distinct file-level IDs; the ID sits in a drawer above the first heading
-- a project file is indexed as a file-level node; dashboards are not indexed at all
+- two hand-written zettels get distinct file-level IDs from =C-c k e=; the ID
+  sits in a drawer above the first heading
+- nothing in the projects tree is indexed; a project fixture is not a node
 - a node resolves from its ID and carries the file title
 - an =id:= link is indexed with both endpoints, and the target gets a backlink
 - deleting the database and re-indexing restores the same node and link counts
-  and changes no knowledge file
+  and changes no zettel
 - a plain heading does not acquire an ID unless asked
 
 * Dashboards
@@ -267,7 +278,7 @@ types with org-super-agenda grouping.
 | =(and (not (done)) (deadline :to today))=     | overdue                        |
 | =(and (todo "NEXT") (not (done)))=            | next actions                   |
 | =(and (not (done)) (deadline 14))=            | deadline within 14 days        |
-| =(and (path "notes/projects") (todo "WAITING"))= | waiting, project files only |
+| =(and (path "projects") (todo "WAITING"))= | waiting, project files only |
 
 Relative strings like ="+2w"= are *not* accepted in =:to= — org-ql parses them
 with =parse-time-string= and fails with a =fixnump= error. Use a day count.
@@ -285,8 +296,8 @@ Two files, two jobs:
 
 | File                                  | Job                                    |
 |---------------------------------------+----------------------------------------|
-| =notes/references/<slug>.org=          | one source: summary, critique, quotes, the attached file |
-| =notes/references/tracking.org=        | the queue: unread, reading, finished    |
+| =references/<slug>.org=                | one source: summary, critique, quotes, the attached file |
+| =references/tracking.org=              | the queue: unread, reading, finished    |
 
 ** EPUB
 
@@ -312,7 +323,7 @@ subsystem.
 
 ** Attachments
 
-=C-c k A= copies a file into =~/knowledge/attachments/<id>/= through
+=C-c k A= copies a file into =~/projects/attachments/<id>/= through
 =`org-attach'=, so the book sits beside its note and neither is duplicated.
 =C-c k o= opens the first attachment of the current note.
 
@@ -344,43 +355,49 @@ block queries the agenda files as before.
 
 ** Git
 
-Two repositories, both local-only for the knowledge tree:
+Three repositories:
 
 | Repository        | Remote            | Contents                          |
 |-------------------+-------------------+-----------------------------------|
 | =~/.emacs.d=      | your Emacs-config | configuration, modules, docs      |
-| =~/knowledge=     | none              | Org files, templates, attachments |
+| =~/knowledge=     | none              | the zettelkasten: literature-box/, main-box/ |
+| =~/projects=      | none              | projects, learning, references, dashboards, attachments |
 
-Nothing is pushed from =~/knowledge=. There is no remote on it.
+Nothing is pushed from =~/knowledge= or =~/projects=. There is no remote on
+either.
 
 ** What is committed and what is not
 
-Committed: every =.org= file, =templates/=, =dashboards/= (including the
-generated tables, so a fresh clone reads sensibly), =attachments/=, and
-=bin/backup.sh=.
+Committed: every =.org= file; in =~/projects= also =templates/=,
+=dashboards/= (including the generated tables, so a fresh clone reads
+sensibly), =attachments/=, and =bin/backup.sh=.
 
-Ignored, because it is rebuildable or machine-specific: =org-roam.db=,
-=.org-id-locations=, =.DS_Store=, lock files, Emacs autosaves.
+Ignored, because it is rebuildable or machine-specific: =org-roam.db= and
+=.org-id-locations= (both live in =~/.emacs.d=, outside the data trees),
+=.DS_Store=, lock files, Emacs autosaves.
 
-The ignore rules are tested from both directions in =stage6-check.el=: indexes
-must be ignored, notes/attachments/templates must not be.
+The ignore rules of both repositories are tested from both directions in
+=stage6-check.el=: =.DS_Store= must be ignored; zettels, the inbox,
+attachments and templates must not be.
 
 ** Backup
 
 #+begin_src sh
-  ~/knowledge/bin/backup.sh
+  ~/projects/bin/backup.sh
 #+end_src
 
-It commits anything pending, then archives the *whole* repository — including
-=.git= — to =~/knowledge-backups/knowledge-YYYY-MM-DD.tar.gz=. The archive is
-the fallback for what git cannot fix: a lost directory or a corrupted =git=. The
-script is tested by extracting its own output and comparing every tracked file
-byte for byte.
+It commits anything pending in *both* repositories, then archives each whole
+tree — including =.git= — to =~/knowledge-backups/knowledge-YYYY-MM-DD.tar.gz=
+and =projects-YYYY-MM-DD.tar.gz=. The archive is the fallback for what git
+cannot fix: a lost directory or a corrupted =git=. The script is tested against
+copies of both trees, extracting its own output and comparing every tracked
+knowledge file byte for byte.
 
 Restore:
 
 #+begin_src sh
   mkdir -p ~ && tar -xzf ~/knowledge-backups/knowledge-2026-11-22.tar.gz -C ~
+  # same for projects-2026-11-22.tar.gz
 #+end_src
 
 Restore one file: =git log --oneline -- path= then =git checkout <commit> -- path=.
@@ -402,10 +419,17 @@ not observations:
 
 | What                            | Measured | Gate   |
 |---------------------------------+----------+--------|
-| Batch load of the whole config   | 0.15 s   | 0.25 s |
-| Agenda build over 40 projects    | 0.56 s   | 5 s    |
+| Batch load of the whole config   | 0.21 s   | 0.25 s |
+| Agenda build over 40 projects    | 0.58 s   | 5 s    |
 | Regenerate every board/dashboard | 0.26 s   | 15 s   |
-| Cold org-roam re-index           | 0.07 s   | 20 s   |
+| Regenerate the doc blocks       | 13.9 s   | 20 s   |
+| Cold org-roam re-index           | 0.01 s   | 20 s   |
+
+The two refresh gates are split on purpose: the documentation blocks are
+dominated by the 4,430-row inventory in =INVENTORY.org=, and that cost must
+not hide inside the board and dashboard number. =C-c k b= pays both halves —
+boards and dashboards in under a second, the inventory block in ~14 s —
+which is the honest price of refreshing every generated table at once.
 
 Startup is spent as: the built-in coding config, then ~20 ms for the five Org
 modules. org-ql, org-super-agenda and nov are loaded on first use, not at
@@ -430,16 +454,16 @@ not be reached listed rather than silently dropped.
 | =i= | =inbox.org= under *Tasks*                     |
 | =t= | Prompts for a project, files under *Tasks*    |
 | =l= | Prompts for a subject, files under *Tasks*    |
-| =j= | Weekly date tree in =notes/daily/journal.org= |
+| =j= | Weekly date tree in =daily/journal.org= |
 | =n= | Someday idea under =inbox.org= *Ideas*        |
-| =r= | Reading tracker in =notes/references/=        |
+| =r= | Reading tracker in =references/=        |
 
 The journal uses one file with a date tree rather than one file per day: it
 keeps =org-agenda-files= short and makes a week visible in one screen.
 
 * Templates and file creation
 
-=my/new-project= and friends read a skeleton from =~/knowledge/templates/=,
+=my/new-project= and friends read a skeleton from =~/projects/templates/=,
 substitute the name and today's date, refuse to overwrite an existing file, and
 open the result. There is no example project: create your own with =C-c k p=.
 
@@ -461,7 +485,7 @@ refusal to overwrite, agenda discovery without config edits, capture target
 resolution, and the generated help buffer. It creates a fixture project and
 deletes it again.
 
-Last measured: =CONFIG_OK=, 179 checks, 0 failures, =load-seconds= 0.15.
+Last measured: =CONFIG_OK=, 200 checks, 0 failures, =load-seconds= 0.22.
 The per-stage breakdown is in =VERIFICATION.org=.
 
 * Terminal limits

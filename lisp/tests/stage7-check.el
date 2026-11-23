@@ -205,6 +205,24 @@ a global-only lookup would report them as dead."
       (my/stage7-check (format "%s points at %s" (file-name-nondirectory file) target)
                        (string-match-p (regexp-quote target) text)))))
 
+;;;; 7. The data repositories' READMEs teach real keys
+
+;; The knowledge README once taught the wrong link key and no gate caught it,
+;; because stage 7 only looked at documents inside ~/.emacs.d. The READMEs
+;; that live in the data trees are checked now, with the same rule.
+(dolist (spec (list (cons "knowledge" my/knowledge-dir)
+                    (cons "projects" my/projects-dir)))
+  (let* ((readme (expand-file-name "README.org" (cdr spec)))
+         (keys (when (file-exists-p readme)
+                 (my/stage7-taught-keys (my/stage7-text readme))))
+         (dead (cl-remove-if #'my/stage7-resolves-p keys)))
+    (my/stage7-check (format "the %s README teaches a useful number of keys" (car spec))
+                     (and keys (> (length keys) 2))
+                     (format "%d keys" (length keys)))
+    (my/stage7-check (format "every key the %s README teaches resolves" (car spec))
+                     (null dead)
+                     (format "%d taught, dead: %S" (length keys) dead))))
+
 (my/stage7-check "ORG-PKM.org exists" (file-exists-p (expand-file-name "ORG-PKM.org" user-emacs-directory)))
 (my/stage7-check "VERIFICATION.org exists" (file-exists-p (expand-file-name "VERIFICATION.org" user-emacs-directory)))
 (my/stage7-check "VERIFICATION.org documents the gate command"
