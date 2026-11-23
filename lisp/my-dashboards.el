@@ -55,7 +55,7 @@ holding a list."
   (org-ql-select (my/dashboard--files files) query :action '(point-marker)))
 
 (defun my/reference-files ()
-  "Every Org file under notes/references, for the reading blocks."
+  "Every Org file under references, for the reading blocks."
   (my/projects-files-in "references"))
 
 (defun my/dashboard--state-counts (file)

@@ -220,10 +220,19 @@ uncommitted work of yours is not a test failure.")
     (org-todo-list)
     (my/stage6-report "agenda build over 40 projects" (- (float-time) start) 5.0))
 
-  ;; Dashboard refresh
+  ;; Board and dashboard refresh — the thing the label says.
   (let ((start (float-time)))
-    (my/refresh-all-dblocks)
-    (my/stage6-report "full dashboard refresh" (- (float-time) start) 15.0))
+    (dolist (f (append (my/projects-actionable-files)
+                       (my/projects-files-in "dashboards")))
+      (my/refresh-dblocks-in-file f))
+    (my/stage6-report "board and dashboard refresh" (- (float-time) start) 15.0))
+  ;; The documentation blocks (dominated by the 4,430-row inventory) are
+  ;; gated separately, so their cost is visible and cannot hide inside the
+  ;; board number.
+  (let ((start (float-time)))
+    (dolist (f (seq-filter #'file-exists-p my/knowledge-doc-files))
+      (my/refresh-dblocks-in-file f))
+    (my/stage6-report "documentation blocks refresh" (- (float-time) start) 20.0))
   ;; A fast number is worthless if the work did not happen: the health table
   ;; must actually carry a row per fixture project.
   (with-current-buffer (find-file-noselect (my/projects-subdir "dashboards/projects.org"))

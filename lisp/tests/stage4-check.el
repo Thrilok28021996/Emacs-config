@@ -164,6 +164,19 @@ one would test the wrong section."
   (my/stage4-check "an empty section says so instead of inventing an item"
                    (string-match-p "Nothing here" (my/stage4-block-text home "my-tasks"))))
 
+;; The per-tree sections scope by :files, not by a (path ...) regexp: a
+;; path that no longer matches renders a tidy "Nothing here." forever, so
+;; they are checked against fixtures rather than trusted.
+(my/stage4-check "the projects dashboard lists its fixture task"
+                 (string-match-p "wire the eval harness"
+                                 (my/stage4-block-text (my/projects-subdir "dashboards/projects.org")
+                                                       "my-tasks")))
+(my/stage4-check "the learning dashboard lists its fixture task"
+                 (let ((text (my/stage4-block-text (my/projects-subdir "dashboards/learning.org")
+                                                   "my-tasks")))
+                   (and (string-match-p "redo the MCP summary" text)
+                        (string-match-p "finish the agents chapter" text))))
+
 ;;;; 3. Agenda dashboards
 
 (defun my/stage4-agenda (key)

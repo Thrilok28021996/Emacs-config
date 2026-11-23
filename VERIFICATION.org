@@ -11,7 +11,7 @@ Run the whole thing yourself:
   ./emacs-sync.sh verify
 #+end_src
 
-Last full run, 2026-11-25: =CONFIG_OK=, **191 checks, 0 failures**, batch load
+Last full run, 2026-11-25: =CONFIG_OK=, **194 checks, 0 failures**, batch load
 **0.22 s**.
 
 The checks live in =lisp/tests/stageN-check.el= and run headless. Each one
@@ -132,14 +132,15 @@ number that skipped the work would be worse than a slow one.
 
 | What                              | Measured | Gate  |
 |-----------------------------------+----------+-------|
-| Batch load of the whole config     | 0.22 s   | 0.25 s |
-| Agenda build over 40 projects      | 0.60 s   | 5 s    |
-| Regenerate every board/dashboard   | 14.3 s   | 15 s   |
-| Cold org-roam re-index             | 0.02 s   | 20 s   |
+| Batch load of the whole config     | 0.21 s   | 0.25 s |
+| Agenda build over 40 projects      | 0.58 s   | 5 s    |
+| Regenerate every board/dashboard   | 0.26 s   | 15 s   |
+| Regenerate the documentation blocks | 13.9 s  | 20 s   |
+| Cold org-roam re-index             | 0.01 s   | 20 s   |
 
-The 14.3 s refresh is dominated by regenerating the 4,430-row inventory block
-in =INVENTORY.org= (13.3 s on its own); the boards and dashboards themselves
-take well under a second.
+The documentation-blocks gate is dominated by regenerating the 4,430-row
+inventory block in =INVENTORY.org=; it is gated separately so that cost
+cannot hide inside the board and dashboard number.
 
 * Documentation is gated too
 

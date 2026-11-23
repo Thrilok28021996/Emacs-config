@@ -18,7 +18,7 @@ stale.
 | =lisp/my-help.el=           | =C-c ?= binding listing and the doc opener             |
 | =lisp/my-reading.el=        | EPUB, attachments, reading status                     |
 | =lisp/my-dashboards.el=     | Generated dashboard blocks and agenda views           |
-| =lisp/tests/stageN-check.el= | Headless acceptance checks, 191 in total             |
+| =lisp/tests/stageN-check.el= | Headless acceptance checks, 194 in total             |
 | =VERIFICATION.org=          | The twelve acceptance criteria and their evidence     |
 | =cheatsheet.org=            | The key reference, with a generated master table       |
 | =tutorial.org=              | The guided course for the knowledge system             |
@@ -376,8 +376,9 @@ Ignored, because it is rebuildable or machine-specific: =org-roam.db= and
 =.org-id-locations= (both live in =~/.emacs.d=, outside the data trees),
 =.DS_Store=, lock files, Emacs autosaves.
 
-The ignore rules are tested from both directions in =stage6-check.el=: indexes
-must be ignored, notes/attachments/templates must not be.
+The ignore rules of both repositories are tested from both directions in
+=stage6-check.el=: =.DS_Store= must be ignored; zettels, the inbox,
+attachments and templates must not be.
 
 ** Backup
 
@@ -418,13 +419,15 @@ not observations:
 
 | What                            | Measured | Gate   |
 |---------------------------------+----------+--------|
-| Batch load of the whole config   | 0.22 s   | 0.25 s |
-| Agenda build over 40 projects    | 0.60 s   | 5 s    |
-| Regenerate every board/dashboard | 14.3 s   | 15 s   |
-| Cold org-roam re-index           | 0.02 s   | 20 s   |
+| Batch load of the whole config   | 0.21 s   | 0.25 s |
+| Agenda build over 40 projects    | 0.58 s   | 5 s    |
+| Regenerate every board/dashboard | 0.26 s   | 15 s   |
+| Regenerate the doc blocks       | 13.9 s   | 20 s   |
+| Cold org-roam re-index           | 0.01 s   | 20 s   |
 
-The refresh number is honest about what it includes: the 4,430-row inventory
-block alone takes 13.3 s; boards and dashboards cost under a second.
+The two refresh gates are split on purpose: the documentation blocks are
+dominated by the 4,430-row inventory in =INVENTORY.org=, and that cost must
+not hide inside the board and dashboard number.
 
 Startup is spent as: the built-in coding config, then ~20 ms for the five Org
 modules. org-ql, org-super-agenda and nov are loaded on first use, not at
@@ -480,7 +483,7 @@ refusal to overwrite, agenda discovery without config edits, capture target
 resolution, and the generated help buffer. It creates a fixture project and
 deletes it again.
 
-Last measured: =CONFIG_OK=, 191 checks, 0 failures, =load-seconds= 0.22.
+Last measured: =CONFIG_OK=, 194 checks, 0 failures, =load-seconds= 0.22.
 The per-stage breakdown is in =VERIFICATION.org=.
 
 * Terminal limits
