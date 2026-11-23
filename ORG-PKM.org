@@ -18,7 +18,7 @@ stale.
 | =lisp/my-help.el=           | =C-c ?= binding listing and the doc opener             |
 | =lisp/my-reading.el=        | EPUB, attachments, reading status                     |
 | =lisp/my-dashboards.el=     | Generated dashboard blocks and agenda views           |
-| =lisp/tests/stageN-check.el= | Headless acceptance checks, 195 in total             |
+| =lisp/tests/stageN-check.el= | Headless acceptance checks, 200 in total             |
 | =VERIFICATION.org=          | The twelve acceptance criteria and their evidence     |
 | =cheatsheet.org=            | The key reference, with a generated master table       |
 | =tutorial.org=              | The guided course for the knowledge system             |
@@ -427,7 +427,9 @@ not observations:
 
 The two refresh gates are split on purpose: the documentation blocks are
 dominated by the 4,430-row inventory in =INVENTORY.org=, and that cost must
-not hide inside the board and dashboard number.
+not hide inside the board and dashboard number. =C-c k b= pays both halves —
+boards and dashboards in under a second, the inventory block in ~14 s —
+which is the honest price of refreshing every generated table at once.
 
 Startup is spent as: the built-in coding config, then ~20 ms for the five Org
 modules. org-ql, org-super-agenda and nov are loaded on first use, not at
@@ -483,7 +485,7 @@ refusal to overwrite, agenda discovery without config edits, capture target
 resolution, and the generated help buffer. It creates a fixture project and
 deletes it again.
 
-Last measured: =CONFIG_OK=, 195 checks, 0 failures, =load-seconds= 0.22.
+Last measured: =CONFIG_OK=, 200 checks, 0 failures, =load-seconds= 0.22.
 The per-stage breakdown is in =VERIFICATION.org=.
 
 * Terminal limits

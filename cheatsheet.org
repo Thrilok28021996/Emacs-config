@@ -58,7 +58,7 @@ path. The journal writes into a weekly date tree in =daily/journal.org=.
 | =C-c k L= | learning dashboard                                |
 | =C-c k d= | open the home dashboard *file*                    |
 | =C-c k B= | consolidated kanban in =dashboards/projects.org=  |
-| =C-c k b= | regenerate every board, dashboard block and doc key table |
+| =C-c k b= | regenerate every board, dashboard block and doc key table — the 4,430-row inventory makes this take ~14 s |
 | =C-c k q= | ad-hoc org-ql query                               |
 
 ** Linking and backlinks

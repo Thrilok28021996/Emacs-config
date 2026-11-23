@@ -106,6 +106,10 @@ uncommitted work of yours is not a test failure.")
 
 (let* ((copy-k (expand-file-name "knowledge" my/stage6-sandbox))
        (copy-p (expand-file-name "projects" my/stage6-sandbox))
+       ;; The script's headline behavior is committing pending work; make the
+       ;; copy dirty so that path is exercised deliberately, not by chance.
+       (_dirty (with-temp-file (expand-file-name "zz-stage6-dirty.org" copy-k)
+                 (insert "#+TITLE: dirty\n")))
        (tracked (with-temp-buffer
                   (let ((default-directory (file-name-as-directory copy-k)))
                     (call-process "git" nil t nil "ls-files"))
@@ -125,6 +129,9 @@ uncommitted work of yours is not a test failure.")
                                     my/stage6-backup-dir)))
   (my/stage6-check "it reports what it did"
                    (string-match-p "archived" output) (format "%S" output))
+  (my/stage6-check "it committed the dirty copy before archiving"
+                   (string-match-p "backup: " (my/stage6-git copy-k "log" "--oneline" "-1"))
+                   (my/stage6-git copy-k "log" "--oneline" "-1"))
   (my/stage6-check "it leaves a knowledge archive behind" (file-exists-p archive-k))
   (my/stage6-check "it leaves a projects archive behind" (file-exists-p archive-p))
   (when (file-exists-p archive-k)
