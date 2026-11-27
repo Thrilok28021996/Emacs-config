@@ -6,12 +6,9 @@
 ;; it from scratch, which the stage-3 checks prove.
 ;;
 ;; Node policy: a file-level node for every document that carries a top-of-file
-;; ID property drawer (all four templates do), plus a node for any heading that
-;; has an ID.  Headings are not given IDs automatically — a node nobody links to
-;; is a maintenance cost with no payoff.
-;;
-;; Dashboards, templates and attachments are excluded from the index: they are
-;; views and skeletons, not knowledge.
+;; ID property drawer, plus a node for any heading that has an ID.  Headings are
+;; not given IDs automatically.  Zettels are created by hand, so the finder
+;; only visits notes that already exist.
 
 ;;; Code:
 
@@ -29,7 +26,6 @@ knowledge, and it must never be committed."
 
 (setq org-roam-directory (directory-file-name my/knowledge-dir)
       org-roam-db-location my/roam-db-location
-      org-roam-dailies-directory "notes/daily/"
       org-roam-completion-everywhere t
       ;; Excluded paths are relative to `org-roam-directory'.
       org-roam-file-exclude-regexp
@@ -39,6 +35,9 @@ knowledge, and it must never be committed."
       (concat "${title:*} " (propertize "${tags:12}" 'face 'org-tag))
       org-roam-buffer-position 'right
       org-roam-buffer-width 0.35)
+
+;; The finder only visits existing notes; there is no creation template.
+(setq org-roam-capture-templates nil)
 
 ;;;; Nodes
 
@@ -87,9 +86,12 @@ the drawer must come before the first heading."
   (org-roam-node-insert))
 
 (defun my/roam-find-node ()
-  "Jump to a node of the knowledge tree."
+  "Jump to an existing node of the knowledge tree.
+No capture template is used: zettels are created and numbered by hand."
   (interactive)
-  (org-roam-node-find))
+  (let ((node (org-roam-node-read nil nil nil t)))
+    (when (org-roam-node-file node)
+      (org-roam-node-visit node))))
 
 (defun my/roam-toggle-buffer ()
   "Show or hide the backlinks buffer for the current note."
@@ -106,23 +108,6 @@ the drawer must come before the first heading."
         (org-roam-ui-mode 1)
         (org-roam-ui-open))
     (user-error "org-roam-ui is not installed; graph export needs it")))
-
-;;;; Capture
-
-(setq org-roam-capture-templates
-      `(("d" "Knowledge note" plain
-         ,(concat ":PROPERTIES:\n:ID:       ${id}\n:END:\n"
-                  "#+TITLE: ${title}\n"
-                  "#+FILETAGS: :knowledge:\n"
-                  "#+STARTUP: overview indent\n\n"
-                  "* The idea\n%?\n\n"
-                  "* Why it matters\n\n"
-                  "* Details\n\n"
-                  "* Links\n- Related:\n- Used by projects:\n- Used by learning:\n\n"
-                  "* Sources\n")
-         :target (file+head "notes/knowledge/%<%Y%m%d%H%M%S>-${slug}.org"
-                            ":PROPERTIES:\n:ID:       ${id}\n:END:\n#+TITLE: ${title}\n")
-         :empty-lines 1)))
 
 ;;;; Keys
 

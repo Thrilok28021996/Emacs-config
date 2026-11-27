@@ -1,167 +1,51 @@
-#+TITLE: Verification report
+#+TITLE: Verification
 #+STARTUP: overview
 
-Every acceptance criterion from the plan, what proves it, and where the proof
-lives. Nothing here is claimed as verified that was not run.
+Run everything with =emacs-sync.sh verify=. The script loads the config, runs
+the checks and reports startup time. Exit status 0 means all checks passed.
 
-Run the whole thing yourself:
+* Gates
 
-#+begin_src sh
-  cd ~/.emacs.d
-  ./emacs-sync.sh verify
-#+end_src
+| Check | What it proves |
+|-------+----------------|
+| =stage1-check.el= | The eight workflow states, the exact removed-key list, the surviving bindings, and no capture template behind the node finder |
+| =stage3-check.el= | A file ID becomes a node, a link becomes a backlink, and the index rebuilds from a temporary tree |
+| =stage5-check.el= | A real EPUB opens in nov-mode and renders text for a terminal |
+| =stage7-check.el= | Every live =C-c= binding is in the cheatsheet; no doc teaches a removed key; no config file still points into the old tree |
 
-Last full run, 2026-11-22: =CONFIG_OK=, **170 checks, 0 failures**, batch load
-**0.173 s**.
+The earlier board, dashboard, capture and backup checks were removed with the
+features they covered. The current gates do not write into =~/knowledge=.
 
-The checks live in =lisp/tests/stageN-check.el= and run headless. Each one
-creates its own fixtures and removes them again.
+* Why the key contract is checked twice
 
-* The twelve criteria
-
-** 1. Create a new project through a template
-
-Proven by =stage1-check.el=: =my/new-project= creates
-=notes/projects/<slug>.org=, the file carries the =#+TODO:= line, a kanban
-block, a =Tasks= heading and a file-level ID.
-
-#+begin_example
-PASS  my/new-project creates notes/projects/<slug>.org
-PASS  created file carries the #+TODO line
-PASS  created file carries a kanban block
-PASS  created file has its Tasks heading
-PASS  my/new-project refuses to overwrite
-#+end_example
-
-** 2. Create a new learning subject through a template
-
-Proven by =stage1-check.el=, same code path but asserted separately:
-=my/new-learning-subject= writes =notes/learning/<slug>.org= with the mirrored
-workflow line and a board, and the agenda discovers it.
-
-** 3. Every project and learning document has its own board**
-
-Proven by =stage2-check.el=: the fixture project file renders a board with the
-seven active states in workflow order, each task in its own state column, and
-=CANCELLED= absent while still present as a heading.
-
-** 4. The consolidated board shows tasks from all files**
-
-Proven by =stage2-check.el=: the board in =dashboards/projects.org= is scoped to
-the two directories and contains both a project task and a learning task.
-
-** 5. Moving a task on the consolidated board updates its original file**
-
-Proven by =stage2-check.el=, and this is where the one serious bug was found:
-org-kanban resolved a row to a *neighbouring heading* because it searched the
-target buffer from wherever point happened to be. The fixture caught a move that
-changed the wrong task. =lisp/my-kanban.el= replaces the resolver and refuses to
-guess when a heading cannot be found.
-
-#+begin_example
-PASS  moving a row on the consolidated board updates the project file
-PASS  the move left every other task in its own state
-PASS  after the move the task shows in the NEXT column
-#+end_example
-
-** 6. The agenda shows tasks and deadlines across projects and subjects
-
-Proven by =stage1-check.el= (directory-based discovery, so a new file needs no
-config edit), =stage4-check.el= (all three agenda dashboards build; the project
-view shows project tasks only, the learning view learning tasks only; a due
-deadline is displayed) and =stage6-check.el= (agenda build over 40 fixture
-projects, 0.56 s).
-
-** 7. Org-roam resolves backlinks between learning, projects and knowledge notes**
-
-Proven by =stage3-check.el=: an =id:= link is indexed with both endpoints, the
-target gets a backlink, and the link resolves to the target's file.
-
-** 8. Knowledge notes can be linked without duplicating content**
-
-Structural, not merely asserted: a file-level ID per document, links by =id:=,
-and the design rule that a learning file links to a knowledge note instead of
-restating it. =stage3-check.el= proves the link and backlink machinery;
-=C-c k v= shows what links to the note at point.
-
-** 9. Flashcards can be created and reviewed — NOT IMPLEMENTED**
-
-=org-fc= is not on MELPA, GNU ELPA or NonGNU ELPA (checked against all three
-=archive-contents= files), so it could not be installed under the agreed rule of
-MELPA + GNU ELPA only. It was deferred by decision, not attempted and failed.
-No flashcard functionality exists in this system.
-
-** 10. Research annotations connected to knowledge notes — NOT IMPLEMENTED**
-
-Two independent blockers, both verified:
-
-- A terminal cannot display images, and =doc-view= renders pages as images. No
-  pdf-tools means no text layer either.
-- =nov.el= has **no annotation feature at all** — no highlight store, no
-  annotation list. There is nothing to attach an annotation to.
-
-What exists instead: EPUB renders as text, the source file is attached to its
-note, and notes are written in Org and linked. See =ORG-PKM.org= → Reading.
-
-** 11. Git preserves the authoritative Org files and attachments**
-
-Proven by =stage6-check.el=: =bin/backup.sh= commits pending work and archives
-the whole repository; the archive is extracted into a temporary directory and
-**every tracked file is compared byte for byte**. The script is run against a
-copy of the tree, because it commits and a test must never commit to the
-repository it is testing. The ignore rules are checked
-from both directions: indexes and =.DS_Store= are ignored, notes, attachments
-and templates are not.
-
-** 12. Rebuilding the Org-roam database does not destroy knowledge**
-
-Proven by =stage3-check.el=: the database is deleted, rebuilt, and the node
-count, the link count and the md5 of every knowledge file are compared before
-and after.
-
-* Performance
-
-Measured by =stage6-check.el= with 40 fixture projects (200 tasks, boards
-included). These are gates now, not observations:
-
-| What                              | Measured | Gate  |
-|-----------------------------------+----------+-------|
-| Batch load of the whole config     | 0.173 s  | 0.25 s |
-| Agenda build over 40 projects      | 0.56 s   | 5 s    |
-| Regenerate every board/dashboard   | 0.26 s   | 15 s   |
-| Cold org-roam re-index             | 0.07 s   | 20 s   |
-
-Each timing is paired with a check that the work actually happened — a fast
-number that skipped the work would be worse than a slow one.
-
-* Documentation is gated too
-
-=stage7-check.el= (39 checks) keeps the documentation honest, because a document
-that teaches a key which does not exist is worse than no document:
-
-- every =C-c= binding in the live keymaps must appear in =cheatsheet.org=, and
-  the master table there is generated from the keymaps, not typed
-- every key the cheatsheet and tutorial teach must resolve to a command, checked
-  in an Org buffer so =C-c C-c=, =C-c C-t= and friends are found in =org-mode-map=
-- neither document keeps a section describing removed software, and the
-  cheatsheet may not name a package that is not loaded
-- both documents must cover the knowledge layer (creation, dashboards, blocks,
-  attachments, backlinks, kanban, org-ql, EPUB, backup, gates)
-- both must point at =ORG-PKM.org= and =VERIFICATION.org= instead of duplicating
-  them
-
-It immediately caught a real error: the tutorials taught =C-c C-x C-w= to move a
-kanban row, and that key is =org-cut-special=. org-kanban ships *no* keybinding
-at all — =org-kanban/shift= is only reachable through =M-x= — so =C-c k m= was
-added and is now tested through the transient map with real keystrokes.
+=stage1-check.el= holds the list of keys that must be unbound and the list that
+must still resolve. =stage7-check.el= reads the cheatsheet and the tutorial and
+checks the other direction: a document cannot teach a key that does nothing.
+Both run in batch with the same =init.el= that Emacs loads.
 
 * Known limits
 
-- Seven-column kanban boards render at 305–324 characters per line. They do not
-  fit a terminal. The one-line fix is documented: =:range (TODO . REVIEW)= on
-  the block.
-- An empty tree renders an empty board, because org-kanban derives columns from
-  the files it scans.
-- =org-super-agenda= grouping applies to the three dashboards only.
-- PDF reading happens outside Emacs.
-- The Org layer costs ~20 ms of startup time over the bare coding config.
+- Python Eglot keys are bound but no Python language server is installed here.
+  C and C++ have clangd.
+- Files already under =~/projects= are outside this configuration. Their
+  generated blocks are no longer refreshed from here.
+- Org-roam's graph needs org-roam-ui, which is installed but only starts on
+  request through =C-c k g=.
+
+* Result
+
+Last run on Emacs 31.1, 2026-11-27:
+
+#+begin_example
+CONFIG_OK
+82 checks, 0 failures
+10 checks, 0 failures
+8 checks, 0 failures
+280 checks, 0 failures
+load-seconds=0.143
+#+end_example
+
+Startup time moves a little between runs. =emacs-sync.sh build= exits 0 with
+no warnings. The four checks total 380
+assertions. All of them ran against this repository, with the temporary
+Org-roam tree kept outside =~/knowledge=.

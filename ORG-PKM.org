@@ -1,473 +1,65 @@
-#+TITLE: Org knowledge system
+#+TITLE: Org setup and key layout
 #+STARTUP: overview
 
-How the Org knowledge system is wired into this Emacs configuration. The data
-lives in =~/knowledge/=; this file is about the Emacs side.
+This file explains what is left of the Org layer and why. For the key list,
+see =cheatsheet.org=; for the checks, see =VERIFICATION.org=.
 
-Open it any time with =C-c k H=. For every key this configuration defines,
-press =C-c ?= — that buffer is generated from the live keymaps, so it cannot go
-stale.
+* The data
 
-* Files that do the work
+=~/knowledge= is a Luhmann-style zettelkasten: numbered notes, linked by =id:=
+links, with =main-box=, =literature-box= and a hand-curated index. Files are
+created and numbered by hand. Nothing in Emacs picks the next number.
 
-| File                        | Responsibility                                        |
-|-----------------------------+-------------------------------------------------------|
-| =init.el=                   | Unchanged except one load block at the very end        |
-| =lisp/my-org-pkm.el=        | Directories, workflow, discovery, capture, file creation |
-| =lisp/my-help.el=           | =C-c ?= binding listing and the doc opener             |
-| =lisp/my-reading.el=        | EPUB, attachments, reading status                     |
-| =lisp/my-dashboards.el=     | Generated dashboard blocks and agenda views           |
-| =lisp/tests/stageN-check.el= | Headless acceptance checks, 170 in total             |
-| =VERIFICATION.org=          | The twelve acceptance criteria and their evidence     |
-| =emacs-sync.sh=             | Gate script: =check=, =test=, =verify=, =build=, =benchmark=, =doctor= |
+The Org-roam index lives in =~/.emacs.d/org-roam.db=, outside the data tree. It
+is a cache: delete it and =C-c k s= rebuilds it from the Org files.
 
-Nothing in =lisp/= is byte-compiled at startup and nothing is loaded before
-=init.el= finishes, so the coding setup's startup path is untouched.
+* Loaded modules
 
-* Why the configuration is built this way
+| File | Job |
+|------+-----|
+| =init.el= | Global keys, editing, Eglot, Flymake, Magit, projects, theme |
+| =lisp/my-org-pkm.el= | =my/knowledge-dir=, shared Org settings, eight workflow states |
+| =lisp/my-roam.el= | Index, node find, backlinks, graph, sync |
+| =lisp/my-reading.el= | Route =.epub= files to nov-mode |
+| =lisp/my-help.el= | Open this document |
 
-The configuration is deliberately built-in-only: no =use-package=, no
-=package-initialize=, no completion framework. Startup speed is the reason.
-The Org layer costs two small =require= calls and nothing else, measured below.
+Only these modules load. The modules for project files, capture, boards,
+dashboards and the reading queue were removed with the old tree layout. Their
+bindings and checks went with them.
 
-Two consequences worth knowing:
+* Why the prefixes look like this
 
-1. ~org-agenda-files~ points at *directories*, not files. Org expands
-   directories itself, so a new project file appears in the agenda with no
-   configuration edit. That is the whole trick behind "discover automatically".
-2. Every knowledge file carries its own =#+TODO:= line mirroring the global
-   workflow. Kanban columns are derived from the TODO keywords found in the
-   files being scanned, so a file that forgot a state would silently change the
-   board's shape. Stage 2 relies on this.
+- =C-c k= is the zettelkasten and nothing else: find (=f=), backlinks (=v=),
+  sync (=s=), graph (=g=), this document (=H=).
+- =C-c o= holds Org clocking (=I=, =O=, =R=) and link insertion (=i=).
+- =C-c c= is code, =C-c e= is diagnostics, =C-c g= is Git, =C-c p= is projects,
+  =C-c v= is Conda, =C-c w= is windows, =C-c i= is indentation, =C-c f= is
+  recent files, =C-c s= is imenu and =C-c t= is the theme.
 
-* The workflow
+Redundant aliases went away. =C-x b=, =C-s= and the built-in undo keys already
+do what the old three-letter aliases did. The line-moving keys also went: Org
+owns the same chord and the binding behaved differently depending on the mode.
 
-=BACKLOG= → =TODO= → =NEXT= → =DOING= → =WAITING= → =REVIEW= → =DONE=, with
-=CANCELLED= as a second terminal state.
+* Workflow states
 
-- =BACKLOG= — captured, not committed to. Shows up in no dashboard.
-- =TODO= — committed, unscheduled.
-- =NEXT= — the next physical action.
-- =DOING= — in progress now.
-- =WAITING= — blocked on someone else. It blocks its subtasks, because a
-  parent you cannot act on is not work you can do.
-- =REVIEW= — finished, awaiting a second look.
-- =DONE=, =CANCELLED= — terminal. Completing either writes a =CLOSED:= line
-  into the =LOGBOOK= drawer.
-
-Recurring items use plain Org repeaters (=+1w=, =.+1d=, =++1m=). No habit
-graphs: they are agenda noise in a terminal.
-
-Dependencies are parent/child plus the =ORDERED= property. =org-depend= is not
-used: it was part of Org's contrib directory, which Emacs 31 no longer ships.
-
-* Keys
-
-| Key       | Command                        |
-|-----------+--------------------------------|
-| =C-c k p= | New project file               |
-| =C-c k l= | New learning subject file      |
-| =C-c k n= | New permanent knowledge note   |
-| =C-c k r= | New source/reference note      |
-| =C-c k i= | Capture an inbox item          |
-| =C-c k t= | Pick any capture template      |
-| =C-c k a= | Agenda over the knowledge tree |
-| =C-c k d= | Home dashboard                 |
-| =C-c k b= | Regenerate every kanban board  |
-| =C-c k B= | Consolidated project board     |
-| =C-c k H= | This document                  |
-| =C-c ?=   | Every =C-c= binding, generated live |
-
-* Kanban
-
-Every project and learning file ends with a =* Board= section holding a
-dynamic block. The consolidated boards live in =dashboards/projects.org= and
-=dashboards/learning.org=.
-
-Refresh a board with =C-c C-c= on the block, one file with
-=M-x my/kanban-refresh-buffer=, all of them with =C-c k b=.
-
-** Moving tasks
-
-org-kanban ships no keybinding of its own: =org-kanban/shift= is reachable only
-through =M-x=, which is no way to move tasks. =C-c k m= is bound to
-=my/kanban-move= for that reason. Put point on a row, press it, then:
-
-| Key       | Effect                          |
-|-----------+---------------------------------|
-| =a= / =h= | move the task back one state     |
-| =d= / =l= | move the task forward one state  |
-| =w= / =k= | move the row up                  |
-| =s= / =j= | move the row down                |
-
-The row is a link, not a copy. Moving it runs =org-todo= on the heading in the
-task's own file and saves that file, so the board and the file cannot disagree.
-
-** Verified behaviour
-
-- Columns come from the =#+TODO:= line of the files in scope, in workflow
-  order, so every board shows BACKLOG … DONE left to right.
-- =CANCELLED= is dropped with =:skip-columns ("CANCELLED")=. The strings
-  matter: org-kanban compares columns with =-difference= against strings.
-- The consolidated board uses =:scope (~/knowledge/notes/projects
-  ~/knowledge/notes/learning)=. Org expands those directories itself, so a new
-  project file shows up on the next refresh with no edit here. The parameters
-  must be *symbols*, not strings, and a directory scope is not recursive.
-- An empty tree renders an empty board, because there are no TODO keywords to
-  derive columns from. That is org-kanban's behaviour, not a bug here.
-
-** Width, measured honestly
-
-A seven-column board is wide. On a fixture with ordinary task titles the
-project board rendered at **305 characters** and the consolidated board at
-**324 characters** per line. A terminal at 80, 120 or even 200 columns cannot
-show that.
-
-The cause is that each cell holds a full Org link
-(=[[file:path::*heading][heading]]=), so the raw table is as wide as the link
-plus the title, and =:layout= only truncates the visible description, not the
-link.
-
-When you want to narrow a board, the knob is one line. Put it on the
-=BEGIN: kanban= line:
+Files that carry a task list use the same eight states in board order:
 
 #+begin_src org
-  #+BEGIN: kanban :range (TODO . REVIEW) :skip-columns ("CANCELLED")
+#+TODO: BACKLOG(b) TODO(t) NEXT(n) DOING(o) WAITING(w) REVIEW(r) | DONE(d) CANCELLED(c)
 #+end_src
 
-That drops BACKLOG and DONE from the table while keeping them as real states in
-the file. =:compressed t= stacks sparse columns into fewer rows, which trades
-width for height.
+The state sequence is still checked by =stage1-check.el=. There is no board
+renderer in this configuration now.
 
-** A bug that was found and fixed
+* What to expect when something is missing
 
-org-kanban's =org-kanban//find= resolves the row under point with
-=org-find-exact-headline-in-buffer=, called on the task file *without resetting
-point in it*. Depending on where point last sat in that buffer, the call can
-return a **neighbouring heading**. The move then lands on the wrong task,
-silently, in the wrong place. It was caught here by a check asserting that the
-other tasks did not move.
+- No key creates a project or captures a task. Do that in the Org file by hand.
+- No dashboard refreshes. The files under =~/projects= are data, not config.
+- Eglot bindings are present but Python has no language server installed here.
+- =C-h k= plus a key remains the authoritative answer for what is bound.
 
-=lisp/my-kanban.el= overrides =org-kanban//find= with a resolver that walks the
-file from the top, compares heading text, and returns =nil= rather than guess.
-If a row cannot be resolved, the move refuses instead of corrupting data.
+* Verification
 
-
-* Org-roam
-
-The knowledge tree is indexed by Org-roam into one SQLite file:
-=~/.emacs.d/org-roam.db=. It lives outside the repository on purpose — it is an
-index, not knowledge, and it is rebuilt from the Org files at any time.
-
-** What becomes a node
-
-| Thing                          | Node? |
-|--------------------------------+-------|
-| Any of the four templates      | Yes — file-level node, ID written at creation |
-| A heading with an =ID=          | Yes |
-| A heading without an =ID=       | No |
-| =dashboards/=, =templates/=, =archive/=, =attachments/= | No — excluded from the index |
-
-IDs live in a property drawer at the very top of the file, before the first
-heading. That is the only place Org-roam reads a file-level node from, and it is
-why the templates start with one.
-
-Headings are not given IDs automatically. A node nothing links to is pure
-maintenance cost, so you opt in per heading with =M-x org-id-get-create=.
-
-** Keys
-
-| Key       | Command                     |
-|-----------+-----------------------------|
-| =C-c k f= | Find or create a node        |
-| =C-c k v= | Toggle the backlinks buffer  |
-| =C-c k s= | Re-index and report counts   |
-| =C-c k g= | Graph in a browser           |
-| =C-c o i= | Insert a link to a node      |
-
-The graph is served by =org-roam-ui= to your browser, so it works from a
-terminal.
-
-** Rebuilding the index
-
-#+begin_src sh
-  emacsclient --eval '(my/roam-sync)'
-#+end_src
-
-or =C-c k s=. Deleting =org-roam.db= and re-indexing is a supported operation,
-not a repair: the stage-3 checks delete it, rebuild, and compare the node count,
-the link count and the checksum of every knowledge file.
-
-The garden-era index was moved aside to =org-roam.db.pre-knowledge.bak= when
-this stage landed, and the old idle timer that pointed Org-roam at
-=~/Documents/garden/= was removed from =init.el=. It would have re-set
-=org-roam-directory= five seconds after startup and fought the knowledge tree.
-
-** Verified behaviour
-
-- two notes get distinct file-level IDs; the ID sits in a drawer above the first heading
-- a project file is indexed as a file-level node; dashboards are not indexed at all
-- a node resolves from its ID and carries the file title
-- an =id:= link is indexed with both endpoints, and the target gets a backlink
-- deleting the database and re-indexing restores the same node and link counts
-  and changes no knowledge file
-- a plain heading does not acquire an ID unless asked
-
-* Dashboards
-
-Two different things, and keeping them apart is what stops the dashboards from
-turning into a second copy of your tasks.
-
-** Generated blocks (the dashboard files)
-
-=dashboards/home.org=, =projects.org= and =learning.org= contain dynamic blocks
-that are *computed* from the project, learning and reference files. Refresh with
-=C-c k b= or =C-c C-c= on a block.
-
-| Block                | What it produces                                        |
-|----------------------+---------------------------------------------------------|
-| =my-tasks=           | a list from any org-ql query                            |
-| =project-health=     | one table row per project: state counts, open, overdue, has-NEXT |
-| =learning-progress=  | one row per subject: open, done, percentage, has-NEXT    |
-
-Nothing in those files is typed by hand. An empty section says "Nothing here."
-rather than showing a stale line from last month.
-
-** Agenda views (the time-based page)
-
-| Key       | Dashboard | Contents                                  |
-|-----------+-----------+-------------------------------------------|
-| =C-c k D= | Home      | today's schedule, next actions, doing, waiting, review |
-| =C-c k P= | Projects  | open project tasks grouped by state        |
-| =C-c k L= | Learning  | open learning tasks, revision, next actions |
-| =C-c k q= | Search    | interactive org-ql query                   |
-
-The home view groups with =org-super-agenda= by overdue / today / soon. The
-project and learning views group by state and are restricted to their own
-directories through =org-agenda-files=, so a learning task never appears on the
-project page.
-
-** Why org-ql is not used as an agenda block
-
-`org-ql-block' cannot be used inside =org-agenda-custom-commands= on Emacs 31.
-Org's =org-agenda-run-series= accepts only agenda/agenda*/alltodo/stuck/search/
-tags/tags-todo/todo and rejects anything else with "Invalid type in command
-series". That was tested, not assumed. So org-ql does the querying for the
-generated blocks and for =C-c k q=, and the agenda views use Org's own command
-types with org-super-agenda grouping.
-
-** Queries that are known to work
-
-| Query                                        | Means                          |
-|----------------------------------------------+--------------------------------|
-| =(and (not (done)) (deadline :to today))=     | overdue                        |
-| =(and (todo "NEXT") (not (done)))=            | next actions                   |
-| =(and (not (done)) (deadline 14))=            | deadline within 14 days        |
-| =(and (path "notes/projects") (todo "WAITING"))= | waiting, project files only |
-
-Relative strings like ="+2w"= are *not* accepted in =:to= — org-ql parses them
-with =parse-time-string= and fails with a =fixnump= error. Use a day count.
-
-** Width
-
-Generated tables are narrow because they hold numbers, not links:
-=projects.org= renders at 106 characters, the other two at 87. That fits a
-120-column terminal. The task lists hold one link per line, so a long task title
-is a long line — same trade-off as the kanban boards.
-
-* Reading
-
-Two files, two jobs:
-
-| File                                  | Job                                    |
-|---------------------------------------+----------------------------------------|
-| =notes/references/<slug>.org=          | one source: summary, critique, quotes, the attached file |
-| =notes/references/tracking.org=        | the queue: unread, reading, finished    |
-
-** EPUB
-
-=nov.el= (MELPA, 20251213.1501) renders an EPUB as text through =shr=, which
-works in a terminal. Open any attached =.epub= and it renders; =n=/=p= move
-between documents, =TAB= follows links inside the book.
-
-Two things that had to be dealt with rather than assumed:
-
-1. Emacs maps =.epub= to =archive-mode= by itself, so the =nov-mode= entry has
-   to be *prepended* to `auto-mode-alist', not merely present.
-2. Only nov's autoloads are loaded at startup. The reader loads when you first
-   open a book, not when Emacs starts.
-
-PDF is out of scope by decision, not by accident: a terminal can display no
-pages, and without pdf-tools there is no text layer either. =doc-view= would
-render nothing.
-
-Annotations are **not** a feature of nov.el. There is no highlight store, no
-annotation list, nothing to sync. Notes about a book are taken in Org and
-linked to the source note; pretending otherwise would have meant inventing a
-subsystem.
-
-** Attachments
-
-=C-c k A= copies a file into =~/knowledge/attachments/<id>/= through
-=`org-attach'=, so the book sits beside its note and neither is duplicated.
-=C-c k o= opens the first attachment of the current note.
-
-** Tracking
-
-| Key       | Command                    |
-|-----------+----------------------------|
-| =C-c k S= | Set STATUS on the entry at point |
-| =C-c k R= | Open the reading tracker          |
-| =C-c k A= | Attach a file to the current note |
-| =C-c k o= | Open the first attachment         |
-
-=STATUS= takes =unread=, =reading=, =done= or =abandoned=. Setting it records
-=STATUS_CHANGED=, and =done= also records =FINISHED=.
-
-The home dashboard's "Reading in flight" block is an org-ql query over the
-reference directory. Because the reference files are not agenda files, that
-block uses the =:files= parameter:
-
-#+begin_src org
-  #+BEGIN: my-tasks :query (not (done)) :files my/reference-files
-  #+END:
-#+end_src
-
-=:files= takes a function name or a variable holding a list; without it the
-block queries the agenda files as before.
-
-* Reliability
-
-** Git
-
-Two repositories, both local-only for the knowledge tree:
-
-| Repository        | Remote            | Contents                          |
-|-------------------+-------------------+-----------------------------------|
-| =~/.emacs.d=      | your Emacs-config | configuration, modules, docs      |
-| =~/knowledge=     | none              | Org files, templates, attachments |
-
-Nothing is pushed from =~/knowledge=. There is no remote on it.
-
-** What is committed and what is not
-
-Committed: every =.org= file, =templates/=, =dashboards/= (including the
-generated tables, so a fresh clone reads sensibly), =attachments/=, and
-=bin/backup.sh=.
-
-Ignored, because it is rebuildable or machine-specific: =org-roam.db=,
-=.org-id-locations=, =.DS_Store=, lock files, Emacs autosaves.
-
-The ignore rules are tested from both directions in =stage6-check.el=: indexes
-must be ignored, notes/attachments/templates must not be.
-
-** Backup
-
-#+begin_src sh
-  ~/knowledge/bin/backup.sh
-#+end_src
-
-It commits anything pending, then archives the *whole* repository — including
-=.git= — to =~/knowledge-backups/knowledge-YYYY-MM-DD.tar.gz=. The archive is
-the fallback for what git cannot fix: a lost directory or a corrupted =git=. The
-script is tested by extracting its own output and comparing every tracked file
-byte for byte.
-
-Restore:
-
-#+begin_src sh
-  mkdir -p ~ && tar -xzf ~/knowledge-backups/knowledge-2026-11-22.tar.gz -C ~
-#+end_src
-
-Restore one file: =git log --oneline -- path= then =git checkout <commit> -- path=.
-
-** Dead ends that were removed
-
-- The garden-era capture wrappers in =init.el= (=C-c n i/j/r/w/t=) pointed at
-  templates and directories that no longer existed. =C-c n w= called a deleted
-  template and signalled an error. Removed; capture is =C-c k i= / =C-c k t=.
-- The garden-era org-roam idle timer re-set =org-roam-directory= to
-  =~/Documents/garden/= five seconds after startup. Removed.
-- =C-c ? d= could not exist: =C-c ?= is a full command, so it cannot also be a
-  prefix. The document moved to =C-c k H=.
-
-** Performance
-
-Measured with 40 fixture projects, 200 tasks, boards included. These are gates,
-not observations:
-
-| What                            | Measured | Gate   |
-|---------------------------------+----------+--------|
-| Batch load of the whole config   | 0.173 s  | 0.25 s |
-| Agenda build over 40 projects    | 0.56 s   | 5 s    |
-| Regenerate every board/dashboard | 0.26 s   | 15 s   |
-| Cold org-roam re-index           | 0.07 s   | 20 s   |
-
-Startup is spent as: the built-in coding config, then ~20 ms for the five Org
-modules. org-ql, org-super-agenda and nov are loaded on first use, not at
-startup.
-
-** Reporting
-
-=VERIFICATION.org= maps all twelve acceptance criteria to the checks that prove
-them, and states plainly which two were not implemented and why.
-
-* Capture templates
-
-| Key | Target                                        |
-|-----+-----------------------------------------------|
-| =i= | =inbox.org= under *Tasks*                     |
-| =t= | Prompts for a project, files under *Tasks*    |
-| =l= | Prompts for a subject, files under *Tasks*    |
-| =j= | Weekly date tree in =notes/daily/journal.org= |
-| =n= | Someday idea under =inbox.org= *Ideas*        |
-| =r= | Reading tracker in =notes/references/=        |
-
-The journal uses one file with a date tree rather than one file per day: it
-keeps =org-agenda-files= short and makes a week visible in one screen.
-
-* Templates and file creation
-
-=my/new-project= and friends read a skeleton from =~/knowledge/templates/=,
-substitute the name and today's date, refuse to overwrite an existing file, and
-open the result. There is no example project: create your own with =C-c k p=.
-
-* IDs
-
-Every file created from a template gets a file-level =ID= in a drawer above the
-first heading, so documents are linkable from anywhere without tagging each
-heading. Headings stay un-identified until you ask for an ID.
-
-* Gates
-
-#+begin_src sh
-  cd ~/.emacs.d
-  ./emacs-sync.sh verify     # check + test + benchmark
-#+end_src
-
-=test= runs =lisp/tests/stage1-check.el=: workflow order, file creation,
-refusal to overwrite, agenda discovery without config edits, capture target
-resolution, and the generated help buffer. It creates a fixture project and
-deletes it again.
-
-Last measured: =CONFIG_OK=, 170 checks, 0 failures, =load-seconds= 0.173.
-The per-stage breakdown is in =VERIFICATION.org=.
-
-* Terminal limits
-
-A terminal cannot display images, so PDF pages, inline images and =org-latex-preview=
-are unavailable. =org-startup-with-latex-preview= is set to =nil= here to keep
-Org from even trying. PDF annotation (=pdf-tools=, =org-noter=) and spaced
-repetition (=org-fc=) are out of scope by decision, not by accident.
-
-* Stage status
-
-| Stage                          | Status                          |
-|--------------------------------+---------------------------------|
-| 1 Foundation                   | Done, verified                  |
-| 2 Kanban                       | Done, verified                  |
-| 3 Org-roam                     | Done, verified                  |
-| 4 Dashboards                   | Done, verified                  |
-| 5 Reading (EPUB)               | Done, verified                  |
-| 6 Reliability / docs           | Done, verified                  |
-| Flashcards, PDF annotation     | Out of scope                    |
+=emacs-sync.sh verify= loads the config and runs the checks. The gates check
+the workflow and the exact key contract, the Org-roam index in a temporary
+tree, EPUB routing, and the docs against the live keymaps.
