@@ -3,16 +3,16 @@
 ;;; Commentary:
 ;; Reading lives in two places and they do different jobs:
 ;;
-;;   notes/references/<slug>.org      one file per source: summary, critique,
+;;   references/<slug>.org            one file per source: summary, critique,
 ;;                                    quotes, and the attached file
-;;   notes/references/tracking.org    the queue: what is unread, reading, done
+;;   references/tracking.org          the queue: what is unread, reading, done
 ;;
 ;; EPUB is rendered as text by nov.el, which works in a terminal.  PDF is out of
 ;; scope by decision: a terminal cannot display pages, and without pdf-tools
 ;; there is no text layer either.  Annotations are not a feature of nov.el, so
 ;; notes about a book are taken in Org and linked, not attached to the text.
 ;;
-;; Attachments go through `org-attach' into ~/knowledge/attachments/, which is
+;; Attachments go through `org-attach' into ~/projects/attachments/, which is
 ;; already the configured store, so a source file is never duplicated.
 
 ;;; Code:
@@ -21,7 +21,7 @@
 (require 'org-attach)
 (require 'my-org-pkm)
 
-(defcustom my/reading-tracker (expand-file-name "notes/references/tracking.org" my/knowledge-dir)
+(defcustom my/reading-tracker (expand-file-name "references/tracking.org" my/projects-dir)
   "The file that queues sources."
   :type 'file
   :group 'my/knowledge)

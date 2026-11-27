@@ -6,10 +6,10 @@
 ;;     -l ~/.emacs.d/early-init.el -l ~/.emacs.d/init.el \
 ;;     -l ~/.emacs.d/lisp/tests/stage2-check.el
 ;;
-;; Builds two throwaway knowledge files, renders boards from them, moves a task
+;; Builds two throwaway project files, renders boards from them, moves a task
 ;; through the consolidated board and checks that the *source* file changed.
-;; The fixtures and every generated table are removed again, so the tree is
-;; left as found.
+;; The fixtures and every generated table are removed again, so the projects
+;; tree is left as found.
 
 ;;; Code:
 
@@ -33,9 +33,9 @@
 ;;;; Fixtures
 
 (defvar my/stage2-project (expand-file-name "zz-kanban-fixture.org"
-                                            (my/knowledge-subdir "notes/projects")))
+                                            (my/projects-subdir "projects")))
 (defvar my/stage2-learning (expand-file-name "zz-kanban-learning.org"
-                                             (my/knowledge-subdir "notes/learning")))
+                                             (my/projects-subdir "learning")))
 
 (defconst my/stage2-project-body
   (concat "#+TITLE: Kanban fixture\n"
@@ -72,8 +72,8 @@
         (set-buffer-modified-p nil)
         (kill-buffer)))
     (when (file-exists-p f) (delete-file f)))
-  (dolist (d (list (my/knowledge-subdir "dashboards/projects.org")
-                   (my/knowledge-subdir "dashboards/learning.org")))
+  (dolist (d (list (my/projects-subdir "dashboards/projects.org")
+                   (my/projects-subdir "dashboards/learning.org")))
     (my/kanban-refresh-file d)))
 
 ;;;; Table parsing
@@ -177,8 +177,8 @@
 
 ;;;; 2. Consolidated board over two directories
 
-(my/kanban-refresh-file (my/knowledge-subdir "dashboards/projects.org"))
-(let ((table (my/stage2-table (my/knowledge-subdir "dashboards/projects.org"))))
+(my/kanban-refresh-file (my/projects-subdir "dashboards/projects.org"))
+(let ((table (my/stage2-table (my/projects-subdir "dashboards/projects.org"))))
   (my/stage2-check "consolidated board renders from a directory scope"
                    (consp table) (format "%S" table))
   (my/stage2-check "consolidated board has the same 7 columns"
@@ -200,7 +200,7 @@
     (beginning-of-line)
     (current-buffer)))
 
-(let ((board (my/knowledge-subdir "dashboards/projects.org")))
+(let ((board (my/projects-subdir "dashboards/projects.org")))
   (with-current-buffer (my/stage2-goto-row board "wire the retrieval eval harness")
     (org-kanban/next))
   (my/stage2-check "moving a row on the consolidated board updates the project file"
@@ -234,7 +234,7 @@
 ;; Everything above calls `org-kanban/next' directly. A user cannot: org-kanban
 ;; ships no keybinding, so `my/kanban-move' plus the transient map *is* the
 ;; path. Test it the way a person uses it.
-(let ((board (my/knowledge-subdir "dashboards/projects.org")))
+(let ((board (my/projects-subdir "dashboards/projects.org")))
   (with-current-buffer (my/stage2-goto-row board "read the chunking benchmark results")
     ;; A transient map dispatches through the *selected window's* buffer, so the
     ;; board has to be the one on screen for the keystroke to land in the table.
@@ -258,7 +258,7 @@
 
 (princ "\nBoard widths (characters, longest rendered line):\n")
 (dolist (spec (list (cons "project board (7 tasks)" my/stage2-project)
-                    (cons "consolidated board (9 tasks)" (my/knowledge-subdir "dashboards/projects.org"))))
+                    (cons "consolidated board (9 tasks)" (my/projects-subdir "dashboards/projects.org"))))
   (princ (format "  %-32s %4d chars\n"
                  (car spec) (my/stage2-table-width (cdr spec)))))
 (princ (format "  %-32s %4d chars\n"
@@ -272,7 +272,7 @@
                  (and (not (file-exists-p my/stage2-project))
                       (not (file-exists-p my/stage2-learning))))
 (my/stage2-check "consolidated board shows no task rows after cleanup"
-                 (let ((table (my/stage2-table (my/knowledge-subdir "dashboards/projects.org"))))
+                 (let ((table (my/stage2-table (my/projects-subdir "dashboards/projects.org"))))
                    (or (null table) (<= (length table) 1))))
 
 (princ (format "\n%d checks, %d failures\n" my/stage2-checks my/stage2-failures))

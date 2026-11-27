@@ -1,12 +1,20 @@
 ;;; my-org-pkm.el --- Org knowledge system: layout, workflow, capture -*- lexical-binding: t; -*-
 
 ;;; Commentary:
-;; Stage 1 of the Org knowledge system.  Everything is derived from
-;; `my/knowledge-dir', so a new project or learning file needs no config edit:
-;; agenda discovery reads directories, not a hand-maintained file list.
+;; Stage 1 of the Org system, now split across two repositories:
+;;
+;;   ~/knowledge   the zettelkasten: literature-box/ and main-box/ only,
+;;                 indexed by Org-roam (see my-roam.el).  Zettel files are
+;;                 created by hand and numbered by hand.
+;;   ~/projects    everything actionable: projects, learning, references,
+;;                 journal, inbox, dashboards.  Everything here resolves
+;;                 against `my/projects-dir', so a new project or learning
+;;                 file needs no config edit: agenda discovery reads
+;;                 directories, not a hand-maintained file list.
 ;;
 ;; Rules this file must not break:
-;;   - Org files are the source of truth; nothing here caches state on disk.
+;;   - Org files are the source of truth; nothing here caches state on disk
+;;     (the rebuildable indexes live in ~/.emacs.d, outside both trees).
 ;;   - One global 8-state workflow; every file mirrors it with its own #+TODO.
 ;;   - Only built-in Org, no packages.
 
@@ -28,7 +36,14 @@
   :prefix "my/")
 
 (defcustom my/knowledge-dir (expand-file-name "~/knowledge/")
-  "Root of the Org knowledge system."
+  "Root of the zettelkasten: literature notes and permanent notes.
+Zettel files are created and numbered by hand; this file only points
+Org-roam at the tree.  See my-roam.el."
+  :type 'directory
+  :group 'my/knowledge)
+
+(defcustom my/projects-dir (expand-file-name "~/projects/")
+  "Root of the actionable tree: projects, learning, references, journal."
   :type 'directory
   :group 'my/knowledge)
 
@@ -44,16 +59,16 @@
   :type '(repeat string)
   :group 'my/knowledge)
 
-(defcustom my/knowledge-agenda-dirs '("notes/projects" "notes/learning")
-  "Directories whose Org files are actionable, relative to `my/knowledge-dir'.
+(defcustom my/projects-agenda-dirs '("projects" "learning")
+  "Directories whose Org files are actionable, relative to `my/projects-dir'.
 `org-agenda-files' expands directories itself, which is what makes a newly
 created project file appear without any configuration change."
   :type '(repeat string)
   :group 'my/knowledge)
 
-(defun my/knowledge-subdir (name)
-  "Absolute path of NAME under `my/knowledge-dir'."
-  (expand-file-name name my/knowledge-dir))
+(defun my/projects-subdir (name)
+  "Absolute path of NAME under `my/projects-dir'."
+  (expand-file-name name my/projects-dir))
 
 (defun my/--todo-split ()
   "Return (ACTIVE . DONE) state alists from `my/knowledge-todo-states'."
@@ -81,34 +96,34 @@ created project file appear without any configuration change."
 
 ;;;; Discovery
 
-(defun my/knowledge-agenda-files ()
-  "Return the `org-agenda-files' value for the knowledge system."
-  (let ((inbox (expand-file-name "inbox.org" my/knowledge-dir)))
+(defun my/projects-agenda-files ()
+  "Return the `org-agenda-files' value for the actionable tree."
+  (let ((inbox (expand-file-name "inbox.org" my/projects-dir)))
     (append (when (file-exists-p inbox) (list inbox))
-            (mapcar #'my/knowledge-subdir my/knowledge-agenda-dirs))))
+            (mapcar #'my/projects-subdir my/projects-agenda-dirs))))
 
-(defun my/knowledge-files-in (subdir)
-  "Return regular Org files directly inside SUBDIR of the knowledge tree."
-  (let ((dir (my/knowledge-subdir subdir)))
+(defun my/projects-files-in (subdir)
+  "Return regular Org files directly inside SUBDIR of the projects tree."
+  (let ((dir (my/projects-subdir subdir)))
     (when (file-directory-p dir)
       (seq-filter #'file-regular-p
                   (directory-files dir t "\\`[^.#].*\\.org\\'")))))
 
-(defun my/knowledge-project-files ()
-  "Org files under notes/projects."
-  (my/knowledge-files-in "notes/projects"))
+(defun my/projects-files ()
+  "Org files under projects."
+  (my/projects-files-in "projects"))
 
-(defun my/knowledge-learning-files ()
-  "Org files under notes/learning."
-  (my/knowledge-files-in "notes/learning"))
+(defun my/projects-learning-files ()
+  "Org files under learning."
+  (my/projects-files-in "learning"))
 
-(defun my/knowledge-actionable-files ()
+(defun my/projects-actionable-files ()
   "Every file whose TODOs belong on the consolidated board."
-  (append (my/knowledge-project-files) (my/knowledge-learning-files)))
+  (append (my/projects-files) (my/projects-learning-files)))
 
 ;;;; Org configuration
 
-(setq org-directory my/knowledge-dir
+(setq org-directory my/projects-dir
       org-todo-keywords (my/knowledge-todo-keywords)
       org-todo-keyword-faces
       '(("BACKLOG" . (:foreground "gray60"))
@@ -131,20 +146,21 @@ created project file appear without any configuration change."
       org-refile-use-outline-path 'file
       org-outline-path-complete-in-steps nil
       org-refile-allow-creating-parent-nodes 'confirm
-      org-attach-id-dir (my/knowledge-subdir "attachments")
-      org-id-locations-file (expand-file-name ".org-id-locations" my/knowledge-dir)
+      org-attach-id-dir (my/projects-subdir "attachments")
+      org-id-locations-file (locate-user-emacs-file ".org-id-locations")
       org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id
       ;; A terminal cannot render LaTeX fragments; never attempt it.
       org-startup-with-latex-preview nil)
 
-(setq org-agenda-files (my/knowledge-agenda-files))
+(setq org-agenda-files (my/projects-agenda-files))
 
 ;;;; Refreshing generated blocks
 
 (defvar my/knowledge-doc-files nil
   "Documentation files whose generated blocks are refreshed with the dashboards.")
 
-(defvar my/dblock-types '("kanban" "my-tasks" "project-health" "learning-progress" "my-keys")
+(defvar my/dblock-types '("kanban" "my-tasks" "project-health" "learning-progress" "my-keys"
+                                   "my-inventory")
   "Dynamic block names this configuration knows how to regenerate.")
 
 (defun my/refresh-dblocks-in-file (file)
@@ -163,15 +179,21 @@ Returns the number of blocks updated.  Unknown block names are left alone:
           (cl-incf count)
           (when (re-search-forward "^#\\+END:" nil t)
             (forward-line 1))))
-      (when (> count 0) (save-buffer))
+      (when (> count 0)
+        ;; Bind the coding system around the write: otherwise a file whose
+        ;; coding system is undecided prompts "Select coding system" in the
+        ;; middle of a refresh, which in batch is a hard error.
+        (set-buffer-file-coding-system 'utf-8-unix t)
+        (let ((coding-system-for-write 'utf-8-unix))
+          (save-buffer)))
       (set-buffer-modified-p nil)
       count)))
 
 (defun my/refresh-all-dblocks ()
-  "Regenerate the boards and dashboards over the whole knowledge tree."
+  "Regenerate the boards and dashboards over the whole projects tree."
   (interactive)
-  (let ((files (append (my/knowledge-actionable-files)
-                       (my/knowledge-files-in "dashboards")
+  (let ((files (append (my/projects-actionable-files)
+                       (my/projects-files-in "dashboards")
                        (seq-filter #'file-exists-p my/knowledge-doc-files)))
         (blocks 0))
     (dolist (file files)
@@ -212,59 +234,45 @@ Refuses to overwrite: a typo must not eat an existing file."
 (defun my/--create (subdir template-file name)
   "Create SUBDIR/NAME.org from templates/TEMPLATE-FILE."
   (my/knowledge-create-file
-   (expand-file-name (concat (my/knowledge-slug name) ".org") (my/knowledge-subdir subdir))
-   (my/knowledge-subdir (concat "templates/" template-file))
+   (expand-file-name (concat (my/knowledge-slug name) ".org") (my/projects-subdir subdir))
+   (my/projects-subdir (concat "templates/" template-file))
    name))
 
 (defun my/new-project (name)
-  "Create a project file called NAME under notes/projects."
+  "Create a project file called NAME under projects."
   (interactive (list (read-string "Project name: ")))
-  (my/--create "notes/projects" "project.org" name))
+  (my/--create "projects" "project.org" name))
 
 (defun my/new-learning-subject (name)
-  "Create a learning subject file called NAME under notes/learning."
+  "Create a learning subject file called NAME under learning."
   (interactive (list (read-string "Learning subject: ")))
-  (my/--create "notes/learning" "learning.org" name))
-
-(defun my/knowledge-areas ()
-  "Knowledge note areas: subdirectories of notes/knowledge."
-  (let ((dir (my/knowledge-subdir "notes/knowledge")))
-    (when (file-directory-p dir)
-      (seq-filter (lambda (f) (file-directory-p (expand-file-name f dir)))
-                  (directory-files dir nil "\\`[^.#].*\\'")))))
-
-(defun my/new-knowledge-note (area name)
-  "Create a permanent note called NAME inside AREA of notes/knowledge."
-  (interactive
-   (list (completing-read "Area: " (my/knowledge-areas) nil t)
-         (read-string "Note title: ")))
-  (my/--create (concat "notes/knowledge/" area) "knowledge-note.org" name))
+  (my/--create "learning" "learning.org" name))
 
 (defun my/new-reference (name)
-  "Create a source note called NAME under notes/references."
+  "Create a source note called NAME under references."
   (interactive (list (read-string "Source title: ")))
-  (my/--create "notes/references" "reference.org" name))
+  (my/--create "references" "reference.org" name))
 
 ;;;; Capture
 
-(defun my/knowledge-component (path)
-  "PATH relative to `my/knowledge-dir', used to label capture choices."
-  (file-relative-name path my/knowledge-dir))
+(defun my/projects-component (path)
+  "PATH relative to `my/projects-dir', used to label capture choices."
+  (file-relative-name path my/projects-dir))
 
 (defun my/capture--pick (files prompt)
   "Prompt for one of FILES using PROMPT and return its absolute path."
   (unless files (user-error "No files yet — create one with C-c k p or C-c k l"))
-  (let* ((choices (mapcar (lambda (f) (cons (my/knowledge-component f) f)) files))
+  (let* ((choices (mapcar (lambda (f) (cons (my/projects-component f) f)) files))
          (choice (completing-read prompt choices nil t)))
     (cdr (assoc choice choices))))
 
 (defun my/capture-project-file ()
   "Capture file-spec function: pick a project file."
-  (my/capture--pick (my/knowledge-project-files) "Project: "))
+  (my/capture--pick (my/projects-files) "Project: "))
 
 (defun my/capture-learning-file ()
   "Capture file-spec function: pick a learning subject file."
-  (my/capture--pick (my/knowledge-learning-files) "Subject: "))
+  (my/capture--pick (my/projects-learning-files) "Subject: "))
 
 (defvar my/knowledge-task-body
   "* %?\n  :PROPERTIES:\n  :CREATED: %U\n  :END:\n"
@@ -280,7 +288,7 @@ Refuses to overwrite: a typo must not eat an existing file."
 
 (setq org-capture-templates
       `(("i" "Inbox item" entry
-         (file+headline ,(expand-file-name "inbox.org" my/knowledge-dir) "Tasks")
+         (file+headline ,(expand-file-name "inbox.org" my/projects-dir) "Tasks")
          ,my/knowledge-task-body :empty-lines 1)
         ("t" "Task in a project" entry
          (file+headline my/capture-project-file "Tasks")
@@ -289,7 +297,7 @@ Refuses to overwrite: a typo must not eat an existing file."
          (file+headline my/capture-learning-file "Tasks")
          ,my/knowledge-task-body :empty-lines 1)
         ("j" "Journal entry" entry
-         (file+olp+datetree ,(my/knowledge-subdir "notes/daily/journal.org"))
+         (file+olp+datetree ,(my/projects-subdir "daily/journal.org"))
          ,(concat "* %U\n"
                   "** Focus\n%?\n"
                   "** Done\n"
@@ -297,10 +305,10 @@ Refuses to overwrite: a typo must not eat an existing file."
                   "** Next\n")
          :empty-lines 1 :tree-type week)
         ("n" "Someday idea" entry
-         (file+headline ,(expand-file-name "inbox.org" my/knowledge-dir) "Ideas")
+         (file+headline ,(expand-file-name "inbox.org" my/projects-dir) "Ideas")
          ,my/knowledge-note-body :empty-lines 1)
         ("r" "Source / reading" entry
-         (file+headline ,(my/knowledge-subdir "notes/references/tracking.org") "Reading")
+         (file+headline ,(my/projects-subdir "references/tracking.org") "Reading")
          ,(concat "* %^{Source}\n"
                   ":PROPERTIES:\n"
                   "  :CREATED: %U\n"
@@ -319,19 +327,18 @@ Refuses to overwrite: a typo must not eat an existing file."
 (defun my/open-home-dashboard ()
   "Open the home dashboard."
   (interactive)
-  (find-file (my/knowledge-subdir "dashboards/home.org")))
+  (find-file (my/projects-subdir "dashboards/home.org")))
 
 (defun my/open-kb-agenda ()
-  "Open the agenda over the knowledge system."
+  "Open the agenda over the projects tree."
   (interactive)
-  (setq org-agenda-files (my/knowledge-agenda-files))
+  (setq org-agenda-files (my/projects-agenda-files))
   (org-agenda))
 
 (global-set-key (kbd "C-c k i") #'my/capture-inbox)
 (global-set-key (kbd "C-c k t") #'org-capture)
 (global-set-key (kbd "C-c k p") #'my/new-project)
 (global-set-key (kbd "C-c k l") #'my/new-learning-subject)
-(global-set-key (kbd "C-c k n") #'my/new-knowledge-note)
 (global-set-key (kbd "C-c k r") #'my/new-reference)
 (global-set-key (kbd "C-c k a") #'my/open-kb-agenda)
 (global-set-key (kbd "C-c k d") #'my/open-home-dashboard)

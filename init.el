@@ -319,16 +319,12 @@
 
 (autoload 'org-roam-node-find "org-roam-node" nil t)
 (autoload 'org-roam-node-insert "org-roam-node" nil t)
-(autoload 'org-roam-capture "org-roam-capture" nil t)
 (autoload 'org-roam-db-autosync-mode "org-roam-db" nil t)
 (global-set-key (kbd "C-c o r") #'org-roam-node-find)
 (global-set-key (kbd "C-c o i") #'org-roam-node-insert)
-(global-set-key (kbd "C-c n k") #'org-roam-capture)
 
-;; Org-roam itself is configured in lisp/my-roam.el, against ~/knowledge/.
-;; The garden-era idle timer that pointed it at ~/Documents/garden/ was removed:
-;; it would have re-set org-roam-directory five seconds after startup and
-;; fought the knowledge tree.
+;; Org-roam itself is configured in lisp/my-roam.el, against ~/knowledge/,
+;; which is now the zettelkasten (literature-box/ and main-box/).
 
 ;;; Conda environment switching
 

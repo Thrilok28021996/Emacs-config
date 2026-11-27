@@ -27,11 +27,11 @@
     (princ (format "FAIL  %s%s\n" label (if detail (format "  [%s]" detail) "")))))
 
 (defvar my/stage4-project (expand-file-name "zz-stage4-project.org"
-                                            (my/knowledge-subdir "notes/projects")))
+                                            (my/projects-subdir "projects")))
 (defvar my/stage4-learning (expand-file-name "zz-stage4-subject.org"
-                                             (my/knowledge-subdir "notes/learning")))
+                                             (my/projects-subdir "learning")))
 (defvar my/stage4-idle-project (expand-file-name "zz-stage4-idle.org"
-                                                 (my/knowledge-subdir "notes/projects")))
+                                                 (my/projects-subdir "projects")))
 
 (defun my/stage4-day (n)
   "Return the date N days from today as an Org timestamp string."
@@ -113,9 +113,9 @@ one would test the wrong section."
 (my/stage4-cleanup)
 (my/stage4-write)
 (my/refresh-all-dblocks)
-(setq org-agenda-files (my/knowledge-agenda-files))
+(setq org-agenda-files (my/projects-agenda-files))
 
-(let* ((projects (my/knowledge-subdir "dashboards/projects.org"))
+(let* ((projects (my/projects-subdir "dashboards/projects.org"))
        (rows (my/stage4-block-rows projects "project-health"))
        (row (cl-find-if (lambda (r) (equal (car r) "zz-stage4-project")) (cdr rows))))
   (my/stage4-check "project health has a row per project file"
@@ -141,7 +141,7 @@ one would test the wrong section."
                    (string-match-p "zz-stage4-idle.*has no NEXT action"
                                    (my/stage4-block-text projects "project-health"))))
 
-(let* ((learning (my/knowledge-subdir "dashboards/learning.org"))
+(let* ((learning (my/projects-subdir "dashboards/learning.org"))
        (rows (my/stage4-block-rows learning "learning-progress")))
   (my/stage4-check "learning progress counts open and done"
                    (equal (list (my/stage4-cell rows "Open" "zz-stage4-subject")
@@ -153,7 +153,7 @@ one would test the wrong section."
 
 ;;;; 2. The task lists are queries, not copies
 
-(let ((home (my/knowledge-subdir "dashboards/home.org")))
+(let ((home (my/projects-subdir "dashboards/home.org")))
   (my/stage4-check "the overdue list names the overdue task"
                    (string-match-p "write the scoring notes"
                                    (my/stage4-block-text home "my-tasks")))
@@ -164,11 +164,24 @@ one would test the wrong section."
   (my/stage4-check "an empty section says so instead of inventing an item"
                    (string-match-p "Nothing here" (my/stage4-block-text home "my-tasks"))))
 
+;; The per-tree sections scope by :files, not by a (path ...) regexp: a
+;; path that no longer matches renders a tidy "Nothing here." forever, so
+;; they are checked against fixtures rather than trusted.
+(my/stage4-check "the projects dashboard lists its fixture task"
+                 (string-match-p "wire the eval harness"
+                                 (my/stage4-block-text (my/projects-subdir "dashboards/projects.org")
+                                                       "my-tasks")))
+(my/stage4-check "the learning dashboard lists its fixture task"
+                 (let ((text (my/stage4-block-text (my/projects-subdir "dashboards/learning.org")
+                                                   "my-tasks")))
+                   (and (string-match-p "redo the MCP summary" text)
+                        (string-match-p "finish the agents chapter" text))))
+
 ;;;; 3. Agenda dashboards
 
 (defun my/stage4-agenda (key)
   "Build the agenda dashboard KEY and return its buffer text."
-  (setq org-agenda-files (my/knowledge-agenda-files))
+  (setq org-agenda-files (my/projects-agenda-files))
   (org-agenda nil key)
   (with-current-buffer "*Org Agenda*"
     (buffer-substring-no-properties (point-min) (point-max))))
@@ -215,9 +228,14 @@ one would test the wrong section."
                       (not (file-exists-p my/stage4-learning))
                       (not (file-exists-p my/stage4-idle-project))))
 (my/stage4-check "dashboards go back to placeholders"
-                 (let ((rows (my/stage4-block-rows (my/knowledge-subdir "dashboards/projects.org")
+                 (let ((rows (my/stage4-block-rows (my/projects-subdir "dashboards/projects.org")
                                                    "project-health")))
                    (equal "_no projects yet_" (caadr rows))))
+(my/stage4-check "an empty files-scope renders Nothing here, not the dashboard's own headings"
+                 (let ((text (with-temp-buffer
+                               (insert-file-contents (my/projects-subdir "dashboards/learning.org"))
+                               (buffer-string))))
+                   (not (string-match-p "file:learning.org" text))))
 
 (princ (format "\n%d checks, %d failures\n" my/stage4-checks my/stage4-failures))
 (when (> my/stage4-failures 0)

@@ -92,16 +92,18 @@ Measure startup:
 
 ## Org knowledge & productivity system
 
-This configuration also runs a plain-text knowledge system in `~/knowledge/`:
-projects, learning subjects, permanent notes, Kanban boards, dashboards, reading
-and a local git history. It is loaded from `lisp/` by a single block at the end
-of `init.el`, so the coding setup above is untouched.
+This configuration also runs a plain-text knowledge system across two
+repositories: a Luhmann-style zettelkasten in `~/knowledge/` (literature-box/
+and main-box/, numbered by hand) and an actionable tree in `~/projects/`
+(projects, learning subjects, reading, journal, Kanban boards and dashboards),
+both with local git history. It is loaded from `lisp/` by a single block at the
+end of `init.el`, so the coding setup above is untouched.
 
 - Architecture and keys: `ORG-PKM.org` (or `C-c k H` in Emacs)
 - Evidence for every acceptance criterion: `VERIFICATION.org`
 - Every binding this configuration defines: `C-c ?`
-- Gates: `./emacs-sync.sh verify` (check + 128 tests + benchmark)
-- Data: `~/knowledge/README.org`
+- Gates: `./emacs-sync.sh verify` (check + tests + benchmark)
+- Data: `~/knowledge/README.org` and `~/projects/README.org`
 
 The old `cheatsheet.org` and `tutorial.org` describe the previous configuration
 and now open with a correction banner.

@@ -49,14 +49,19 @@ holding a list."
         ((listp spec) spec)
         (t (org-agenda-files))))
 
-(defun my/dashboard--query (query &optional files)
-  "Return markers for QUERY over FILES, defaulting to the agenda files."
+(defun my/dashboard--query (query &optional spec)
+  "Return markers for QUERY over the files SPEC resolves to.
+An empty list means no files: `org-ql-select' would otherwise fall back to
+searching the current buffer, which for a dashboard block is the dashboard
+itself — its own headings would appear as results."
   (my/dashboard--ensure-ql)
-  (org-ql-select (my/dashboard--files files) query :action '(point-marker)))
+  (let ((files (my/dashboard--files spec)))
+    (when files
+      (org-ql-select files query :action '(point-marker)))))
 
 (defun my/reference-files ()
-  "Every Org file under notes/references, for the reading blocks."
-  (my/knowledge-files-in "notes/references"))
+  "Every Org file under references, for the reading blocks."
+  (my/projects-files-in "references"))
 
 (defun my/dashboard--state-counts (file)
   "Return an alist of (STATE . COUNT) for the open and done items in FILE."
@@ -158,7 +163,7 @@ and two labels for one list is how dashboards start to drift."
 (defun my/dashboard--health-rows ()
   "Return (ROWS . MISSING) for the project health table."
   (let (rows missing)
-    (dolist (file (my/knowledge-project-files))
+    (dolist (file (my/projects-files))
       (let* ((stats (my/dashboard-file-stats file))
              (count (lambda (s) (or (cdr (assoc s (plist-get stats :counts))) 0))))
         (push (append (list (plist-get stats :name))
@@ -198,7 +203,7 @@ and two labels for one list is how dashboards start to drift."
 (defun my/dashboard--progress-rows ()
   "Return the rows of the learning progress table."
   (let (rows)
-    (dolist (file (my/knowledge-learning-files))
+    (dolist (file (my/projects-learning-files))
       (let* ((stats (my/dashboard-file-stats file))
              (open (plist-get stats :open))
              (done (plist-get stats :done))
@@ -258,13 +263,13 @@ and Waiting blocks.")
      ((alltodo "" ((org-agenda-overriding-header "Project tasks")))
       (todo "WAITING" ((org-agenda-overriding-header "Waiting")))
       (todo "NEXT" ((org-agenda-overriding-header "Next actions"))))
-     ((org-agenda-files (my/knowledge-project-files))
+     ((org-agenda-files (my/projects-files))
       (org-super-agenda-groups my/dashboard-work-groups)))
     ("l" "Learning dashboard"
      ((alltodo "" ((org-agenda-overriding-header "Learning tasks")))
       (todo "REVIEW" ((org-agenda-overriding-header "Revision")))
       (todo "NEXT" ((org-agenda-overriding-header "Next actions"))))
-     ((org-agenda-files (my/knowledge-learning-files))
+     ((org-agenda-files (my/projects-learning-files))
       (org-super-agenda-groups my/dashboard-work-groups)))))
 
 (setq org-agenda-custom-commands
@@ -278,7 +283,7 @@ and Waiting blocks.")
 (defun my/dashboard-open-home ()
   "Open the home dashboard file and refresh it."
   (interactive)
-  (my/dashboard-open (my/knowledge-subdir "dashboards/home.org")))
+  (my/dashboard-open (my/projects-subdir "dashboards/home.org")))
 
 (defun my/dashboard-open (file)
   "Open dashboard FILE, refresh its blocks and leave point at the top."
@@ -290,7 +295,7 @@ and Waiting blocks.")
   "Open the agenda dashboard KEY, refreshing the agenda files first."
   (interactive)
   (my/dashboard--ensure-super-agenda)
-  (setq org-agenda-files (my/knowledge-agenda-files))
+  (setq org-agenda-files (my/projects-agenda-files))
   (org-agenda nil key))
 
 (defun my/dashboard-home ()
