@@ -1,430 +1,161 @@
-#+TITLE: Emacs cheatsheet
-#+AUTHOR: Thrilok
+#+TITLE: Key cheatsheet
 #+STARTUP: overview
 
-The key reference for this configuration. Every binding here was checked
-against the running keymaps; the master table at the bottom is *generated* from
-them, so it cannot drift.
+This is the short version. =ORG-PKM.org= explains the layout and why the keys
+are grouped this way; =VERIFICATION.org= records how the keymaps are checked.
 
-Refresh that table after changing keys: =C-c k b= (or =C-c C-c= on the block).
-Open the live version any time with =C-c ?=.
+* Where the prefixes lead
 
-Architecture and reasoning: =ORG-PKM.org= (=C-c k H=).
-Evidence that it all works: =VERIFICATION.org=.
-Gates: =./emacs-sync.sh verify=.
+| Prefix | Use |
+|--------+-----|
+| =C-c k= | Zettelkasten: find, backlinks, sync, graph, help |
+| =C-c o= | Org clocking and node insertion |
+| =C-c c= | Compile, Python, Eglot, references |
+| =C-c e= | Flymake diagnostics |
+| =C-c g= | Magit |
+| =C-c p= | Emacs projects (same map as =C-x p=) |
+| =C-c v= | Conda environments |
+| =C-c w= | Window navigation and layout |
+| =C-c i= | Indentation |
+| =C-c f= | Recent files |
+| =C-c s= | Imenu |
+| =C-c t= | Theme |
 
-* The knowledge layer (C-c k) — start here
+The old creation, capture, dashboard and reading-queue keys are gone. Notes in
+=~/knowledge= are made by hand and numbered by hand.
 
-This is what the configuration exists for. ~/knowledge/ holds the notes; Emacs
-is the only editor expected to understand them.
+* Zettelkasten, day to day
 
-** Making things
+- =C-c k f= finds a node by title, or creates one.
+- =C-c o i= inserts an =id:= link at point.
+- =C-c k v= toggles the backlinks buffer for the current note.
+- =C-c k s= rebuilds the index and reports node and link counts.
+- =C-c k g= opens the graph in a browser when org-roam-ui is installed.
+- =C-c k H= opens =ORG-PKM.org=.
 
-| Key       | Does                                              |
-|-----------+---------------------------------------------------|
-| =C-c k p= | new project: prompts a name, writes =notes/projects/<name>.org= with an ID, the workflow line, a Tasks section and a kanban block |
-| =C-c k l= | new learning subject: same, in =notes/learning/=   |
-| =C-c k n= | new permanent note: prompts for the area (artificial-intelligence, software-engineering, business, economics, productivity) then the title |
-| =C-c k r= | new source note in =notes/references/=             |
+The index lives in =~/.emacs.d/org-roam.db=. It is disposable: delete it and
+=C-c k s= rebuilds it from the Org files.
 
-Every created file refuses to overwrite an existing one, which is the point:
-a typo in the name never destroys a file.
+* Org on a note
 
-** Capturing
+Clocking still works in any Org buffer.
 
-| Key       | Does                                              |
-|-----------+---------------------------------------------------|
-| =C-c k i= | capture straight into =inbox.org= under Tasks      |
-| =C-c k t= | capture menu: =i= inbox, =t= task in a project, =l= task in a subject, =j= journal, =n= someday idea, =r= source |
+| Key | Does |
+|-----+------|
+| =C-c o I= | Clock in |
+| =C-c o O= | Clock out |
+| =C-c o R= | Insert a clock report |
 
-=t= and =l= prompt for the target file, so capture never needs you to know a
-path. The journal writes into a weekly date tree in =notes/daily/journal.org=.
-
-** Working
-
-| Key       | Does                                              |
-|-----------+---------------------------------------------------|
-| =C-c k a= | agenda over the knowledge tree                    |
-| =C-c k D= | home dashboard: today, next, doing, waiting, review |
-| =C-c k P= | projects dashboard, grouped by state              |
-| =C-c k L= | learning dashboard                                |
-| =C-c k d= | open the home dashboard *file*                    |
-| =C-c k B= | consolidated kanban in =dashboards/projects.org=  |
-| =C-c k b= | regenerate every board, dashboard block and doc key table |
-| =C-c k q= | ad-hoc org-ql query                               |
-
-** Linking and backlinks
-
-| Key       | Does                                              |
-|-----------+---------------------------------------------------|
-| =C-c k f= | find a node, or create it                         |
-| =C-c k v= | toggle the backlinks panel for this note          |
-| =C-c k s= | re-index Org-roam and report node/link counts     |
-| =C-c k g= | knowledge graph in your browser (org-roam-ui)     |
-| =C-c o i= | insert a link to a node at point                  |
-| =C-c n k= | roam capture (older binding, still works)         |
-
-** Reading
-
-| Key       | Does                                              |
-|-----------+---------------------------------------------------|
-| =C-c k A= | attach a file to this note — copied into =attachments/<id>/= |
-| =C-c k o= | open the first attachment of this note            |
-| =C-c k S= | set STATUS: unread / reading / done / abandoned   |
-| =C-c k R= | open the reading queue (=notes/references/tracking.org=) |
-
-An =.epub= opens in =nov-mode= and renders as text, so reading works in a
-terminal. Inside a book: =n= / =p= next/previous document, =TAB= next link.
-
-** Documentation
-
-| Key       | Does                                              |
-|-----------+---------------------------------------------------|
-| =C-c k H= | this system's architecture document (=ORG-PKM.org=) |
-| =C-c ?=   | every =C-c= binding, live, grouped by prefix       |
-
-* The workflow: eight states
-
-=BACKLOG(b) TODO(t) NEXT(n) DOING(o) WAITING(w) REVIEW(r) | DONE(d) CANCELLED(c)=
-
-=C-c C-t= then the letter jumps straight to that state. =S-right= / =S-left= on
-a heading cycles without the menu.
-
-| State   | Means                                                    |
-|---------+----------------------------------------------------------|
-| BACKLOG | captured, not committed to. Never appears on a dashboard   |
-| TODO    | committed, unscheduled                                     |
-| NEXT    | the next physical action; a project with none is flagged   |
-| DOING   | in progress now                                            |
-| WAITING | blocked on someone else — and it blocks its subtasks       |
-| REVIEW  | finished, needs a second look                              |
-| DONE    | terminal; writes a =CLOSED:= timestamp in the =LOGBOOK=     |
-| CANCELLED | terminal, off every board                                |
-
-Recurring items use plain repeaters (=+1w=, =.+1d=, =++1m=). Dependencies use
-parent/child plus the =ORDERED= property; =org-depend= is not used because
-Emacs 31 no longer ships Org's contrib directory.
-
-** Kanban
-
-Boards are dynamic blocks, four of them: one per project, one per subject, plus
-the consolidated ones in =dashboards/projects.org= and =dashboards/learning.org=.
-
-Point on a row, press =C-c k m=, then:
-
-| Key       | Does                                    |
-|-----------+-----------------------------------------|
-| =a= / =h= | move the task back one state            |
-| =d= / =l= | move the task forward one state         |
-| =w= / =k= | move the row up                         |
-| =s= / =j= | move the row down                       |
-
-The row is a link, not a copy: moving it runs =org-todo= on the heading in the
-task's own file and saves that file. =CANCELLED= is not a column. A board is as
-wide as its links — see =ORG-PKM.org= for the =:range= knob if seven columns
-overflow your terminal.
-
-* Org core
-
-** Structure and editing
-
-| Key             | Does                                  |
-|-----------------+---------------------------------------|
-| =TAB= / =S-TAB= | fold / unfold subtree                 |
-| =M-left/right=  | promote / demote heading              |
-| =M-up/down=     | move subtree; with a region, move the line |
-| =C-c C-s=       | schedule                              |
-| =C-c C-d=       | deadline                              |
-| =C-c C-w=       | refile                                |
-| =C-c C-x C-a=   | archive subtree                       |
-| =C-c C-l=       | insert or edit a link                 |
-| =C-c C-o=       | open the link at point                |
-| =C-c C-t=       | set TODO state                        |
-
-=org-return-follows-link= is on, so RET on a link follows it.
-=org-enforce-todo-dependencies= is on: a parent with open children refuses to
-be marked DONE and tells you why.
-
-** Agenda
-
-| Key       | Does                                              |
-|-----------+---------------------------------------------------|
-| =C-c o a= | agenda dispatcher                                  |
-| =C-c k a= | dispatcher, with the knowledge files reloaded first |
-| =C-c k D=, =C-c k P=, =C-c k L= | the three dashboards                           |
-
-Inside =*Org Agenda*=: =t= set state, =s= schedule, =d= deadline, =r= refile,
-=f= / =b= next/previous span, =g= refresh, =q= quit.
-=org-agenda-window-setup= is =current-window=, so =q= puts you back exactly
-where you were.
-
-** Clocking
-
-| Key       | Does                    |
-|-----------+--------------------------|
-| =C-c o I= | clock in                |
-| =C-c o O= | clock out               |
-| =C-c o R= | clock report table      |
-
-Clocks persist across restarts, and the mode line shows today's total.
-
-** Tables
-
-| Key           | Does                        |
-|---------------+------------------------------|
-| =TAB=         | next cell, create rows as needed |
-| =M-left/right= | move the column            |
-| =C-c -= | hline below / above       |
-| =C-c C-c=     | align, or update the dynamic block at point |
+The eight states are =BACKLOG=, =TODO=, =NEXT=, =DOING=, =WAITING=, =REVIEW=,
+=DONE= and =CANCELLED=. =C-c C-t= sets one from inside an Org buffer.
 
 * Coding
 
-The coding half of this configuration is built-in only and untouched by the Org
-layer. Startup is ~0.15 s.
+- =C-c c c= compiles; =C-c c p= runs the current Python file with =python3=.
+- =C-c c r=, =C-c c i= and =C-c c d= go through Eglot or xref.
+- =C-c c a= lists code actions; =C-c c f= formats the buffer; =C-c c h= toggles inlay hints.
+- =C-c e n=, =C-c e p= and =C-c e b= walk Flymake diagnostics.
+- =C-c g g= opens Magit status. The other =C-c g= keys are commit, push, pull,
+  fetch, log, diff, branch, blame and stash.
+- =C-c p f= finds a file in the current project; =C-c p p= switches project.
 
-** Completion and navigation (built-in)
+Python diagnostics need a language server on =PATH=. None is installed here,
+so those bindings stay but have nothing to talk to in Python buffers.
 
-| Key             | Does                                        |
-|-----------------+----------------------------------------------|
-| =TAB= in minibuffer | complete; =fido-vertical-mode= shows a vertical list |
-| =C-x b=         | switch buffer                                |
-| =C-c b b=       | switch buffer                                |
-| =C-c f r=       | recent files                                 |
-| =C-c s s=       | incremental search                           |
-| =C-c s i=       | imenu: jump to a definition or heading       |
-| =M-o=           | other window                                 |
-| =C-c w h=, =C-c w j=, =C-c w k=, =C-c w l= | move to the window left/down/up/right        |
-| =C-c w u= / =C-c w U= | undo / redo window layout              |
-| =C-c w ==       | balance windows                              |
-| =C-x t=         | tab bar: =2= new tab, =1= close, =0= close all |
-| =C-x C-/= or =C-c z= | redo (undo is =C-/)                     |
-| =M-<up>= / =M-<down>= | move the line or region up/down        |
+* Windows and buffers
 
-Completion previews appear while typing in code (=completion-preview-mode=),
-the built-in alternative to a completion popup; prose buffers deliberately do
-not get them.
+| Key | Does |
+|-----+------|
+| =C-c f r= | Recent files |
+| =C-c s i= | Imenu |
+| =C-c w h= / =C-c w j= / =C-c w k= / =C-c w l= | Window left / down / up / right |
+| =C-c w u= / =C-c w U= | Undo / redo window layout |
+| =C-c w == | Balance windows |
+| =M-o= | Next window |
+| =C-x C-/= | Redo |
 
-** Projects and compiling (C-c c)
+* Environment and look
 
-| Key       | Does                                  |
-|-----------+---------------------------------------|
-| =C-c c c= | compile                               |
-| =C-c c p= | run the current Python file with python3 |
-| =C-c c r= | eglot rename symbol                   |
-| =C-c c a= | eglot code actions                    |
-| =C-c c f= | eglot format buffer                   |
-| =C-c c i= | eglot find implementation             |
-| =C-c c h= | toggle inlay hints                    |
-| =C-c c d= | xref find references                  |
+- =C-c v a= activates a Conda environment; =C-c v d= deactivates it.
+- =C-c t t= toggles dark and light themes.
+- =.epub= files open in nov-mode, so EPUB text is readable in a terminal.
 
-Project commands are under =C-c p= or =C-x p=: =p= switch project, =f= find
-file, =g= find regexp, =c= compile, =e= eshell, =s= shell, =D= dired.
+* Every C-c binding, from the live keymap
 
-** Diagnostics (C-c e)
+This table is written by hand and checked against the keymaps by
+=stage7-check.el=. If a binding is missing from the table, the check fails.
 
-| Key       | Does                        |
-|-----------+------------------------------|
-| =C-c e n= | next error                  |
-| =C-c e p= | previous error              |
-| =C-c e b= | list buffer diagnostics     |
+| Key | Command |
+|---+---|
+| =C-c M-g= | =magit-file-dispatch= |
+| =C-c c a= | =eglot-code-actions= |
+| =C-c c c= | =compile= |
+| =C-c c d= | =xref-find-references= |
+| =C-c c f= | =eglot-format-buffer= |
+| =C-c c h= | =eglot-inlay-hints-mode= |
+| =C-c c i= | =eglot-find-implementation= |
+| =C-c c p= | =my/python-run-current-file= |
+| =C-c c r= | =eglot-rename= |
+| =C-c e b= | =flymake-show-buffer-diagnostics= |
+| =C-c e n= | =flymake-goto-next-error= |
+| =C-c e p= | =flymake-goto-prev-error= |
+| =C-c f r= | =recentf-open-files= |
+| =C-c g a= | =magit-blame= |
+| =C-c g b= | =magit-branch= |
+| =C-c g c= | =magit-commit= |
+| =C-c g d= | =magit-diff-dwim= |
+| =C-c g f= | =magit-fetch= |
+| =C-c g g= | =magit-status= |
+| =C-c g l= | =magit-log-current= |
+| =C-c g p= | =magit-push= |
+| =C-c g s= | =magit-stash= |
+| =C-c g u= | =magit-pull= |
+| =C-c i l= | =indent-rigidly-left-to-tab-stop= |
+| =C-c i r= | =indent-rigidly-right-to-tab-stop= |
+| =C-c k H= | =my/help-open-doc= |
+| =C-c k f= | =my/roam-find-node= |
+| =C-c k g= | =my/roam-open-ui= |
+| =C-c k s= | =my/roam-sync= |
+| =C-c k v= | =my/roam-toggle-buffer= |
+| =C-c o I= | =org-clock-in= |
+| =C-c o O= | =org-clock-out= |
+| =C-c o R= | =org-clock-report= |
+| =C-c o i= | =org-roam-node-insert= |
+| =C-c p != | =project-shell-command= |
+| =C-c p &= | =project-async-shell-command= |
+| =C-c p C-b= | =project-list-buffers= |
+| =C-c p C-x s= | =project-save-some-buffers= |
+| =C-c p D= | =project-dired= |
+| =C-c p F= | =project-or-external-find-file= |
+| =C-c p G= | =project-or-external-find-regexp= |
+| =C-c p b= | =project-switch-to-buffer= |
+| =C-c p c= | =project-compile= |
+| =C-c p d= | =project-find-dir= |
+| =C-c p e= | =project-eshell= |
+| =C-c p f= | =project-find-file= |
+| =C-c p g= | =project-find-regexp= |
+| =C-c p k= | =project-kill-buffers= |
+| =C-c p o= | =project-any-command= |
+| =C-c p p= | =project-switch-project= |
+| =C-c p r= | =project-query-replace-regexp= |
+| =C-c p s= | =project-shell= |
+| =C-c p v= | =project-vc-dir= |
+| =C-c p x= | =project-execute-extended-command= |
+| =C-c s i= | =imenu= |
+| =C-c t t= | =my/toggle-theme= |
+| =C-c v a= | =conda-env-activate= |
+| =C-c v d= | =conda-env-deactivate= |
+| =C-c w == | =balance-windows= |
+| =C-c w U= | =winner-redo= |
+| =C-c w h= | =windmove-left= |
+| =C-c w j= | =windmove-down= |
+| =C-c w k= | =windmove-up= |
+| =C-c w l= | =windmove-right= |
+| =C-c w u= | =winner-undo= |
 
-=M-g n= / =M-g p= do the same thing globally. =eglot= starts automatically in
-Python and C/C++ buffers, and =flymake= runs in every =prog-mode= buffer.
+65 bindings under C-c.
 
-** Git (C-c g) — Magit
+* When a key seems wrong
 
-| Key       | Does                    |
-|-----------+--------------------------|
-| =C-c g g= | status                  |
-| =C-c g c= | commit                  |
-| =C-c g p= | push                    |
-| =C-c g u= | pull                    |
-| =C-c g f= | fetch                   |
-| =C-c g l= | log                     |
-| =C-c g d= | diff                    |
-| =C-c g b= | branch                  |
-| =C-c g a= | blame                   |
-| =C-c g s= | stash                   |
-| =C-c M-g= | file dispatch           |
-
-Only Magit's autoloads load at startup; the rest loads on first use.
-
-** Python environments (C-c v)
-
-| Key       | Does                    |
-|-----------+--------------------------|
-| =C-c v a= | activate a conda env    |
-| =C-c v d= | deactivate              |
-
-** Look and feel
-
-| Key       | Does                    |
-|-----------+--------------------------|
-| =C-c t t= | toggle dark/light theme |
-
-*treesit* grammars are enabled for Python, C, C++, JS, JSON, CSS, TypeScript and
-Bash when the grammar is installed; otherwise the classic mode stays.
-
-* Housekeeping
-
-| Key       | Does                                        |
-|-----------+----------------------------------------|
-| =C-h k=   | what does this key do                       |
-| =C-h f= / =C-h v= | describe function / variable        |
-| =C-h e=   | recent messages                              |
-| =C-c ?=   | every C-c binding, generated                 |
-| =C-x C-c= | quit                                         |
-
-Autosave on idle and auto-revert are on: files changed on disk by another tool
-reload and files you edit are saved without asking.
-
-* Daily workflow
-
-1. =C-c k D= — today, next actions, what is in progress, what is waiting.
-2. Capture whatever interrupts you: =C-c k i= (inbox) or =C-c k t=.
-3. Work a task: open its project file, or move it on =C-c k B=.
-4. Learn something: =C-c k t= → =l= → subject; note the reusable idea with =C-c k n= and link it with =C-c k f=.
-5. Read: =C-c k R= to see the queue, =C-c k A= to attach a book, =C-c k S= to move its status.
-6. End of day: =C-c k t= → =j=.
-7. Weekly: =C-c k b= to rebuild every board and dashboard, then read =C-c k d=.
-
-* Files
-
-| Path                                          | What it is                        |
-|-----------------------------------------------+-----------------------------------|
-| =~/knowledge/inbox.org=                       | unsorted capture                  |
-| =~/knowledge/notes/projects/<name>.org=       | one project, with its board       |
-| =~/knowledge/notes/learning/<name>.org=       | one learning subject              |
-| =~/knowledge/notes/knowledge/<area>/<note>.org= | permanent notes, one idea each  |
-| =~/knowledge/notes/references/…=              | one note per source, plus =tracking.org= |
-| =~/knowledge/notes/daily/journal.org=         | journal date tree                 |
-| =~/knowledge/dashboards/…=                    | generated dashboards              |
-| =~/knowledge/attachments/<id>/=               | org-attach store                  |
-| =~/knowledge/templates/=                      | skeletons                         |
-| =~/knowledge/bin/backup.sh=                   | commit + archive the whole repo   |
-| =~/.emacs.d/init.el=                          | config; loads =lisp/*.el= at the end |
-| =~/.emacs.d/lisp/my-*.el=                     | the six knowledge-system modules  |
-| =~/.emacs.d/cheatsheet.org=                   | this file                         |
-| =~/.emacs.d/tutorial.org=                     | the guided course                 |
-| =~/.emacs.d/ORG-PKM.org=                      | architecture                      |
-| =~/.emacs.d/VERIFICATION.org=                 | what is proven, and what is not   |
-| =~/.emacs.d/org-roam.db=                      | rebuildable index                 |
-
-=~/Documents/garden/= is the older Markdown note base: untouched, unread by
-anything here.
-
-* When it looks broken
-
-| Symptom | Check |
-|---|---|
-| Emacs will not start | =emacs --batch -l ~/.emacs.d/init.el --eval '(princ "ok")'= |
-| a key does nothing | =C-c ?= — absent means unbound; present means =C-h k= it |
-| board is empty | the board derives columns from the files it scans; an empty tree has none |
-| board is too wide | =:range (TODO . REVIEW)= on the =#+BEGIN: kanban= line |
-| dashboard says "Nothing here" | the query is right and nothing matches; check the block's =:query= |
-| roam finds nothing | =C-c k s=; the index is disposable, not precious |
-
-* Every C-c binding, generated
-
-Refreshed by =C-c k b=. If a binding is missing here, it is missing from the
-configuration too — this table is built from the live keymaps, not typed.
-
-#+BEGIN: my-keys
-| Key | Command | What it does |
-|---+---+---|
-| =C-c ?= | =my/help-bindings= | Show every C-c binding in the live global map, grouped by prefix |
-| =C-c M-g= | =magit-file-dispatch= |  |
-| =C-c b b= | =switch-to-buffer= | Display buffer BUFFER-OR-NAME in the selected window |
-| =C-c c a= | =eglot-code-actions= | Find LSP code actions of type ACTION-KIND between BEG and END |
-| =C-c c c= | =compile= | Compile the program including the current buffer |
-| =C-c c d= | =xref-find-references= | Find references to the identifier at point |
-| =C-c c f= | =eglot-format-buffer= | Format contents of current buffer. |
-| =C-c c h= | =eglot-inlay-hints-mode= | Minor mode for annotating buffers with LSP server’s inlay hints |
-| =C-c c i= | =eglot-find-implementation= | Find implementation for SYM, the identifier at point. |
-| =C-c c p= | =my/python-run-current-file= | Run the current Python file with python3. |
-| =C-c c r= | =eglot-rename= | Rename the current symbol to NEWNAME |
-| =C-c e b= | =flymake-show-buffer-diagnostics= | Show listing of Flymake diagnostics for current buffer |
-| =C-c e n= | =flymake-goto-next-error= | Go to Nth next Flymake diagnostic that matches FILTER |
-| =C-c e p= | =flymake-goto-prev-error= | Go to Nth previous Flymake diagnostic that matches FILTER |
-| =C-c f r= | =recentf-open-files= | Show a dialog to open a recent file |
-| =C-c g a= | =magit-blame= |  |
-| =C-c g b= | =magit-branch= |  |
-| =C-c g c= | =magit-commit= |  |
-| =C-c g d= | =magit-diff-dwim= | Show changes for the thing at point |
-| =C-c g f= | =magit-fetch= |  |
-| =C-c g g= | =magit-status= | Show the status of the current Git repository in a buffer |
-| =C-c g l= | =magit-log-current= |  |
-| =C-c g p= | =magit-push= |  |
-| =C-c g s= | =magit-stash= |  |
-| =C-c g u= | =magit-pull= |  |
-| =C-c i l= | =indent-rigidly-left-to-tab-stop= | Indent all lines between BEG and END leftward to a tab stop |
-| =C-c i r= | =indent-rigidly-right-to-tab-stop= | Indent all lines between BEG and END rightward to a tab stop |
-| =C-c k A= | =my/reading-attach= | Attach FILE to the current Org entry and report where it went |
-| =C-c k B= | =my/kanban-open-overview= | Open the dashboard holding the consolidated project board. |
-| =C-c k D= | =my/dashboard-home= | Home dashboard: today, next actions, waiting and review. |
-| =C-c k H= | =my/help-open-doc= | Open the ORG-PKM document that explains the knowledge system. |
-| =C-c k L= | =my/dashboard-learning= | Learning dashboard: every open learning task, grouped by state. |
-| =C-c k P= | =my/dashboard-projects= | Projects dashboard: every open project task, grouped by state. |
-| =C-c k R= | =my/reading-open-tracker= | Open the reading tracker. |
-| =C-c k S= | =my/reading-set-status= | Set the STATUS property of the entry at point and timestamp the change. |
-| =C-c k a= | =my/open-kb-agenda= | Open the agenda over the knowledge system. |
-| =C-c k b= | =my/kanban-update-all= | Regenerate every board and dashboard block. |
-| =C-c k d= | =my/open-home-dashboard= | Open the home dashboard. |
-| =C-c k f= | =my/roam-find-node= | Jump to a node of the knowledge tree. |
-| =C-c k g= | =my/roam-open-ui= | Open the Org-roam graph in a browser, if org-roam-ui is installed. |
-| =C-c k i= | =my/capture-inbox= | Capture an item into the inbox. |
-| =C-c k l= | =my/new-learning-subject= | Create a learning subject file called NAME under notes/learning. |
-| =C-c k m= | =my/kanban-move= | Move the kanban row at point, then read one more key for the direction |
-| =C-c k n= | =my/new-knowledge-note= | Create a permanent note called NAME inside AREA of notes/knowledge. |
-| =C-c k o= | =my/reading-open-attachment= | Open the first file attached to the current entry. |
-| =C-c k p= | =my/new-project= | Create a project file called NAME under notes/projects. |
-| =C-c k q= | =my/dashboard-search= | Ask for an org-ql query and show the results. |
-| =C-c k r= | =my/new-reference= | Create a source note called NAME under notes/references. |
-| =C-c k s= | =my/roam-sync= | Re-index the knowledge tree and report what is in the index. |
-| =C-c k t= | =org-capture= | Capture something |
-| =C-c k v= | =my/roam-toggle-buffer= | Show or hide the backlinks buffer for the current note. |
-| =C-c n k= | =org-roam-capture= | Launches an ‘org-capture’ process for a new or existing node |
-| =C-c o I= | =org-clock-in= | Start the clock on the current item |
-| =C-c o O= | =org-clock-out= | Stop the currently running clock |
-| =C-c o R= | =org-clock-report= | Update or create a table containing a report about clocked time |
-| =C-c o a= | =org-agenda= | Dispatch agenda commands to collect entries to the agenda buffer |
-| =C-c o c= | =org-capture= | Capture something |
-| =C-c o i= | =org-roam-node-insert= | Find an Org-roam node and insert (where the point is) an "id:" link to it |
-| =C-c o r= | =org-roam-node-find= | Find and open an Org-roam node by its title or alias |
-| =C-c p != | =project-shell-command= | Run ‘shell-command’ in the current project’s root directory. |
-| =C-c p &= | =project-async-shell-command= | Run ‘async-shell-command’ in the current project’s root directory. |
-| =C-c p C-b= | =project-list-buffers= | Display a list of project buffers |
-| =C-c p C-x s= | =project-save-some-buffers= | Like ‘save-some-buffers’, but only for this project’s buffers |
-| =C-c p D= | =project-dired= | Start Dired in the current project’s root. |
-| =C-c p F= | =project-or-external-find-file= | Visit a file (with completion) in the current project or external roots |
-| =C-c p G= | =project-or-external-find-regexp= | Find all matches for REGEXP in the project roots or external roots |
-| =C-c p b= | =project-switch-to-buffer= | Display buffer BUFFER-OR-NAME in the selected window |
-| =C-c p c= | =project-compile= | Run ‘compile’ in the project root. |
-| =C-c p d= | =project-find-dir= | Start Dired in a directory inside the current project |
-| =C-c p e= | =project-eshell= | Start Eshell in the current project’s root directory |
-| =C-c p f= | =project-find-file= | Visit a file (with completion) in the current project |
-| =C-c p g= | =project-find-regexp= | Find all matches for REGEXP in the current project’s roots |
-| =C-c p k= | =project-kill-buffers= | Kill the buffers belonging to the current project |
-| =C-c p o= | =project-any-command= | Run the next command in the current project |
-| =C-c p p= | =project-switch-project= | "Switch" to another project by running an Emacs command |
-| =C-c p r= | =project-query-replace-regexp= | Query-replace REGEXP in all the files of the project |
-| =C-c p s= | =project-shell= | Start an inferior shell in the current project’s root directory |
-| =C-c p v= | =project-vc-dir= | Run VC-Dir in the current project’s root. |
-| =C-c p x= | =project-execute-extended-command= | Execute an extended command in project root. |
-| =C-c s i= | =imenu= | Jump to a place in the buffer chosen using a buffer menu or mouse menu |
-| =C-c s s= | =isearch-forward= | Do incremental search forward |
-| =C-c t t= | =my/toggle-theme= | Toggle between the preferred Doom theme and a light fallback. |
-| =C-c v a= | =conda-env-activate= | Switch to environment NAME, prompting if called interactively |
-| =C-c v d= | =conda-env-deactivate= | Deactivate the current conda env. |
-| =C-c w == | =balance-windows= | Balance the sizes of windows shown on the selected frame |
-| =C-c w U= | =winner-redo= | Cancel the current sequence of ‘winner-undo’ commands |
-| =C-c w h= | =windmove-left= | Select the window to the left of the current one |
-| =C-c w j= | =windmove-down= | Select the window below the current one |
-| =C-c w k= | =windmove-up= | Select the window above the current one |
-| =C-c w l= | =windmove-right= | Select the window to the right of the current one |
-| =C-c w u= | =winner-undo= | Switch back to an earlier window configuration saved by Winner mode |
-| =C-c z= | =undo-redo= | Undo the last ARG undos, i.e., redo the last ARG changes |
-
-92 bindings under C-c. Generated from the live keymaps.
-
-#+END:
+Use =C-h k= then the key. If it is absent from this sheet, it is not part of
+the configuration any more.

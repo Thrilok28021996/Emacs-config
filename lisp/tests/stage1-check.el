@@ -1,15 +1,13 @@
-;;; stage1-check.el --- Headless acceptance checks for Stage 1 -*- lexical-binding: t; -*-
+;;; stage1-check.el --- Workflow and keybinding acceptance checks -*- lexical-binding: t; -*-
 
 ;;; Commentary:
-;; Run it, don't read it and hope:
-;;
 ;;   emacs --batch -Q \
 ;;     --eval '(setq user-emacs-directory (expand-file-name "~/.emacs.d/"))' \
 ;;     -l ~/.emacs.d/early-init.el -l ~/.emacs.d/init.el \
 ;;     -l ~/.emacs.d/lisp/tests/stage1-check.el
 ;;
-;; Exit status 0 means every check passed.  A fixture project file is created
-;; and deleted again, so the knowledge tree is left exactly as found.
+;; Exit status 0 means every check passed.  The key lists are the contract:
+;; one side must be gone, the other must still resolve to its command.
 
 ;;; Code:
 
@@ -27,6 +25,12 @@
     (princ (format "FAIL  %s%s\n" label
                    (if detail (format "  [%s]" detail) "")))))
 
+(defun my/stage1-global-binding (key)
+  "Return the binding of KEY in a fundamental-mode buffer."
+  (with-temp-buffer
+    (fundamental-mode)
+    (key-binding (kbd key))))
+
 (defun my/stage1-state-names ()
   "TODO state names as Org actually reports them, fast keys stripped."
   (seq-remove (lambda (s) (equal s "|"))
@@ -39,7 +43,7 @@
                      (apply #'append (mapcar #'cdr org-todo-keywords)))))
     (cdr (member "|" all))))
 
-;;; 1. Workflow
+;;; 1. The workflow still exists
 
 (let* ((expected '("BACKLOG" "TODO" "NEXT" "DOING" "WAITING" "REVIEW" "DONE" "CANCELLED"))
        (states (my/stage1-state-names)))
@@ -56,117 +60,84 @@
                                                "DOING(o)" "WAITING(w)" "REVIEW(r)") " ")))
                  (my/knowledge-todo-line))
 
-;;; 2. Project creation
+;;; 2. Removed bindings
 
-(defvar my/stage1-fixture
-  (expand-file-name "zz-stage1-fixture.org" (my/knowledge-subdir "notes/projects")))
+(dolist (key '("C-c b b" "C-c s s" "C-c z" "C-c ?"
+               "C-c o a" "C-c o c" "C-c o r" "C-c n k" "C-c n i"
+               "C-c k i" "C-c k t" "C-c k p" "C-c k l" "C-c k n" "C-c k r"
+               "C-c k a" "C-c k d" "C-c k D" "C-c k P" "C-c k L" "C-c k q"
+               "C-c k m" "C-c k b" "C-c k B" "C-c k A" "C-c k o" "C-c k R"
+               "C-c k S" "M-<up>" "M-<down>"))
+  (my/stage1-check (format "%s is unbound" key)
+                   (null (my/stage1-global-binding key))
+                   (format "%S" (my/stage1-global-binding key))))
 
-(when (file-exists-p my/stage1-fixture) (delete-file my/stage1-fixture))
+;;; 3. Bindings that must survive
 
-(my/new-project "zz stage1 fixture")
-(my/stage1-check "my/new-project creates notes/projects/<slug>.org"
-                 (file-exists-p my/stage1-fixture))
-(with-temp-buffer
-  (insert-file-contents my/stage1-fixture)
-  (let ((text (buffer-string)))
-    (my/stage1-check "created file carries the #+TODO line"
-                     (string-match-p (regexp-quote (my/knowledge-todo-line)) text))
-    (my/stage1-check "created file carries a kanban block"
-                     (string-match-p "#\\+BEGIN: kanban" text))
-    (my/stage1-check "created file has its Tasks heading"
-                     (string-match-p "^\\* Tasks$" text))))
-;;; 2b. Learning subjects use the same code path but deserve their own check
+(dolist (spec '((("C-c f r") . recentf-open-files)
+                (("C-c s i") . imenu)
+                (("C-c w u") . winner-undo)
+                (("C-c w U") . winner-redo)
+                (("C-c w h") . windmove-left)
+                (("C-c w j") . windmove-down)
+                (("C-c w k") . windmove-up)
+                (("C-c w l") . windmove-right)
+                (("C-c w =") . balance-windows)
+                (("M-o") . other-window)
+                (("C-x C-/") . undo-redo)
+                (("C-c i r") . indent-rigidly-right-to-tab-stop)
+                (("C-c i l") . indent-rigidly-left-to-tab-stop)
+                (("C-c c c") . compile)
+                (("C-c c d") . xref-find-references)
+                (("C-c c p") . my/python-run-current-file)
+                (("C-c c r") . eglot-rename)
+                (("C-c c a") . eglot-code-actions)
+                (("C-c c i") . eglot-find-implementation)
+                (("C-c c h") . eglot-inlay-hints-mode)
+                (("C-c c f") . eglot-format-buffer)
+                (("C-c e n") . flymake-goto-next-error)
+                (("C-c e p") . flymake-goto-prev-error)
+                (("C-c e b") . flymake-show-buffer-diagnostics)
+                (("C-c g g") . magit-status)
+                (("C-c g c") . magit-commit)
+                (("C-c g p") . magit-push)
+                (("C-c g u") . magit-pull)
+                (("C-c g f") . magit-fetch)
+                (("C-c g l") . magit-log-current)
+                (("C-c g d") . magit-diff-dwim)
+                (("C-c g b") . magit-branch)
+                (("C-c g a") . magit-blame)
+                (("C-c g s") . magit-stash)
+                (("C-c t t") . my/toggle-theme)
+                (("C-c o I") . org-clock-in)
+                (("C-c o O") . org-clock-out)
+                (("C-c o R") . org-clock-report)
+                (("C-c o i") . org-roam-node-insert)
+                (("C-c v a") . conda-env-activate)
+                (("C-c v d") . conda-env-deactivate)
+                (("C-c k f") . my/roam-find-node)
+                (("C-c k v") . my/roam-toggle-buffer)
+                (("C-c k g") . my/roam-open-ui)
+                (("C-c k s") . my/roam-sync)
+                (("C-c k H") . my/help-open-doc)))
+  (let* ((key (car (car spec)))
+         (expected (cdr spec))
+         (actual (my/stage1-global-binding key)))
+    (my/stage1-check (format "%s still runs %s" key expected)
+                     (eq actual expected)
+                     (format "got %S" actual))))
 
-(defvar my/stage1-subject
-  (expand-file-name "zz-stage1-subject.org" (my/knowledge-subdir "notes/learning")))
+(my/stage1-check "C-c M-g still runs magit-file-dispatch"
+                 (eq (my/stage1-global-binding "C-c M-g") 'magit-file-dispatch))
 
-(when (file-exists-p my/stage1-subject) (delete-file my/stage1-subject))
-(my/new-learning-subject "zz stage1 subject")
-(my/stage1-check "my/new-learning-subject creates notes/learning/<slug>.org"
-                 (file-exists-p my/stage1-subject))
-(with-temp-buffer
-  (insert-file-contents my/stage1-subject)
-  (my/stage1-check "the subject file mirrors the workflow and has a board"
-                   (and (string-match-p (regexp-quote (my/knowledge-todo-line)) (buffer-string))
-                        (string-match-p "#\\+BEGIN: kanban" (buffer-string))
-                        (string-match-p "^\\* Board$" (buffer-string)))))
-(my/stage1-check "a new subject is an agenda file"
-                 (org-agenda-file-p my/stage1-subject))
-(when (get-file-buffer my/stage1-subject)
-  (with-current-buffer (get-file-buffer my/stage1-subject)
-    (set-buffer-modified-p nil)
-    (kill-buffer)))
-(when (file-exists-p my/stage1-subject) (delete-file my/stage1-subject))
+(my/stage1-check "node finder has no capture template"
+                 (null org-roam-capture-templates))
 
-(my/stage1-check "my/new-project refuses to overwrite"
-                 (condition-case nil
-                     (progn (my/new-project "zz stage1 fixture") nil)
-                   (user-error t)))
-
-;;; 3. Discovery without config edits
-
-(my/stage1-check "new project file is an agenda file with no config change"
-                 (org-agenda-file-p my/stage1-fixture))
-(my/stage1-check "inbox.org is an agenda file"
-                 (org-agenda-file-p (expand-file-name "inbox.org" my/knowledge-dir)))
-(my/stage1-check "dashboards are not agenda files"
-                 (not (org-agenda-file-p (my/knowledge-subdir "dashboards/home.org"))))
-(my/stage1-check "learning files are discovered from the directory"
-                 (equal (my/knowledge-learning-files)
-                        (my/knowledge-files-in "notes/learning")))
-
-;;; 4. Capture targets
-
-(defun my/stage1-check-target (key)
-  "Return the expanded file for capture template KEY."
-  (let* ((template (assoc key org-capture-templates))
-         (target (nth 3 template))
-         (kind (car target)))
-    (when (memq kind '(file+headline file+olp+datetree file+olp file+regexp))
-      (org-capture-expand-file (nth 1 target)))))
-
-(dolist (spec '(("i" . "inbox.org")
-                ("j" . "notes/daily/journal.org")
-                ("r" . "notes/references/tracking.org")))
-  (let* ((key (car spec))
-         (expected (my/knowledge-subdir (cdr spec)))
-         (actual (my/stage1-check-target key)))
-    (my/stage1-check (format "capture template %S resolves to %s" key (cdr spec))
-                     (equal actual expected)
-                     (format "%S" actual))
-    (my/stage1-check (format "capture target for %S exists" key)
-                     (file-exists-p expected))))
-
-;; Function-valued file specs get resolved the same way a real capture would.
-;; `cl-letf' on the function cell, because a plain `let' cannot rebind a
-;; function name for the interpreter.
-(cl-letf (((symbol-function 'completing-read)
-           (lambda (&rest _) "notes/projects/zz-stage1-fixture.org")))
-  (my/stage1-check "project capture target resolves via the picker"
-                   (equal (my/capture-project-file) my/stage1-fixture)))
-
-;;; 5. Help buffer
-
-(my/help-bindings)
-(with-current-buffer "*My Keys*"
-  (let ((text (buffer-string)))
-    (my/stage1-check "C-c ? lists the knowledge bindings"
-                     (and (string-match-p "C-c k p" text)
-                          (string-match-p "C-c k l" text)
-                          (string-match-p "C-c k a" text)))
-    (my/stage1-check "help buffer documents the binding count"
-                     (string-match-p "bindings under C-c" text))
-    (kill-buffer)))
-
-;;; 6. Cleanup
-
-(when (get-file-buffer my/stage1-fixture)
-  (with-current-buffer (get-file-buffer my/stage1-fixture)
-    (set-buffer-modified-p nil)
-    (kill-buffer)))
-(when (file-exists-p my/stage1-fixture) (delete-file my/stage1-fixture))
-(my/stage1-check "fixture removed, knowledge tree unchanged"
-                 (not (file-exists-p my/stage1-fixture)))
+(my/stage1-check "C-c p is still a project prefix"
+                 (let ((binding (my/stage1-global-binding "C-c p")))
+                   (or (keymapp binding)
+                       (and (symbolp binding) (fboundp binding)
+                            (keymapp (symbol-function binding))))))
 
 (princ (format "\n%d checks, %d failures\n" my/stage1-checks my/stage1-failures))
 (when (> my/stage1-failures 0)

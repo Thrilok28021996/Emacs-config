@@ -98,9 +98,7 @@
 (require 'winner)
 (winner-mode 1)
 
-(global-set-key (kbd "C-c b b") #'switch-to-buffer)
 (global-set-key (kbd "C-c f r") #'recentf-open-files)
-(global-set-key (kbd "C-c s s") #'isearch-forward)
 (global-set-key (kbd "C-c s i") #'imenu)
 (global-set-key (kbd "C-c w u") #'winner-undo)
 (global-set-key (kbd "C-c w U") #'winner-redo)
@@ -111,26 +109,7 @@
 (global-set-key (kbd "C-c w =") #'balance-windows)
 (global-set-key (kbd "M-o") #'other-window)
 (global-set-key (kbd "C-x C-/") #'undo-redo)
-(global-set-key (kbd "C-c z") #'undo-redo)
 
-(defun my/move-line-up ()
-  "Move the current line or active region up."
-  (interactive)
-  (if (use-region-p)
-      (let ((text (delete-and-extract-region (region-beginning) (region-end))))
-        (forward-line -1) (insert text))
-    (transpose-lines 1) (forward-line -2)))
-
-(defun my/move-line-down ()
-  "Move the current line or active region down."
-  (interactive)
-  (if (use-region-p)
-      (let ((text (delete-and-extract-region (region-beginning) (region-end))))
-        (forward-line 1) (insert text))
-    (forward-line 1) (transpose-lines 1) (forward-line -1)))
-
-(global-set-key (kbd "M-<up>") #'my/move-line-up)
-(global-set-key (kbd "M-<down>") #'my/move-line-down)
 (global-set-key (kbd "C-c i r") #'indent-rigidly-right-to-tab-stop)
 (global-set-key (kbd "C-c i l") #'indent-rigidly-left-to-tab-stop)
 
@@ -149,10 +128,7 @@
                    "magit-section-[0-9]*" "magit-[0-9]*" "with-editor-[0-9]*"
                    "cond-let-[0-9]*" "llama-[0-9]*"
                    "conda-[0-9]*" "dash-[0-9]*" "s-[0-9]*" "f-[0-9]*"
-                   "org-kanban-[0-9]*"
                    "simple-httpd-[0-9]*" "websocket-[0-9]*" "org-roam-ui-[0-9]*"
-                   "org-ql-[0-9]*" "org-super-agenda-[0-9]*"
-                   "ov-[0-9]*" "ts-[0-9]*" "ht-[0-9]*"
                    "nov-[0-9]*" "esxml-[0-9]*"
                    "pythonic-[0-9]*"))
   (my/add-elpa-package pattern))
@@ -271,46 +247,30 @@
     (load-theme 'modus-vivendi t))))
 (global-set-key (kbd "C-c t t") #'my/toggle-theme)
 
-;;; Org: built-in notes, capture, agenda, and clocking
+;;; Org: built-in notes and clocking
 
 (require 'org)
-(require 'org-agenda)
-(require 'org-capture)
 (require 'org-clock)
 
-(defvar my/garden-dir (expand-file-name "~/Documents/garden/"))
-(defvar my/work-dir (expand-file-name "~/Documents/garden/work/"))
-(defvar my/personal-dir (expand-file-name "~/Documents/garden/personal/"))
-(setq org-directory my/garden-dir
-      org-log-done 'time
+(setq org-log-done 'time
       org-log-into-drawer t
       org-clock-mode-line-total 'today
       org-startup-indented t
       org-hide-emphasis-markers t
       org-return-follows-link t
-      org-agenda-files nil
-      org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id
       org-confirm-babel-evaluate nil
       org-src-preserve-indentation t
       org-src-tab-acts-natively t
       org-clock-persist t
       org-enforce-todo-dependencies t
-      org-agenda-window-setup 'current-window
       org-image-actual-width nil
-      org-agenda-inhibit-startup t
       org-fold-catch-invisible-edits 'smart
-      org-todo-keywords '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)"))
       org-archive-location "%s_archive::* Archived")
 (org-clock-persistence-insinuate)
 
-;; The garden-era capture wrappers that lived here were removed in stage 6.
-;; They pointed at templates ("i" "j" "r" "w" "t") and directories
-;; (~/Documents/garden/work/) that no longer exist; "C-c n w" called a template
-;; that had been deleted, so pressing it signalled an error.  Capture is now
-;; C-c k i (inbox) and C-c k t (template menu), defined in lisp/my-org-pkm.el.
+;; Capture, agenda dispatch and the old creation commands went away with the
+;; two-tree layout.  What remains here is clocking and link insertion.
 
-(global-set-key (kbd "C-c o a") #'org-agenda)
-(global-set-key (kbd "C-c o c") #'org-capture)
 (global-set-key (kbd "C-c o I") #'org-clock-in)
 (global-set-key (kbd "C-c o O") #'org-clock-out)
 (global-set-key (kbd "C-c o R") #'org-clock-report)
@@ -319,16 +279,10 @@
 
 (autoload 'org-roam-node-find "org-roam-node" nil t)
 (autoload 'org-roam-node-insert "org-roam-node" nil t)
-(autoload 'org-roam-capture "org-roam-capture" nil t)
 (autoload 'org-roam-db-autosync-mode "org-roam-db" nil t)
-(global-set-key (kbd "C-c o r") #'org-roam-node-find)
 (global-set-key (kbd "C-c o i") #'org-roam-node-insert)
-(global-set-key (kbd "C-c n k") #'org-roam-capture)
 
 ;; Org-roam itself is configured in lisp/my-roam.el, against ~/knowledge/.
-;; The garden-era idle timer that pointed it at ~/Documents/garden/ was removed:
-;; it would have re-set org-roam-directory five seconds after startup and
-;; fought the knowledge tree.
 
 ;;; Conda environment switching
 
@@ -382,7 +336,7 @@
 (let ((my/lisp-dir (expand-file-name "lisp/" user-emacs-directory)))
   (when (file-directory-p my/lisp-dir)
     (add-to-list 'load-path my/lisp-dir)
-    (dolist (module '(my-org-pkm my-kanban my-roam my-dashboards my-reading my-help))
+    (dolist (module '(my-org-pkm my-roam my-reading my-help))
       (require module nil t))))
 
 ;;; init.el ends here
